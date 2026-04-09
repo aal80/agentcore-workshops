@@ -1,6 +1,6 @@
-# A2A Multi-Agent Workshop with Strands on AWS Bedrock AgentCore
+# A2A Multi-Agent Workshop with Strands on Amazon Bedrock AgentCore
 
-This workshop demonstrates how to build, deploy, and connect multiple AI agents using the **Agent-to-Agent (A2A) protocol** on **AWS Bedrock AgentCore**. Three agents collaborate: a Weather Agent and a Shopping Agent act as specialized sub-agents, while an Orchestrator Agent coordinates them to answer questions like *"Find me running shoes for a marathon in Seattle next week."*
+This workshop demonstrates how to build, deploy, and connect multiple AI agents using the **Agent-to-Agent (A2A) protocol** on **Amazon Bedrock AgentCore**. Three agents collaborate: a Weather Agent and a Shopping Agent act as specialized sub-agents, while an Orchestrator Agent coordinates them to answer questions like *"Find me running shoes for a marathon in Seattle next week."*
 
 ## Architecture
 
@@ -12,7 +12,7 @@ This workshop demonstrates how to build, deploy, and connect multiple AI agents 
 |---|---|
 | Agent framework | [Strands Agents](https://strandsagents.com) |
 | Inter-agent protocol | [A2A (Agent-to-Agent)](https://google.github.io/A2A/) — JSON-RPC 2.0 |
-| Hosting platform | [AWS Bedrock AgentCore Runtime](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html) |
+| Hosting platform | [Amazon Bedrock AgentCore Runtime](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html) |
 | Authentication | [Amazon Cognito](https://aws.amazon.com/cognito/) (OAuth2 client credentials) |
 | Infrastructure | [Terraform](http://developer.hashicorp.com/terraform) |
 | Container registry | [Amazon ECR](https://aws.amazon.com/ecr/) |
