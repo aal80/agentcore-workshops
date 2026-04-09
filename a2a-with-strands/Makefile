@@ -4,6 +4,11 @@ define get-vars
 	$(eval AWS_REGION := $(shell mkdir -p tmp && (cat ./tmp/aws_region.txt 2>/dev/null || { R=$$(aws configure get region); [ -z "$$R" ] && R=$${AWS_REGION}; echo "$$R" | tee ./tmp/aws_region.txt; })))
 endef
 
+test-vars:
+	$(call get-vars)
+	@echo AWS_ACCOUNT_ID=$(AWS_ACCOUNT_ID)
+	@echo AWS_REGION=$(AWS_REGION)
+
 login-to-ecr:
 	$(call get-vars)
 	@echo "> Logging in into ECR..."
@@ -31,6 +36,9 @@ define build-and-push-agent
 	@echo "> Creating ECR repo (if doesn't exist)..."
 	aws ecr describe-repositories --repository-names "$(AGENT_IMAGE_NAME)" --no-cli-pager 2>/dev/null || \
 		aws ecr create-repository --repository-name "$(AGENT_IMAGE_NAME)" --no-cli-pager
+
+	@echo "> Installing QEMU for linux/arm64 cross-compilation..."
+	docker run --privileged --rm tonistiigi/binfmt --install arm64
 
 	@echo "> Building container image from $(AGENT_DIR)..."
 	cd $(AGENT_DIR) && \
@@ -89,7 +97,7 @@ define test-agent
 	@echo "Starting tests..."
 	
 	@echo "The following test attempts to retrieve the agent-card"
-	@read -p "Press ENTER to start..."
+	@printf "Press ENTER to start..."; read _
 	@echo "> Retrieving agent card from $(AGENT_RUNTIME_URL)/.well-known/agent-card.json..."
 	@echo ""
 	curl "$(AGENT_RUNTIME_URL)/.well-known/agent-card.json" \
@@ -97,7 +105,7 @@ define test-agent
 
 	@echo ""
 	@echo "The following test attempts to ask the following question: $(AGENT_TEST_MESSAGE)"
-	@read -p "Press ENTER to start..."
+	@printf "Press ENTER to start..."; read _
 	@echo "> Sending A2A message..."
 	curl -X POST "$(AGENT_RUNTIME_URL)" \
 		-H "Content-Type: application/json" \
@@ -116,7 +124,7 @@ test-orchestrator:
 	
 # 	@echo ""
 # 	@echo "Testing with prompt: $(PROMPT)"
-# 	@read -p "Press ENTER to start..."
+# 	@printf "Press ENTER to start..."; read _
 # 	aws bedrock-agentcore invoke-agent-runtime \
 #   		--agent-runtime-arn "$(RUNTIME_AGENT_ARN)" \
 # 		--payload "$(PAYLOAD)" \
