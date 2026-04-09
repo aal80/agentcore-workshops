@@ -20,6 +20,11 @@ build-and-push-shopping-agent:
 	$(eval AGENT_DIR := agents/shopping)
 	$(call build-and-push-agent)
 
+build-and-push-orchestrator-agent:
+	$(eval AGENT_IMAGE_NAME := a2a-workshop-orchestrator-agent)
+	$(eval AGENT_DIR := agents/orchestrator)
+	$(call build-and-push-agent)
+
 define build-and-push-agent
 	$(call get-vars)
 	$(eval AGENT_ECR_REPO := $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(AGENT_IMAGE_NAME))
@@ -33,8 +38,7 @@ define build-and-push-agent
 
 	@echo "> Pushing to ECR..."
 	docker push "$(AGENT_ECR_REPO):latest"
-	@echo "All done! If you're running on ARM architecture, you can test locally using:"
-	@echo "docker run --rm -it -p 9000:9000 $(AGENT_ECR_REPO):latest"
+	@echo "All done!"
 endef
 
 deploy-infra:
@@ -101,5 +105,27 @@ define test-agent
 		-d '{"jsonrpc":"2.0","id":"1","method":"message/send","params":{"message":{"role":"user","messageId":"msg-001","parts":[{"kind":"text","text":"$(AGENT_TEST_MESSAGE)"}]}}}' \
 		| jq .result.artifacts
 endef
+
+test-orchestrator:
+	python3 orchestrator_invoker.py
+# 	$(eval RUNTIME_AGENT_ARN := $(shell cat ./tmp/orchestrator_agent_runtime_arn.txt))
+# 	$(info > RUNTIME_AGENT_ARN=$(RUNTIME_AGENT_ARN))
+
+# 	$(eval PROMPT := Find me running shoes for a marathon in Seattle next week)
+# 	$(eval PAYLOAD := $(shell echo '{"prompt":"$(PROMPT)"}' | base64))
+	
+# 	@echo ""
+# 	@echo "Testing with prompt: $(PROMPT)"
+# 	@read -p "Press ENTER to start..."
+# 	aws bedrock-agentcore invoke-agent-runtime \
+#   		--agent-runtime-arn "$(RUNTIME_AGENT_ARN)" \
+# 		--payload "$(PAYLOAD)" \
+# 		--content-type "application/json" \
+# 		tmp/invoke_output.txt \
+# 		--no-cli-pager
+
+# 	@echo "> Invocation output:"
+# 	@cat tmp/invoke_output.txt
+
 
 

@@ -1,9 +1,11 @@
+variable "ecr_repo_prefix" {}
+
 locals {
   weather_agent_ecr_uri = "${data.aws_ecr_repository.weather_agent.repository_url}@${data.aws_ecr_image.weather_agent.image_digest}"
 }
 
 data "aws_ecr_repository" "weather_agent" {
-  name = "${local.project_name_short}-weather-agent"
+  name = "${var.ecr_repo_prefix}-weather-agent"
 }
 
 data "aws_ecr_image" "weather_agent" {

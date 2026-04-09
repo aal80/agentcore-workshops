@@ -4,13 +4,13 @@ resource "aws_cloudwatch_log_group" "weather_agent" {
 }
 
 resource "aws_cloudwatch_log_delivery_source" "weather_agent" {
-  name         = "${local.project_name}-weather-agent-app-logs"
+  name         = "${var.project_name}-weather-agent-app-logs"
   log_type     = "APPLICATION_LOGS"
   resource_arn = aws_bedrockagentcore_agent_runtime.weather_agent.agent_runtime_arn
 }
 
 resource "aws_cloudwatch_log_delivery_destination" "weather_agent" {
-  name = "${local.project_name}-weather-agent-dst"
+  name = "${var.project_name}-weather-agent-dst"
 
   delivery_destination_type = "CWL"
   delivery_destination_configuration {

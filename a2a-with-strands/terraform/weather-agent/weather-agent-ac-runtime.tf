@@ -1,5 +1,14 @@
+variable "project_name" {}
+variable "region" {}
+variable "cognito_client_id" {}
+variable "cognito_discovery_url" {}
+
+locals {
+    project_name_underscore = replace(var.project_name, "-", "_")
+}
+
 resource "aws_iam_role" "weather_agent" {
-  name = "${local.project_name}-weather-agent"
+  name = "${var.project_name}-weather-agent"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -52,8 +61,8 @@ resource "aws_bedrockagentcore_agent_runtime" "weather_agent" {
 
   authorizer_configuration {
     custom_jwt_authorizer {
-      discovery_url   = local.cognito_discovery_url
-      allowed_clients = [aws_cognito_user_pool_client.this.id]
+      discovery_url   = var.cognito_discovery_url
+      allowed_clients = [var.cognito_client_id]
     }
   }
 
@@ -68,11 +77,15 @@ resource "aws_bedrockagentcore_agent_runtime" "weather_agent" {
 
 locals {
   weather_agent_runtime_arn_encoded = replace(aws_bedrockagentcore_agent_runtime.weather_agent.agent_runtime_arn, "/", "%2F")
-  weather_agent_runtime_url = "https://bedrock-agentcore.${data.aws_region.current.region}.amazonaws.com/runtimes/${local.weather_agent_runtime_arn_encoded}/invocations/"
+  weather_agent_runtime_url = "https://bedrock-agentcore.${var.region}.amazonaws.com/runtimes/${local.weather_agent_runtime_arn_encoded}/invocations/"
+}
+
+output "runtime_url" {
+  value = local.weather_agent_runtime_url
 }
 
 resource "local_file" "weather_agent_runtime_url" {
   content  = local.weather_agent_runtime_url
-  filename = "${path.module}/../tmp/weather_agent_runtime_url.txt"
+  filename = "${path.root}/../tmp/weather_agent_runtime_url.txt"
 }
 

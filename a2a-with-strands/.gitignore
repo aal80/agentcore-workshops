@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+*.env
 
 # Virtual environments
 .venv/
@@ -23,3 +24,5 @@ tmp/
 .vscode/
 *.swp
 *.swo
+.claude
+*.bkp
