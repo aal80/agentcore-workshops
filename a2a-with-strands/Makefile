@@ -1,13 +1,17 @@
 define get-vars
 	@echo "> get-vars"
-	$(eval AWS_ACCOUNT_ID := $(shell mkdir -p tmp && (cat ./tmp/aws_account_id.txt 2>/dev/null || aws sts get-caller-identity --query Account --output text | tee ./tmp/aws_account_id.txt)))
-	$(eval AWS_REGION := $(shell mkdir -p tmp && (cat ./tmp/aws_region.txt 2>/dev/null || { R=$$(aws configure get region); [ -z "$$R" ] && R=$${AWS_REGION}; echo "$$R" | tee ./tmp/aws_region.txt; })))
+	$(eval AWS_ACCOUNT_ID := $(shell cat ./tmp/aws_account_id.txt))
+	$(eval AWS_REGION := $(shell cat ./tmp/aws_region.txt))
+	$(info > AWS_ACCOUNT_ID=$(AWS_ACCOUNT_ID))
+	$(info > AWS_REGION=$(AWS_REGION))
 endef
 
 test-vars:
 	$(call get-vars)
-	@echo AWS_ACCOUNT_ID=$(AWS_ACCOUNT_ID)
-	@echo AWS_REGION=$(AWS_REGION)
+
+install-qemu:
+	@echo "> Installing QEMU for linux/arm64 cross-compilation..."
+	docker run --privileged --rm tonistiigi/binfmt --install arm64
 
 login-to-ecr:
 	$(call get-vars)
@@ -16,17 +20,17 @@ login-to-ecr:
 	aws ecr get-login-password | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
 build-and-push-weather-agent:
-	$(eval AGENT_IMAGE_NAME := a2a-workshop-weather-agent)
+	$(eval AGENT_IMAGE_NAME := $(shell cat ./tmp/ecr_repo_name_a2a-workshop-weather-agent.txt))
 	$(eval AGENT_DIR := agents/weather)
 	$(call build-and-push-agent)
 
 build-and-push-shopping-agent:
-	$(eval AGENT_IMAGE_NAME := a2a-workshop-shopping-agent)
+	$(eval AGENT_IMAGE_NAME := $(shell cat ./tmp/ecr_repo_name_a2a-workshop-shopping-agent.txt))
 	$(eval AGENT_DIR := agents/shopping)
 	$(call build-and-push-agent)
 
 build-and-push-orchestrator-agent:
-	$(eval AGENT_IMAGE_NAME := a2a-workshop-orchestrator-agent)
+	$(eval AGENT_IMAGE_NAME := $(shell cat ./tmp/ecr_repo_name_a2a-workshop-orchestrator-agent.txt))
 	$(eval AGENT_DIR := agents/orchestrator)
 	$(call build-and-push-agent)
 
@@ -36,9 +40,6 @@ define build-and-push-agent
 	@echo "> Creating ECR repo (if doesn't exist)..."
 	aws ecr describe-repositories --repository-names "$(AGENT_IMAGE_NAME)" --no-cli-pager 2>/dev/null || \
 		aws ecr create-repository --repository-name "$(AGENT_IMAGE_NAME)" --no-cli-pager
-
-	@echo "> Installing QEMU for linux/arm64 cross-compilation..."
-	docker run --privileged --rm tonistiigi/binfmt --install arm64
 
 	@echo "> Building container image from $(AGENT_DIR)..."
 	cd $(AGENT_DIR) && \
@@ -82,7 +83,7 @@ get-cognito-access-token:
 
 test-weather-agent:
 	$(eval AGENT_RUNTIME_URL_FILE := ./tmp/weather_agent_runtime_url.txt)
-	$(eval AGENT_TEST_MESSAGE := What is the weather in Seattle?)
+	$(eval AGENT_TEST_MESSAGE := What is the weather in Seattle next week?)
 	$(call test-agent)
 
 test-shopping-agent:

@@ -97,9 +97,10 @@ AgentCore supports two protocols for containerized agents:
 │       ├── Dockerfile
 │       └── pyproject.toml
 └── terraform/
-    ├── main.tf                     # Root module — uncomment agents here as you progress
+    ├── bootstrap.tf                     # Creates initial set of resources, such as ECR repos
+    ├── workshop.tf                     # Root module — uncomment agents here as you progress
     ├── providers.tf
-    ├── cognito/                    # OAuth2 server (always deployed)
+    ├── cognito/                    # OAuth2 server and client definition
     ├── weather-agent/              # AgentCore runtime for weather (A2A)
     ├── shopping-agent/             # AgentCore runtime for shopping (A2A)
     └── orchestrator-agent/         # AgentCore runtime for orchestrator (HTTP)
@@ -111,10 +112,11 @@ AgentCore supports two protocols for containerized agents:
 
 ### Install pre-requisites
 
-Open Terminal in VSCode and run following commands
+You may need to install some or all of the below pre-reqs. 
+Open Terminal and run following commands:
 
 ```bash
-sudo apt-get install -y make jq
+sudo yum install -y make jq
 ```
 
 ```bash
@@ -126,6 +128,22 @@ git clone https://github.com/aal80/agentcore-workshops
 cd agentcore-workshops/a2a-with-strands
 ```
 
+### Install QEMU
+
+AgentCore requires container images to be built for ARM64. If you're running on x86 architecture CPU, install QEMU to enable cross-platform builds.  
+
+```
+make install-qemu
+```
+
+### Bootstrap the infrastructure
+
+```bash
+make deploy-infra
+```
+
+This runs `terraform apply` to create ECR repositories you will use in this workshop. Once Terraform finishes, you can see files under `./tmp` directory with various properties used in following steps. 
+
 ### Test AWS Variables
 
 ```bash
@@ -135,22 +153,14 @@ make test-vars
 You should see:
 
 ```text
+> AWS_ACCOUNT_ID=123123123123
+> AWS_REGION=us-west-2
 > get-vars
-AWS_ACCOUNT_ID=626216789561
-AWS_REGION=us-east-1
 ```
 
-### Log in to ECR
+### Deploy Cognito resources
 
-```bash
-make login-to-ecr
-```
-
-This resolves your AWS account ID and region (cached in `./tmp/`), then authenticates Docker against your ECR registry.
-
-### Deploy Cognito
-
-Open `terraform/main.tf`. By default only the `cognito` module is active — the agent modules are commented out:
+Open `terraform/workshop.tf`. Uncommend the `cognito` module:
 
 ```hcl
 module "cognito" {
@@ -158,10 +168,6 @@ module "cognito" {
   project_name = local.project_name
   region       = data.aws_region.current.region
 }
-
-# module "weather_agent" { ... }    ← commented out
-# module "shopping_agent" { ... }   ← commented out
-# module "orchestrator_agent" { ... } ← commented out
 ```
 
 Deploy Cognito now:
@@ -186,6 +192,14 @@ You'll need these credentials later when the Orchestrator calls protected sub-ag
 ---
 
 ## Step 1: Weather Agent
+
+### Log in to ECR
+
+```bash
+make login-to-ecr
+```
+
+This resolves your AWS account ID and region (stored previously in `./tmp/`), then authenticates Docker against your ECR registry.
 
 ### Understanding the Code
 
@@ -257,11 +271,11 @@ CMD ["uv", "run", "opentelemetry-instrument", "uvicorn", "main:app", "--host", "
 make build-and-push-weather-agent
 ```
 
-This creates the ECR repository `a2a-workshop-weather-agent` (if needed), builds the linux/arm64 image, and pushes it.
+This build the linux/arm64 image and pushes it to the `a2a-workshop-weather-agent`  ECR repository.
 
 ### Deploy to AgentCore
 
-Uncomment the `weather_agent` module in `terraform/main.tf`:
+Uncomment the `weather_agent` module in `terraform/workshop.tf`:
 
 ```hcl
 module "weather_agent" {
@@ -326,35 +340,34 @@ make test-weather-agent
 ```
 
 **Part 1 — Agent card retrieval:**
-```bash
-curl "https://bedrock-agentcore.<region>.amazonaws.com/.../invocations/.well-known/agent-card.json" \
-  -H "Authorization: Bearer <token>" | jq .
-```
 
 Expected response:
+
 ```json
 {
   "name": "Weather Agent",
   "description": "An agent that answers weather questions using live internet search.",
   "url": "https://bedrock-agentcore.<region>.amazonaws.com/.../invocations/",
-  "capabilities": { "streaming": false }
+  ...REDACTED...
 }
 ```
 
 **Part 2 — A2A message:**
-```bash
-curl -X POST "https://bedrock-agentcore.<region>.amazonaws.com/.../invocations/" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "jsonrpc": "2.0", "id": "1", "method": "message/send",
-    "params": { "message": { "role": "user", "messageId": "msg-001",
-      "parts": [{ "kind": "text", "text": "What is the weather in Seattle?" }] } }
-  }' | jq .result.artifacts
+
+The agent calls `internet_search`, Claude formats the result, and the response arrives as A2A artifacts. Expected response:
+
+```json
+  {
+    "artifactId": "d20b2357-e0b1-4b68-82d3-c9e35cb4dd2f",
+    "name": "agent_response",
+    "parts": [
+      {
+        "kind": "text",
+        "text": "I'm getting forecast pages but not the specific detailed forecast data. Based on the search results, I can see that the National Weather Service, Weather.com, and Weather Underground all have Seattle forecasts available, but the search isn't returning the specific day-by-day forecast details.\n\n**To get Seattle's next week forecast**, I recommend visiting:\n- **Weather.com** (The Weather Channel)\n- **forecast.weather.gov** (National Weather Service Seattle)\n- **Weather Underground**\n\nThese sites will show you detailed forecasts with:\n- High/low temperatures for each day\n- Chance of precipitation\n- Wind speeds\n- Hour-by-hour breakdowns\n\nUnfortunately, the search results aren't displaying the specific forecast numbers. Would you like me to search for current weather conditions in Seattle instead, or try searching for a specific day's forecast?\n"
+      }
+    ]
+  }
 ```
-
-The agent calls `internet_search`, Claude formats the result, and the response arrives as A2A artifacts.
-
 ---
 
 ## Step 2: Shopping Agent
@@ -395,7 +408,7 @@ make build-and-push-shopping-agent
 
 ### Deploy to AgentCore
 
-Uncomment the `shopping_agent` module in `terraform/main.tf`:
+Uncomment the `shopping_agent` module in `terraform/workshop.tf`:
 
 ```hcl
 module "shopping_agent" {
@@ -422,7 +435,20 @@ Same infrastructure as the Weather Agent (IAM role, AgentCore runtime with A2A +
 make test-shopping-agent
 ```
 
-Sends the message `"It is raining in Seattle. What should I wear?"` as an A2A request and displays the agent card and product recommendations.
+Sends the message `"It is raining in Seattle. What should I wear?"` as an A2A request and displays the agent card and product recommendations. Expected response:
+
+```json
+  {
+    "artifactId": "9c0a143e-9ab0-4f5f-b603-9f6dd886ddfb",
+    "name": "agent_response",
+    "parts": [
+      {
+        "kind": "text",
+        "text": "## 🌧️ Rainy Seattle Weather - What to Wear\n\nHere are my recommendations for staying dry and comfortable in Seattle rain:\n\n### 1. **Waterproof Rain Jacket** (Essential!)\n- **Outdoor Ventures Men's Waterproof Rain Jacket** - Lightweight, packable rain shell with hood\n  https://www.amazon.com/gp/most-wished-for/fashion/2476604011/\n  \n- **Waterproof Rain Jackets** (Browse collection)\n  https://www.amazon.com/Waterproof-Rain-Jackets/s?k=Waterproof+Rain+Jackets\n\n### 2. **Waterproof Rain Boots**\n- **Women's Rain Footwear Best Sellers**\n  https://www.amazon.com/Best-Sellers-Clothing-Shoes-Jewelry-Womens-Rain-Footwear/zgbs/fashion/3412250011/\n  \n- **Men's Waterproof Rain Boots** - Knee high PVC rubber boots for outdoor work\n  https://www.amazon.com/rubber-rain-boots/s?k=rubber+rain+boots\n\n### 3. **Water-Resistant Pants**\n- **CQR Men's Tactical Water-Resistant Pants** - Ripstop cargo pants, quick dry\n  https://www.amazon.com/water-resistant-pants-men/s?k=water+resistant+pants+men\n  \n- **Rdruko Women's Water-Resistant Hiking Cargo Pants** - Quick dry with UPF 50+ protection\n  https://www.amazon.com/womens-water-resistant-pants/s?k=womens+water+resistant+pants\n\n**Pro Tip:** Since Seattle rain is often mild and steady, a lightweight packable rain jacket paired with water-resistant pants and waterproof boots will keep you comfortable for the day. Many locals prefer quick-dry athletic wear for flexibility!\n"
+      }
+    ]
+  }
+```
 
 ---
 
@@ -460,7 +486,7 @@ The Cognito credentials arrive via environment variables set in the Terraform `e
 
 **Layer 2 — A2A client with lazy agent discovery**
 
-Before sending a message, the Orchestrator needs each sub-agent's `AgentCard`. `A2ACardResolver` fetches it from `/.well-known/agent-card.json`. Cards are cached in module-level globals and fetched lazily on the first tool call:
+Before sending a message, the Orchestrator needs each sub-agent's `AgentCard`. `A2ACardResolver` fetches these cards from `/.well-known/agent-card.json` of each agent. Cards are cached in module-level globals and fetched lazily on the first tool call:
 
 ```python
 _weather_agent_card = None
@@ -478,7 +504,7 @@ async def discover_agents():
     ).get_agent_card()
 ```
 
-`send_message_to_agent()` builds an A2A `Message`, sends it, and extracts the response text. Note that `a2a_client.send_message()` yields `(Task, None)` tuples, and `Part` is a Pydantic `RootModel` so text lives at `.root.text`:
+`send_message_to_agent()` builds an A2A `Message`, sends it, and extracts the response text. 
 
 ```python
 async def send_message_to_agent(agent_card, message_text):
@@ -556,12 +582,6 @@ async def invoke_agent(payload, context):
                 yield event
 ```
 
-**The Dockerfile** starts via `uv run main.py` which hits `if __name__ == "__main__": app.run(...)`:
-
-```dockerfile
-CMD ["uv", "run", "main.py"]
-```
-
 ### Build and Push
 
 ```bash
@@ -570,7 +590,7 @@ make build-and-push-orchestrator-agent
 
 ### Deploy to AgentCore
 
-Uncomment the `orchestrator_agent` module in `terraform/main.tf`:
+Uncomment the `orchestrator_agent` module in `terraform/workshop.tf`:
 
 ```hcl
 module "orchestrator_agent" {
@@ -593,7 +613,7 @@ Then apply:
 make deploy-infra
 ```
 
-Unlike the sub-agents, the Orchestrator runtime has **no JWT authorizer** (callers authenticate with AWS IAM credentials) and **no `protocol_configuration`** (HTTP mode). The sub-agent URLs and Cognito credentials are injected as environment variables:
+The sub-agent URLs and Cognito credentials required to communicate with downstream agents are injected as environment variables:
 
 ```hcl
 resource "aws_bedrockagentcore_agent_runtime" "orchestrator_agent" {
@@ -607,8 +627,6 @@ resource "aws_bedrockagentcore_agent_runtime" "orchestrator_agent" {
   network_configuration {
     network_mode = "PUBLIC"
   }
-  # no protocol_configuration → HTTP mode
-  # no authorizer_configuration → AWS IAM auth
 }
 ```
 
@@ -632,27 +650,11 @@ response = client.invoke_agent_runtime(
 
 What happens inside the Orchestrator:
 1. Payload arrives at `invoke_agent(payload, context)`
-2. Claude reads the prompt and decides to call `send_message_to_weather_agent(location="Seattle", timeframe="next week")`
+2. LLM reads the prompt and decides to call `send_message_to_weather_agent(location="Seattle", timeframe="next week")`
 3. Orchestrator fetches a Cognito token, discovers the Weather Agent card, sends an A2A message
-4. Claude receives the weather result, calls `send_message_to_shopping_agent(weather_conditions="...", item="running shoes for a marathon")`
+4. LLM receives the weather result, calls `send_message_to_shopping_agent(weather_conditions="...", item="running shoes for a marathon")`
 5. Orchestrator sends A2A message to Shopping Agent
-6. Claude synthesizes a final response: weather summary + product recommendations
-
----
-
-## Observability
-
-### CloudWatch Logs (Weather and Shopping Agents)
-
-Application logs stream to CloudWatch:
-- Weather Agent: `/aws/vendedlogs/agentcore/weather-agent/applogs`
-- Shopping Agent: `/aws/vendedlogs/agentcore/shopping-agent/applogs`
-
-Check these first if an agent is not responding.
-
-### X-Ray Tracing
-
-All agents include `aws-opentelemetry-distro`. Weather and Shopping Dockerfiles run with `opentelemetry-instrument` prefix. Traces appear in the AWS X-Ray console showing model invocations and tool calls.
+6. LLM synthesizes a final response: weather summary + product recommendations
 
 ---
 
@@ -671,25 +673,3 @@ Runs `terraform destroy` and removes `./tmp/`. Deletes all AWS resources: Cognit
 > aws ecr delete-repository --repository-name a2a-workshop-orchestrator-agent --force
 > ```
 
----
-
-## Troubleshooting
-
-### Container restarting on AgentCore
-
-Check CloudWatch logs for the agent. A common cause is a **protocol mismatch**: if the container serves `A2AServer` (FastAPI on port 9000) but Terraform has no `protocol_configuration` block, or vice versa. Ensure:
-
-- `server_protocol = "A2A"` in Terraform ↔ container uses `A2AServer` + FastAPI + port 9000
-- No `protocol_configuration` in Terraform ↔ container uses `BedrockAgentCoreApp` + port 8080
-
-### 401 Unauthorized when calling sub-agents
-
-The bearer token is expired or missing. Re-run `make get-cognito-access-token`. Tokens expire after 1 hour.
-
-### Silent tool failures in Strands
-
-Strands catches tool exceptions and passes the error text to Claude, which generates an apologetic response rather than raising. To debug, wrap tool internals with `try/except Exception as e: logger.exception(e)` and check CloudWatch logs for `ERROR` lines.
-
-### `RuntimeError: Event loop is closed`
-
-This happens when an `httpx.AsyncClient` is created in one `asyncio.run()` call and reused in a later one (e.g., at module import time, then inside uvicorn's loop). Always initialize `_httpx_client = None` at module level and create it lazily on first use inside an async function.

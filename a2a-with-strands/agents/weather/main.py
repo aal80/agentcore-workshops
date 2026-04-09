@@ -3,6 +3,7 @@ import os
 import asyncio
 from strands import Agent, tool
 from strands.multiagent.a2a import A2AServer
+from strands.models import BedrockModel
 import uvicorn
 from fastapi import FastAPI
 
@@ -61,10 +62,15 @@ Guidelines:
 - If search fails, acknowledge the limitation
 """
 
+bedrock_model = BedrockModel(
+    model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0"
+)
+
 agent = Agent(
     system_prompt=system_prompt,
     tools=[internet_search],
     name="Weather Agent",
+    model=bedrock_model,
     description="An agent that answers weather questions using live internet search.",
 )
 

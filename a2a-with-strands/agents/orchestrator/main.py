@@ -7,6 +7,7 @@ from uuid import uuid4
 from a2a.client import A2ACardResolver, ClientConfig, ClientFactory
 from a2a.types import Message, Part, Role, TextPart
 from strands import Agent, tool
+from strands.models import BedrockModel
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from fastapi import HTTPException
 
@@ -191,10 +192,15 @@ Keep responses practical and to the point.
 """
 
 logger.info("Initializing Strands Agent...")
+bedrock_model = BedrockModel(
+    model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0"
+)
+
 agent = Agent(
     system_prompt=system_prompt,
     tools=[send_message_to_weather_agent, send_message_to_shopping_agent],
     name="Orchestrator Agent",
+    model=bedrock_model,
     description="Orchestrates weather and shopping agents to recommend weather-appropriate clothing and gear.",
 )
 logger.info("Strands Agent initialized")

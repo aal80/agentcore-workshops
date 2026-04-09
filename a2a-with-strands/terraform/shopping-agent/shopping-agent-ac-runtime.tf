@@ -2,9 +2,17 @@ variable "project_name" {}
 variable "region" {}
 variable "cognito_client_id" {}
 variable "cognito_discovery_url" {}
+variable "ecr_repo_name" {}
+variable "ecr_repo_url" {}
+
+data "aws_ecr_image" "agent" {
+  repository_name = var.ecr_repo_name
+  image_tag       = "latest"
+}
 
 locals {
-    project_name_underscore = replace(var.project_name, "-", "_")
+  project_name_underscore = replace(var.project_name, "-", "_")
+  agent_ecr_uri           = "${var.ecr_repo_url}@${data.aws_ecr_image.agent.image_digest}"
 }
 
 resource "aws_iam_role" "shopping_agent" {
@@ -40,7 +48,7 @@ resource "aws_iam_role_policy" "shopping_agent" {
           "ecr:GetAuthorizationToken",
           "ecr:BatchGetImage",
           "ecr:GetDownloadUrlForLayer",
-          "xray:PutTraceSegments", 
+          "xray:PutTraceSegments",
           "xray:PutTelemetryRecords"
         ]
         Resource = "*"
@@ -55,7 +63,7 @@ resource "aws_bedrockagentcore_agent_runtime" "shopping_agent" {
 
   agent_runtime_artifact {
     container_configuration {
-      container_uri = local.shopping_agent_ecr_uri
+      container_uri = local.agent_ecr_uri
     }
   }
 
@@ -77,7 +85,7 @@ resource "aws_bedrockagentcore_agent_runtime" "shopping_agent" {
 
 locals {
   shopping_agent_runtime_arn_encoded = replace(aws_bedrockagentcore_agent_runtime.shopping_agent.agent_runtime_arn, "/", "%2F")
-  shopping_agent_runtime_url = "https://bedrock-agentcore.${var.region}.amazonaws.com/runtimes/${local.shopping_agent_runtime_arn_encoded}/invocations/"
+  shopping_agent_runtime_url         = "https://bedrock-agentcore.${var.region}.amazonaws.com/runtimes/${local.shopping_agent_runtime_arn_encoded}/invocations/"
 }
 
 output "runtime_url" {

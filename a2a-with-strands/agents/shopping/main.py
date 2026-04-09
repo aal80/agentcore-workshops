@@ -2,8 +2,8 @@ import logging
 import os
 import asyncio
 from strands import Agent, tool
-from strands.agent.conversation_manager import NullConversationManager
 from strands.multiagent.a2a import A2AServer
+from strands.models import BedrockModel
 import uvicorn
 from fastapi import FastAPI
 
@@ -69,10 +69,16 @@ Examples of weather-to-apparel mapping:
 - Windy + cool → windbreaker, fleece layer
 """
 
+bedrock_model = BedrockModel(
+    model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0"
+)
+
+
 agent = Agent(
     system_prompt=system_prompt,
     tools=[search_amazon],
     name="Shopping Agent",
+    model=bedrock_model,
     description="An agent that recommends weather-appropriate clothing from Amazon based on current weather conditions.",
 )
 

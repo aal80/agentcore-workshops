@@ -3,7 +3,8 @@ import json
 from pathlib import Path
 import boto3
 
-client = boto3.client("bedrock-agentcore")
+AWS_REGION = Path("tmp/aws_region.txt").read_text().strip()
+client = boto3.client("bedrock-agentcore", region_name=AWS_REGION)
 
 RUNTIME_ARN = Path("tmp/orchestrator_agent_runtime_arn.txt").read_text().strip()
 print(f"> RUNTIME_ARN={RUNTIME_ARN}")

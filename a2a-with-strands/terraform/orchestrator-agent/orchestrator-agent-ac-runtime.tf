@@ -4,11 +4,19 @@ variable "cognito_client_id" {}
 variable "cognito_client_secret" {}
 variable "cognito_discovery_url" {}
 variable "cognito_token_endpoint" {}
+variable "ecr_repo_name" {}
+variable "ecr_repo_url" {}
 variable "weather_agent_runtime_url" {}
 variable "shopping_agent_runtime_url" {}
 
+data "aws_ecr_image" "agent" {
+  repository_name = var.ecr_repo_name
+  image_tag       = "latest"
+}
+
 locals {
-    project_name_underscore = replace(var.project_name, "-", "_")
+  project_name_underscore = replace(var.project_name, "-", "_")
+  agent_ecr_uri           = "${var.ecr_repo_url}@${data.aws_ecr_image.agent.image_digest}"
 }
 
 resource "aws_iam_role" "orchestrator_agent" {
@@ -44,7 +52,7 @@ resource "aws_iam_role_policy" "orchestrator_agent" {
           "ecr:GetAuthorizationToken",
           "ecr:BatchGetImage",
           "ecr:GetDownloadUrlForLayer",
-          "xray:PutTraceSegments", 
+          "xray:PutTraceSegments",
           "xray:PutTelemetryRecords"
         ]
         Resource = "*"
@@ -59,15 +67,15 @@ resource "aws_bedrockagentcore_agent_runtime" "orchestrator_agent" {
 
   agent_runtime_artifact {
     container_configuration {
-      container_uri = local.orchestrator_agent_ecr_uri
+      container_uri = local.agent_ecr_uri
     }
   }
   environment_variables = {
-    WEATHER_AGENT_RUNTIME_URL = var.weather_agent_runtime_url
+    WEATHER_AGENT_RUNTIME_URL  = var.weather_agent_runtime_url
     SHOPPING_AGENT_RUNTIME_URL = var.shopping_agent_runtime_url
-    COGNITO_TOKEN_ENDPOINT = var.cognito_token_endpoint
-    COGNITO_CLIENT_ID = var.cognito_client_id
-    COGNITO_CLIENT_SECRET = var.cognito_client_secret
+    COGNITO_TOKEN_ENDPOINT     = var.cognito_token_endpoint
+    COGNITO_CLIENT_ID          = var.cognito_client_id
+    COGNITO_CLIENT_SECRET      = var.cognito_client_secret
   }
 
   network_configuration {
@@ -77,7 +85,7 @@ resource "aws_bedrockagentcore_agent_runtime" "orchestrator_agent" {
 
 locals {
   orchestrator_agent_runtime_arn_encoded = replace(aws_bedrockagentcore_agent_runtime.orchestrator_agent.agent_runtime_arn, "/", "%2F")
-  orchestrator_agent_runtime_url = "https://bedrock-agentcore.${var.region}.amazonaws.com/runtimes/${local.orchestrator_agent_runtime_arn_encoded}/invocations/"
+  orchestrator_agent_runtime_url         = "https://bedrock-agentcore.${var.region}.amazonaws.com/runtimes/${local.orchestrator_agent_runtime_arn_encoded}/invocations/"
 }
 
 resource "local_file" "orchestrator_agent_runtime_url" {
