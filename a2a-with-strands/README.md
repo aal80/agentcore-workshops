@@ -1,4 +1,4 @@
-# A2A Multi-Agent Workshop with Strands on Amazon Bedrock AgentCore
+# A2A Multi-Agent Workshop with Strands SDK, Amazon Bedrock AgentCore, and Terraform
 
 This workshop demonstrates how to build, deploy, and connect multiple AI agents using the **Agent-to-Agent (A2A) protocol** on **Amazon Bedrock AgentCore**. Three agents collaborate: a Weather Agent and a Shopping Agent act as specialized sub-agents, while an Orchestrator Agent coordinates them to answer questions like *"Find me running shoes for a marathon in Seattle next week."*
 
