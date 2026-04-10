@@ -157,7 +157,7 @@ Expected response:
 
 **Part 2 — A2A message** (`"What is the weather in Seattle?"`):
 
-The agent calls `internet_search`, Claude formats the result, and the response arrives as A2A artifacts:
+The agent calls `internet_search`, LLM formats the result, and the response arrives as A2A artifacts:
 
 ```json
 {
@@ -171,6 +171,7 @@ The agent calls `internet_search`, Claude formats the result, and the response a
   ]
 }
 ```
+
 ## Next Step
 
 [Continue to Module 4 - Setting up the Shopping Agent](04-shopping-agent.md)

@@ -1,9 +1,0 @@
-1. remove region from Makefile
-2. make login-to-ecr
-3. make build-and-push-weather-agent
-
-
-sudo yum install make
-curl -LsSf https://astral.sh/uv/install.sh | sh
-git clone https://github.com/aal80/agentcore-samples
-cd agentcore-samples/a2a-workshop

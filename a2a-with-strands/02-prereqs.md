@@ -20,6 +20,8 @@ AgentCore requires container images built for ARM64. If you're running on an x86
 
 ```bash
 docker run --privileged --rm tonistiigi/binfmt --install arm64
+ls /proc/sys/fs/binfmt_misc/qemu-aarch64
+mount | grep binfmt_misc
 ```
 
 This registers the ARM64 QEMU emulator with the Linux kernel via `binfmt_misc`, allowing Docker to execute ARM64 binaries during the build. You only need to do this once per machine.
@@ -36,11 +38,24 @@ sudo yum install -y make jq
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+### Ensure Claude 4.5 Haiku Model is active in Amazon Bedrock
+
+You might need this step if you've never used Bedrock before, or if you're running the workshop in AWS-provided account. 
+
+Open [Bedrock Playground](https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/playground) and select `Claude Haiky 4.5`. 
+
+Start chatting with the model. 
+- If model responds - continue to the next step
+- If you're getting an error message - wait 3-5 minutes, refresh and retry until model responds. 
+
 ### Clone the workshop from Github
 
 ```bash
-git clone https://github.com/aal80/agentcore-workshops
-cd agentcore-workshops/a2a-with-strands
+git clone --no-checkout --depth 1 https://github.com/aal80/agentcore-workshops
+cd agentcore-workshops
+git sparse-checkout set a2a-with-strands
+git checkout
+cd a2a-with-strands
 ```
 
 ### Bootstrap the infrastructure

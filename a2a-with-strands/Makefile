@@ -9,6 +9,12 @@ endef
 test-vars:
 	$(call get-vars)
 
+install-qemu:
+	@echo "> Installing QEMU"
+	docker run --privileged --rm tonistiigi/binfmt --install arm64
+	ls /proc/sys/fs/binfmt_misc/qemu-aarch64
+	mount | grep binfmt_misc
+
 login-to-ecr:
 	$(call get-vars)
 	@echo "> Logging in into ECR..."

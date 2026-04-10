@@ -42,18 +42,28 @@ resource "aws_iam_role_policy" "orchestrator_agent" {
       {
         Effect = "Allow"
         Action = [
+          # To subscribe to Bedrock Models
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Unsubscribe",
+
+          # To invoke Bedrock Models
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
+
+          # To pull images from ECR
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer",
+
+          # To send telemetry to CloudWatch
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
           "logs:DescribeLogGroups",
           "logs:DescribeLogStreams",
-          "ecr:GetAuthorizationToken",
-          "ecr:BatchGetImage",
-          "ecr:GetDownloadUrlForLayer",
           "xray:PutTraceSegments",
-          "xray:PutTelemetryRecords"
+          "xray:PutTelemetryRecords",
         ]
         Resource = "*"
       }
