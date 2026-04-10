@@ -82,7 +82,11 @@ Sends the message `"It is raining in Seattle. What should I wear?"` as an A2A re
 }
 ```
 
-## Workshop Steps
+## Next Step
+
+[Continue to Module 5 - Setting up the Orchestrator Agent](05-orchestrator-agent.md)
+
+## Workshop Table Of Contents
 
 1. [Overview](README.md) - Overview, architecture, understanding the protocols.
 1. [Prerequisites & Setup](02-prereqs.md) — Install dependencies, QEMU, bootstrap infrastructure, deploy Cognito

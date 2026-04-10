@@ -92,7 +92,11 @@ AgentCore supports several protocols for containerized agents:
     └── orchestrator-agent/         # AgentCore runtime for orchestrator (HTTP)
 ```
 
-## Workshop Steps
+## Next Step
+
+[Continue to Module 2 - Installing pre-requisites](02-prereqs.md)
+
+## Workshop Table Of Contents
 
 1. [Overview](README.md) - Overview, architecture, understanding the protocols.
 1. [Prerequisites & Setup](02-prereqs.md) — Install dependencies, QEMU, bootstrap infrastructure, deploy Cognito

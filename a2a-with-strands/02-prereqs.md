@@ -10,9 +10,21 @@ In this module you will install workshop pre-requisites and use them to provisio
 - **Python 3.13+** and **uv**
 - **jq**
 
-## Initial Setup
-
 ### Install dependencies
+
+### Install QEMU (on non-ARM64 machines only)
+
+> Skip this step if you're running on arm64, e.g. **macOS with Apple Silicon** or **AWS Graviton** instances.
+
+AgentCore requires container images built for ARM64. If you're running on an x86_64, install QEMU to enable cross-platform builds:
+
+```bash
+docker run --privileged --rm tonistiigi/binfmt --install arm64
+```
+
+This registers the ARM64 QEMU emulator with the Linux kernel via `binfmt_misc`, allowing Docker to execute ARM64 binaries during the build. You only need to do this once per machine.
+
+### Install make, jq, uv
 
 Install `make, jq, uv`. Below commands are using `yum`, depending on your OS you might need to use `brew`, `apt-get`, or similar package managers. 
 
@@ -23,18 +35,6 @@ sudo yum install -y make jq
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
-
-### Install QEMU (x86_64 Linux only)
-
-AgentCore requires container images built for ARM64. If you're running on an x86_64 CPU, install QEMU to enable cross-platform builds:
-
-```bash
-make install-qemu
-```
-
-This registers the ARM64 QEMU emulator with the Linux kernel via `binfmt_misc`, allowing Docker to execute ARM64 binaries during the build. You only need to do this once per machine.
-
-On **macOS with Apple Silicon (M1/M2/M3)** or **AWS Graviton**, this step is not needed.
 
 ### Clone the workshop from Github
 
@@ -103,7 +103,11 @@ Credentials are saved to `./tmp/`:
 
 You'll need these credentials later when the Orchestrator calls the protected sub-agents.
 
-## Workshop Steps
+## Next Step
+
+[Continue to Module 3 - Setting up the Weather Agent](03-weather-agent.md)
+
+## Workshop Table Of Contents
 
 1. [Overview](README.md) - Overview, architecture, understanding the protocols.
 1. [Prerequisites & Setup](02-prereqs.md) — Install dependencies, QEMU, bootstrap infrastructure, deploy Cognito

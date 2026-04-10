@@ -9,10 +9,6 @@ endef
 test-vars:
 	$(call get-vars)
 
-install-qemu:
-	@echo "> Installing QEMU for linux/arm64 cross-compilation..."
-	docker run --privileged --rm tonistiigi/binfmt --install arm64
-
 login-to-ecr:
 	$(call get-vars)
 	@echo "> Logging in into ECR..."

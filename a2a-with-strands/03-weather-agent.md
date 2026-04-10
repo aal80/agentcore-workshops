@@ -171,8 +171,11 @@ The agent calls `internet_search`, Claude formats the result, and the response a
   ]
 }
 ```
+## Next Step
 
-## Workshop Steps
+[Continue to Module 4 - Setting up the Shopping Agent](04-shopping-agent.md)
+
+## Workshop Table Of Contents
 
 1. [Overview](README.md) - Overview, architecture, understanding the protocols.
 1. [Prerequisites & Setup](02-prereqs.md) — Install dependencies, QEMU, bootstrap infrastructure, deploy Cognito

@@ -206,7 +206,11 @@ What happens inside the Orchestrator:
 5. Orchestrator sends A2A message to Shopping Agent
 6. LLM synthesizes a final response: weather summary + product recommendations
 
-## Workshop Steps
+## Next Step
+
+[Continue to Module 6 - Cleanup](06-cleanup.md)
+
+## Workshop Table Of Contents
 
 1. [Overview](README.md) - Overview, architecture, understanding the protocols.
 1. [Prerequisites & Setup](02-prereqs.md) — Install dependencies, QEMU, bootstrap infrastructure, deploy Cognito
