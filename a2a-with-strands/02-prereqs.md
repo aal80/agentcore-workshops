@@ -9,6 +9,7 @@ In this module you will install workshop pre-requisites and use them to provisio
 - **Docker** with `buildx` for linux/arm64 cross-compilation
 - **Python 3.13+** and **uv**
 - **jq**
+- **boto3**
 
 ### Install dependencies
 
