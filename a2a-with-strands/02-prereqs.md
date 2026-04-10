@@ -14,7 +14,7 @@ In this module you will install workshop pre-requisites and use them to provisio
 
 ### Install QEMU (on non-ARM64 machines only)
 
-> Skip this step if you're running on arm64, e.g. **macOS with Apple Silicon** or **AWS Graviton** instances.
+> You can skip this step if you're running on arm64, e.g. **macOS with Apple Silicon** or **AWS Graviton** instances.
 
 AgentCore requires container images built for ARM64. If you're running on an x86_64, install QEMU to enable cross-platform builds:
 
@@ -26,7 +26,7 @@ mount | grep binfmt_misc
 
 This registers the ARM64 QEMU emulator with the Linux kernel via `binfmt_misc`, allowing Docker to execute ARM64 binaries during the build. You only need to do this once per machine.
 
-### Install make, jq, uv
+### Install make, jq, uv, boto3
 
 Install `make, jq, uv`. Below commands are using `yum`, depending on your OS you might need to use `brew`, `apt-get`, or similar package managers. 
 
@@ -38,15 +38,9 @@ sudo yum install -y make jq
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### Ensure Claude 4.5 Haiku Model is active in Amazon Bedrock
-
-You might need this step if you've never used Bedrock before, or if you're running the workshop in AWS-provided account. 
-
-Open [Bedrock Playground](https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/playground) and select `Claude Haiky 4.5`. 
-
-Start chatting with the model. 
-- If model responds - continue to the next step
-- If you're getting an error message - wait 3-5 minutes, refresh and retry until model responds. 
+```bash
+pip install boto3
+```
 
 ### Clone the workshop from Github
 

@@ -74,6 +74,8 @@ CMD ["uv", "run", "opentelemetry-instrument", "uvicorn", "main:app", "--host", "
 make build-and-push-weather-agent
 ```
 
+> If you see build failure during this step try to re-install QEMU by running `make install-qemu`
+
 This builds the linux/arm64 image and pushes it to the `a2a-workshop-weather-agent` ECR repository.
 
 ## Deploy to AgentCore

@@ -206,6 +206,42 @@ What happens inside the Orchestrator:
 5. Orchestrator sends A2A message to Shopping Agent
 6. LLM synthesizes a final response: weather summary + product recommendations
 
+You will see a stream of events, which includes information about tool calls, token consumption, and LLM interactions. At the end, you will receive a result containing requested information, for example (formatted for readability):
+
+```json
+{
+  "message": {
+    "role": "assistant",
+    "content": [
+      {
+        "text": "
+        ## **Seattle Marathon Next Week - Weather & Shoe Recommendations**
+        
+        **Weather Forecast:** Mostly cloudy with rain, highs mid-50s to 60s°F
+        
+        **Running Shoe Recommendations:**
+        
+        For rainy conditions with cool temperatures, prioritize:
+            - **Waterproof/water-resistant uppers** to keep feet dry
+            - **High-traction outsoles** for grip on wet surfaces
+            - **Lightweight cushioning** for marathon distance without excess weight
+            
+        Top picks include:
+            - **adidas Terrex Trailrider** – excellent wet-weather grip [link]
+            - **Arc'teryx Norvan LD 4 GTX** – GORE-TEX waterproofing with Vibram grip [link]
+            - **Columbia Konos Featherweight** – lightweight with superior traction [link]
+            - **ANTA Wilderness 2.0** – great for muddy/wet conditions [link]
+            
+        The cooler temps (50-60°F) mean you won't overheat, so focus on waterproofing and 
+        traction over breathability. Good luck with your marathon!"
+      }
+    ]
+  }
+}
+```
+
+CONGRATULATIONS! You just deployed a multi-agent solution using A2A on Amazon Bedrock AgentCore!
+
 ## Next Step
 
 [Continue to Module 6 - Cleanup](06-cleanup.md)

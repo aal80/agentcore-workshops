@@ -36,6 +36,8 @@ build-and-push-orchestrator-agent:
 	$(eval AGENT_DIR := agents/orchestrator)
 	$(call build-and-push-agent)
 
+build-and-push-all-agents: build-and-push-weather-agent build-and-push-shopping-agent build-and-push-orchestrator-agent
+
 define build-and-push-agent
 	$(call get-vars)
 	$(eval AGENT_ECR_REPO := $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(AGENT_IMAGE_NAME))
