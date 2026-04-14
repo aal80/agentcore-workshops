@@ -11,7 +11,9 @@ In this module you will install workshop pre-requisites and use them to provisio
 - **jq**
 - **boto3**
 
-### Install dependencies
+## Install dependencies (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
+
+If you're using AWS-Provided Workshop accounts the below dependencies come pre-installed. You can skip to the [Clone the Workshop from Github](#clone-the-workshop-from-github) section. 
 
 ### Install QEMU (on non-ARM64 machines only)
 
@@ -43,7 +45,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 pip install boto3
 ```
 
-### Clone the workshop from Github
+## Clone the workshop from Github
 
 ```bash
 git clone --no-checkout --depth 1 https://github.com/aal80/agentcore-workshops
@@ -53,7 +55,7 @@ git checkout
 cd a2a-with-strands
 ```
 
-### Bootstrap the infrastructure
+## Bootstrap the infrastructure
 
 ```bash
 make deploy-infra
