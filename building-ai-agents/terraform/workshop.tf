@@ -4,3 +4,10 @@
 #   project_name = local.project_name
 #   region = data.aws_region.current.region
 # }
+
+# --- Module 3: Uncomment to deploy AgentCore Memory
+# module "memory" {
+#   source = "./memory"
+#   project_name = local.project_name
+#   region = data.aws_region.current.region
+# }

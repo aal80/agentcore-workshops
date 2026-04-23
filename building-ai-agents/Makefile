@@ -23,11 +23,14 @@ test-vars:
 test-agent-locally:
 	@echo "Testing agent locally..."
 	$(eval TECH_SUPPORT_KB_ID := $(shell cat ./tmp/tech_support_kb_id.txt))
+	$(eval MEMORY_ID := $(shell cat ./tmp/memory_id.txt))
 	$(info > TECH_SUPPORT_KB_ID=$(TECH_SUPPORT_KB_ID))
+	$(info > MEMORY_ID=$(MEMORY_ID))
 
-	cd src/agent \
-		uv sync && \
-		TECH_SUPPORT_KB_ID=$(TECH_SUPPORT_KB_ID) uv run main.py
+	cd src/agent && \
+		TECH_SUPPORT_KB_ID=$(TECH_SUPPORT_KB_ID) \
+		MEMORY_ID=$(MEMORY_ID) \
+		uv run main.py
 
 
 
