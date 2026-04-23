@@ -2,10 +2,16 @@
 
 In Module 1 you built an agent with tools that return hardcoded mock data. In this module you'll replace that with a real **Bedrock Knowledge Base** backed by S3 vector storage, so the `get_technical_support` tool can answer questions from actual documentation.
 
-By the end of this module your agent will:
-- Query a Bedrock Knowledge Base for technical support questions
-- Use Amazon Titan Embed v2 to perform semantic search over 6 documentation files
-- Automatically sync documents from S3 on every `terraform apply`
+By the end of this module your agent will implement a RAG workflow by querying a Bedrock Knowledge Base for technical support questions.
+
+## How Knowledge Bases and RAG work
+
+When a user asks a technical question, the agent needs to find the right answer from a large set of documents. Rather than stuffing all documents into every prompt (expensive and limited by context size), you're going to use a technical called **Retrieval-Augmented Generation (RAG)**:
+
+1. **Ingestion** — you upload source documents (text files in this module) to an S3 bucket. Then you configure a Data Source to point at that bucket. The last step is to trigger an ingestion job. In this module this will be fully automated with Terraform. 
+1. **At index time** — when ingestion job is triggered, Knowledge Base Data Source will read the documents, split them into chunks and converted each chunk into a vector embedding (a list of numbers that captures the semantic meaning of the text) using Amazon Titan Embed v2. These embeddings are then stored in the S3 vector index. This is fully automatic. 
+1. **At query time** — the user's question is embedded the same way, then a similarity search finds the chunks whose embeddings are closest to the question embedding. Closeness in vector space means similarity in meaning. Corresponding chunks are returned back to your agent. 
+1. **Generation** — The agent passes retrieved chunks to the LLM as context, and the LLM composes an answer grounded in knowledge.
 
 ## Architecture
 
@@ -38,73 +44,69 @@ make deploy-infra
 ```
 
 This will:
-1. Create an S3 source bucket and upload the 6 documentation files from [knowledge-base/](knowledge-base/)
+1. Create an S3 source bucket and upload the 6 documentation files from [knowledge-base/](knowledge-base/). Explore these files to see what information is going into the Knowledge Base.
 2. Create an S3 vector bucket and index (1024 dimensions, cosine similarity, float32)
-3. Create the Bedrock Knowledge Base using Amazon Titan Embed v2
+3. Create the Bedrock Knowledge Base and configure it to use Amazon Titan Embed v2
 4. Start an ingestion job to embed and index all documents
-5. Write the Knowledge Base ID to `tmp/tech_support_kb_id.txt`
+5. Write the Knowledge Base ID to `tmp/tech_support_kb_id.txt` (so you can do local testing)
 
-Ingestion takes 1-2 minutes. You can check the status with:
+Typically ingestion takes 1-2 minutes. Monitor progress in the AWS Console:
 
-```bash
-aws bedrock-agent list-ingestion-jobs \
-  --knowledge-base-id $(cat tmp/tech_support_kb_id.txt) \
-  --data-source-id <data-source-id>
-```
+1. Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/)
+2. In the left navigation, go to **Knowledge bases**
+3. Click on your knowledge base (named `<prefix>-building-ai-agents-tech-support`)
+4. Under the **Data source** section, click the datasource named `<prefix>-building-ai-agents-from-s3`
+5. See the **Sync history** section. You should see an entry with a `Complete` status. 
+
+![](./images/lab01-kb-sync-complete.png)
 
 ## Step 2: Verify the Knowledge Base is working
 
-Once ingestion completes, run a test query to confirm documents were indexed:
+Once ingestion is complete, test it directly from the console:
 
-```bash
-aws bedrock-agent-runtime retrieve \
-  --knowledge-base-id $(cat tmp/tech_support_kb_id.txt) \
-  --retrieval-query '{"text": "how do I fix Wi-Fi connection problems"}' \
-  --retrieval-configuration '{"vectorSearchConfiguration": {"numberOfResults": 3}}'
-```
+1. In your knowledge base page, click **Test knowledge base** (top right)
+2. Select `Retrieval only: data sources`, this restricts Knowledge Base to return information as received from the vector database, without any additional LLM processing. 
+2. In the test panel, type: `how do I fix Wi-Fi connection problems`
+3. Click **Run**
 
-You should get back scored text chunks from your documents. An empty result means ingestion hasn't finished yet.
+You should see scored text chunks returned from the documentation. Click `Details` to see result scores. If the results are empty, ingestion may still be in progress — refresh the data source status and try again in a moment.
 
 ## Step 3: Enable the `get_technical_support` tool
 
-Open [src/agent/tools/tech_support.py](src/agent/tools/tech_support.py). The tool reads the KB ID from the `TECH_SUPPORT_KB_ID` environment variable at import time:
+Examine the [src/agent/tools/tech_support.py](src/agent/tools/tech_support.py). The tool reads the KB ID from the `TECH_SUPPORT_KB_ID` environment variable at import time:
 
 ```python
-import os
-import boto3
-from strands.tools import tool
-from strands_tools import retrieve
-
+#Retrieve Knowledge Base ID from environment variable
 TECH_SUPPORT_KB_ID = os.environ.get("TECH_SUPPORT_KB_ID")
 if not TECH_SUPPORT_KB_ID:
     raise ValueError("TECH_SUPPORT_KB_ID environment variable is not set.")
 
+
 @tool
 def get_technical_support(issue_description: str) -> str:
-    try:
-        region = boto3.Session().region_name
-        tool_use = {
-            "toolUseId": "tech_support_query",
-            "input": {
-                "text": issue_description,
-                "knowledgeBaseId": TECH_SUPPORT_KB_ID,
-                "region": region,
-                "numberOfResults": 3,
-                "score": 0.4,
-            },
-        }
-        result = retrieve.retrieve(tool_use)
-        if result["status"] == "success":
-            return result["content"][0]["text"]
-        else:
-            return f"Unable to access technical support documentation. Error: {result['content'][0]['text']}"
-    except Exception as e:
-        return f"Unable to access technical support documentation. Error: {str(e)}"
+    region = boto3.Session().region_name
+    tool_use = {
+        "toolUseId": "tech_support_query",
+        "input": {
+            "text": issue_description,
+            "knowledgeBaseId": TECH_SUPPORT_KB_ID,
+            "region": region,
+            "numberOfResults": 3,
+            "score": 0.4,
+        },
+    }
+    result = retrieve.retrieve(tool_use)
+    return result["content"][0]["text"]
 ```
 
-Now open [src/agent/main.py](src/agent/main.py) and uncomment the `get_technical_support` tool:
+Now open [src/agent/main.py](src/agent/main.py) and uncomment the `get_technical_support` tool import and usage:
 
 ```python
+# Uncomment below line at the top of the file
+from tools.tech_support import get_technical_support
+
+# CODE REDACTED
+
 agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
@@ -112,7 +114,8 @@ agent = Agent(
         get_product_info,
         get_return_policy,
         search_web,
-        get_technical_support,  # <-- uncomment this line
+        # Uncomment below line towards the bottom of the file
+        get_technical_support,  
     ],
 )
 ```
@@ -138,40 +141,34 @@ This time the agent will invoke `get_technical_support` and return content retri
 
 ```
 Tool #1: get_technical_support
+I can help you troubleshoot your broken headphones. Based on the technical support information, here are some common solutions for headphone issues:
 
-Based on our technical documentation, here are steps to troubleshoot your headphones:
+### Basic Troubleshooting Steps:
 
-WARRANTY COVERAGE
-- Manufacturing defects - Full coverage
-- Normal wear and tear - Not covered
-...
+1. **Check Power and Connections:**
+   - Make sure your headphones are properly charged or connected to power
+   - Verify all cables are securely connected
+   - Try a different cable if available
 
-SERVICE OPTIONS
-- In-warranty repairs - Free parts and labor
-...
+... REDACTED ...   
 ```
 
 The agent is now answering from real documentation rather than hardcoded strings.
 
 ## How it works under the hood
 
-1. The agent receives the user's message and decides `get_technical_support` is the right tool
-2. The tool calls `bedrock-agent-runtime retrieve` with the issue description as the query text
-3. Bedrock embeds the query using Titan Embed v2 and performs a vector similarity search against the S3 index
-4. The top 3 matching chunks (above score threshold 0.4) are returned
-5. The agent uses those chunks to compose a response
+1. The agent receives the user's prompt, passes it to LLM along with the list of all available tools. 
+1. LLM decides that `get_technical_support` is the right tool to use 
+1. The agent calls `get_technical_support` tool
+1. The tool calls `strands_tools.retrieve`, a built-in Strands tool that wraps the Bedrock Knowledge Base API, passing the issue description as the query text
+1. Knowledge Base embeds the query using Titan Embed v2 and performs a vector similarity search against the S3 index
+1. The top 3 matching chunks (above score threshold 0.4) are returned
+1. The agent uses those chunks to compose a response
 
 ## Congratulations!
 
-You've integrated a real Bedrock Knowledge Base into your agent!
+You've just integrated a real Bedrock Knowledge Base into your agent!
 
-- Source documents live in S3 and are automatically synced on every `terraform apply`
-- Semantic search finds relevant content even when the query wording doesn't exactly match the docs
-- The KB ID is injected via environment variable — no hardcoded values in code
+In the next module you'll learn how to add memory to your agent so it can remember past sessions and interactions.
 
-Current limitations to address in the next modules:
 
-- The agent still has no memory — it doesn't remember previous conversations
-- Tools are embedded in the agent app and aren't reusable across agents
-- Running locally only — not scalable or observable
-- No authentication or authorization
