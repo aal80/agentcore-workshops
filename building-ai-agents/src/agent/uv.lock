@@ -10,6 +10,7 @@ dependencies = [
     { name = "bedrock-agentcore" },
     { name = "boto3" },
     { name = "ddgs" },
+    { name = "requests" },
     { name = "strands-agents" },
     { name = "strands-agents-tools" },
 ]
@@ -19,6 +20,7 @@ requires-dist = [
     { name = "bedrock-agentcore", specifier = ">=1.6.3" },
     { name = "boto3", specifier = ">=1.42.94" },
     { name = "ddgs", specifier = ">=9.14.1" },
+    { name = "requests", specifier = ">=2.32.0" },
     { name = "strands-agents", specifier = ">=1.37.0" },
     { name = "strands-agents-tools", specifier = ">=0.5.1" },
 ]

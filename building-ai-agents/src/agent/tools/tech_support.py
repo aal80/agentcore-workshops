@@ -4,9 +4,6 @@ from strands.tools import tool
 from strands_tools import retrieve
 
 TECH_SUPPORT_KB_ID = os.environ.get("TECH_SUPPORT_KB_ID")
-if not TECH_SUPPORT_KB_ID:
-    raise ValueError("TECH_SUPPORT_KB_ID environment variable is not set.")
-
 print(f"get_technical_support :: TECH_SUPPORT_KB_ID={TECH_SUPPORT_KB_ID}")
 
 @tool

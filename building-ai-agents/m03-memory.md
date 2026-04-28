@@ -1,6 +1,6 @@
 # Module 3: Personalizing the Agent with Memory
 
-In Module 2 your agent gained the ability to answer technical questions from a Knowledge Base. But it still has no memory — every conversation starts from scratch. Ask it "what laptop did I ask about last time?" and it has no idea.
+In Module 2 your agent gained the ability to answer technical questions using grounded facts stored in the Bedrock Knowledge Base. But it still has no memory — every conversation starts from scratch. Ask it "what laptop did I ask about last time?" and it has no idea.
 
 In this module you'll add **Amazon Bedrock AgentCore Memory** so the agent can remember customer preferences and past interactions across sessions.
 
@@ -11,7 +11,7 @@ AgentCore Memory is a managed service that sits between your agent and the conve
 - **Short-term memory (STM)** — the current session's conversation, stored immediately after each exchange
 - **Long-term memory (LTM)** — persistent patterns and facts, extracted asynchronously from STM (takes 20-30 seconds) and organized by namespace using vector embeddings for semantic retrieval
 
-Memory is organized into **strategies** that define what kind of information to store and where:
+Memory is organized into **strategies** that define what kind of information to store and where, for example:
 
 | Strategy | What it captures | Example |
 |---|---|---|
@@ -36,7 +36,7 @@ When the agent starts a conversation, `AgentCoreMemorySessionManager` automatica
 
 Before you add memory capabilities to your agent, let's examine the problem. 
 
-Update main.py so only the question about overheating will be uncommented, as shown below
+Update `main.py` so only the prompt asking about overheating will be active, as shown below:
 
 ```python
 if __name__ == "__main__":
@@ -102,7 +102,7 @@ Verify it was created in the AWS Console:
 
 ## Step 3: Update the agent to use memory
 
-The memory configuration is already isolated in [src/agent/memory_config.py](src/agent/memory_config.py). Examine it to understand what's being configured:
+The memory configuration is already isolated in [src/agent/memory_config.py](src/agent/memory_config.py). Examine this file to understand what's being configured:
 
 ```python
 import os
@@ -126,16 +126,14 @@ memory_config = AgentCoreMemoryConfig(
 session_manager = AgentCoreMemorySessionManager(memory_config)
 ```
 
-Now open [src/agent/main.py](src/agent/main.py). The memory integration is already wired in but commented out. Uncomment the two marked lines:
+Now open [src/agent/main.py](src/agent/main.py). The memory integration is already wired in but commented out. Uncomment the marked line:
 
 ```python
-# Uncomment when asked in Module 3
-from memory_config import session_manager   # <-- uncomment this import
-
 agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
     tools=[...],
+
     # Uncomment when asked in Module 3
     session_manager=session_manager,        # <-- uncomment this line
 )
@@ -160,7 +158,7 @@ if __name__ == "__main__":
 make test-agent-locally
 ```
 
-The agent answers as before, but this time the conversation is stored as an STM event. AgentCore asynchronously extracts it into LTM — wait ~30 seconds before the next run.
+The agent answers as before, but this time the conversation is stored in the Short-term Memory. AgentCore asynchronously extracts it into Long-term memory — wait ~30 seconds before the next run.
 
 **Second run** — switch back to the follow-up:
 
@@ -202,3 +200,4 @@ Your agent now remembers customers across sessions!
 - Memories are **per-customer** — `{actorId}` namespaces ensure complete isolation between users
 - The session manager is the only change to the agent code — tools and model are unaffected
 
+In the next module you'll learn how to use AgentCore Gateway to securely share tools across multiple agents: [Module 4: Scale with Gateway & Identity](./m04-gateway.md).

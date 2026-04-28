@@ -6,7 +6,7 @@ By the end of this module your agent will implement a RAG workflow by querying a
 
 ## How Knowledge Bases and RAG work
 
-When a user asks a technical question, the agent needs to find the right answer from a large set of documents. Rather than stuffing all documents into every prompt (expensive and limited by context size), you're going to use a technical called **Retrieval-Augmented Generation (RAG)**:
+When a user asks a technical question, the agent needs to find the right answer from a large set of documents. Rather than injecting all this knowledge into every prompt (expensive and limited by context size), you're going to use a technique called **Retrieval-Augmented Generation (RAG)**:
 
 1. **Ingestion** — you upload source documents (text files in this module) to an S3 bucket. Then you configure a Data Source to point at that bucket. The last step is to trigger an ingestion job. In this module this will be fully automated with Terraform. 
 1. **At index time** — when ingestion job is triggered, Knowledge Base Data Source will read the documents, split them into chunks and converted each chunk into a vector embedding (a list of numbers that captures the semantic meaning of the text) using Amazon Titan Embed v2. These embeddings are then stored in the S3 vector index. This is fully automatic. 
@@ -44,7 +44,7 @@ make deploy-infra
 ```
 
 This will:
-1. Create an S3 source bucket and upload the 6 documentation files from [knowledge-base/](knowledge-base/). Explore these files to see what information is going into the Knowledge Base.
+1. Create an S3 source bucket and upload the 6 documentation files from [knowledge-base/](knowledge-base/). Explore these files in VS Code to see what information is going into the Knowledge Base.
 2. Create an S3 vector bucket and index (1024 dimensions, cosine similarity, float32)
 3. Create the Bedrock Knowledge Base and configure it to use Amazon Titan Embed v2
 4. Start an ingestion job to embed and index all documents
@@ -53,7 +53,7 @@ This will:
 Typically ingestion takes 1-2 minutes. Monitor progress in the AWS Console:
 
 1. Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/)
-2. In the left navigation, go to **Knowledge bases**
+2. In the left navigation panel, go to **Build -> Knowledge bases**
 3. Click on your knowledge base (named `<prefix>-building-ai-agents-tech-support`)
 4. Under the **Data source** section, click the datasource named `<prefix>-building-ai-agents-from-s3`
 5. See the **Sync history** section. You should see an entry with a `Complete` status. 
@@ -62,7 +62,7 @@ Typically ingestion takes 1-2 minutes. Monitor progress in the AWS Console:
 
 ## Step 2: Verify the Knowledge Base is working
 
-Once ingestion is complete, test it directly from the console:
+Once ingestion is complete, test it directly from the AWS Console:
 
 1. In your knowledge base page, click **Test knowledge base** (top right)
 2. Select `Retrieval only: data sources`, this restricts Knowledge Base to return information as received from the vector database, without any additional LLM processing. 
@@ -81,7 +81,6 @@ TECH_SUPPORT_KB_ID = os.environ.get("TECH_SUPPORT_KB_ID")
 if not TECH_SUPPORT_KB_ID:
     raise ValueError("TECH_SUPPORT_KB_ID environment variable is not set.")
 
-
 @tool
 def get_technical_support(issue_description: str) -> str:
     region = boto3.Session().region_name
@@ -99,28 +98,23 @@ def get_technical_support(issue_description: str) -> str:
     return result["content"][0]["text"]
 ```
 
-Now open [src/agent/main.py](src/agent/main.py) and uncomment the `get_technical_support` tool import and usage:
+Now open [src/agent/main.py](src/agent/main.py) and uncomment the `get_technical_support` tool usage:
 
 ```python
-# Uncomment below line at the top of the file
-from tools.tech_support import get_technical_support
-
-# CODE REDACTED
-
 agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
     tools=[
         get_product_info,
         get_return_policy,
-        search_web,
-        # Uncomment below line towards the bottom of the file
-        get_technical_support,  
+
+        # Uncomment below line
+        get_technical_support,
     ],
 )
 ```
 
-Also update the test prompt at the bottom to exercise the new tool:
+Make sure that the test prompt at the bottom is requiesting technical support:
 
 ```python
 if __name__ == "__main__":

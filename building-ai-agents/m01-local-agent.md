@@ -7,7 +7,6 @@ But to start with, your agent will have the following tools available:
 
 - `get_return_policy()` - Get return policy for specific products
 - `get_product_info()` - Get product information
-- `search_web()` - Search the web for troubleshooting help
 - `get_technical_support()` - Search a Bedrock Knowledge Base (added in Module 2)
 
 ## Architecture for Module 1
@@ -52,7 +51,6 @@ def get_return_policy(product_category: str) -> str:
 
 Explore the full file at [src/agent/tools/return_policy.py](src/agent/tools/return_policy.py)
 
-
 ### Tool 2: Get Product Information
 
 **Purpose:** Provides customers with product specs, warranties, features, and compatibility information to help them make informed decisions.
@@ -84,39 +82,6 @@ def get_product_info(product_type: str) -> str:
 ```
 Explore the full file: [src/agent/tools/product_info.py](src/agent/tools/product_info.py)
 
-### Tool 3: Web Search
-
-**Purpose:** Allows the agent to browse the internet for troubleshooting help, product recommendations, and up-to-date information.
-
-```python
-from strands.tools import tool
-from ddgs import DDGS
-from ddgs.exceptions import DDGSException, RatelimitException
-
-@tool
-def search_web(keywords: str, region: str = "us-en", max_results: int = 5) -> str:
-    """Search the web for updated information.
-
-    Args:
-        keywords (str): The search query keywords.
-        region (str): The search region: wt-wt, us-en, uk-en, ru-ru, etc.
-        max_results (int): The maximum number of results to return.
-    Returns:
-        List of dictionaries with search results.
-    """
-    try:
-        results = DDGS().text(keywords, region=region, max_results=max_results)
-        return results if results else "No results found."
-    except RatelimitException:
-        return "Rate limit reached. Please try again later."
-    except DDGSException as e:
-        return f"Search error: {e}"
-    except Exception as e:
-        return f"Search error: {str(e)}"
-```
-
-Explore the full file at [src/agent/tools/web_search.py](src/agent/tools/web_search.py)
-
 ## Create and Configure the Customer Support Agent
 
 Now that you understand how tools work, let's see how to create the agent and run it locally.
@@ -139,9 +104,8 @@ agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
     tools=[
-        get_product_info,       
-        get_return_policy,      
-        search_web
+        get_product_info,
+        get_return_policy,
     ],
 )
 ```
@@ -153,6 +117,7 @@ The agent code at the bottom of [src/agent/main.py](src/agent/main.py) has sever
 ```python
 if __name__ == "__main__":
     agent("How can you help me?")
+    # agent("Tell me what you know about headphones?")
     # agent("My headphones are broken, what's the return policy?")
     # agent("My headphones are broken, I need technical support")
 ```
@@ -176,18 +141,54 @@ Hello! I can assist you with a variety of things related to electronics products
 What would you like help with today?
 ```
 
+> Keep in mind, LLMs are non-deterministic. The replies you receive might differ from examples shown in this tutorial. 
+
+### Test the `get_product_info` tool
+
 Now comment out the first prompt and uncomment the second one:
 
 ```python
 if __name__ == "__main__":
     # agent("How can you help me?")
+    agent("Tell me what you know about headphones?")
+    # agent("My headphones are broken, what's the return policy?")
+    # agent("My headphones are broken, I need technical support")
+```
+
+Run `make test-agent-locally` again. The agent automatically invokes `get_product_info` based on the prompt:
+
+```text
+Tool #1: get_product_info
+### Headphones Information
+
+Here's what I know about our headphones:
+
+**Warranty:**  
+• 1-year manufacturer warranty
+
+**Specifications:**  
+• Available in wired and wireless options  
+• Frequency range: 20Hz-20kHz  
+• Noise cancellation technology
+...REDACTED...
+```
+
+### Test the `get_return_policy` tool
+
+Comment out the second prompt and uncomment the one about return policy:
+
+```python
+if __name__ == "__main__":
+    # agent("How can you help me?")
+    # agent("Tell me what you know about headphones?")
     agent("My headphones are broken, what's the return policy?")
     # agent("My headphones are broken, I need technical support")
 ```
 
+
 Run `make test-agent-locally` again. The agent automatically invokes `get_return_policy` based on the prompt:
 
-```
+```text
 Tool #1: get_return_policy
 According to our return policy for headphones:
 
@@ -198,6 +199,7 @@ According to our return policy for headphones:
 - **Refund timeline:** 5-7 business days after inspection
 - **Shipping:** Return shipping policies vary depending on your location
 - **Warranty:** Standard manufacturer warranty still applies during this period
+...REDACTED...
 ```
 
 The agentic loop is working — the agent chose the right tool automatically!
@@ -207,17 +209,18 @@ Now try the last prompt. Update the agent code as shown below and run `make test
 ```python
 if __name__ == "__main__":
     # agent("How can you help me?")
+    # agent("Tell me what you know about headphones?")
     # agent("My headphones are broken, what's the return policy?")
     agent("My headphones are broken, I need technical support")
 ```
 
-The agent responds with return policy information but cannot provide real technical support yet since `get_technical_support` is commented out. Unlike the other tools which use hardcoded mock data, `get_technical_support` queries a real **Bedrock Knowledge Base**. You'll set that up in the next module. But for now...
+The agent responds with product information but cannot provide real technical support yet since `get_technical_support` tool is not implemented yet. Unlike the other tools which use hardcoded mock data, `get_technical_support` uses RAG to query a real **Bedrock Knowledge Base**. You'll set that up in the next module. But for now...
 
 ## Congratulations!
 
 You've just created a real AI Agent using Strands Agents SDK and Amazon Bedrock!
 
-- Built an agent with 3 custom tools (`get_return_policy`, `get_product_info`, `search_web`)
+- Built an agent with 2 custom tools (`get_return_policy`, `get_product_info`)
 - Tested the agentic loop — the agent selects tools automatically based on context
 - Established the foundation for the next modules
 

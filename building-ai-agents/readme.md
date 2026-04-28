@@ -10,9 +10,13 @@ In this workshop, you will go through an end-to-end journey from prototype to pr
 
 ## Workshop Journey
 
-* Module 1: Create Agent Prototype - Build a functional customer support agent
-* Module 2: Enhance with Memory - Add conversation context and personalization
-* Module 3: Scale with Gateway & Identity - Share tools across agents securely
+* [Module 0: Installing pre-requisites](./m00-bootstrap.md)
+* [Module 1: Create Agent Prototype - Build a functional customer support agent](./m01-local-agent.md)
+* [Module 2: Adding a Knowledge Base - Grounding agent responses in factual data](./m02-knowledge-base.md)
+
+* [Module 3: Enhance with Memory - Add conversation context and personalization](./m03-memory.md)
+
+* [Module 4: Scale with Gateway & Identity - Share tools across agents securely](./m04-gateway.md)
 * Module 4: Deploy to Production - Use AgentCore Runtime with observability
 * Module 5: Evaluate Agent Performance - Monitor quality with online evaluations
 * Module 6: Build User Interface - Create a customer-facing application
@@ -24,4 +28,6 @@ In this workshop, you will go through an end-to-end journey from prototype to pr
 - AWS CLI configured with credentials
 - Amazon Nova 2 Lite enabled on Amazon Bedrock
 
-### Let's get started!
+## Let's get started!
+
+Nexs step - [Module 0: Installing pre-requisites](./m00-bootstrap.md)
