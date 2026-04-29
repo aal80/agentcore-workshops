@@ -98,7 +98,7 @@ def get_technical_support(issue_description: str) -> str:
     return result["content"][0]["text"]
 ```
 
-Now open [src/agent/main.py](src/agent/main.py) and uncomment the `get_technical_support` tool usage:
+Now open [src/agent/agent.py](src/agent/agent.py) and uncomment the `get_technical_support` tool usage:
 
 ```python
 agent = Agent(

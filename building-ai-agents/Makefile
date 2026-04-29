@@ -51,7 +51,7 @@ test-agent-locally:
 		COGNITO_CLIENT_SECRET_ARN=$(COGNITO_CLIENT_SECRET_ARN) \
 		COGNITO_TOKEN_ENDPOINT=$(COGNITO_TOKEN_ENDPOINT) \
 		COGNITO_SCOPE=$(COGNITO_SCOPE) \
-		uv run main.py
+		uv run agent.py
 
 get-cognito-access-token:
 	@echo "Getting a new access token..."
@@ -93,74 +93,23 @@ test-gateway:
 		| jq .
 
 
-### DELIMITER-----
-build-and-push-weather-agent:
-	$(eval AGENT_IMAGE_NAME := $(shell cat ./tmp/ecr_repo_name_a2a-workshop-weather-agent.txt))
-	$(eval AGENT_DIR := agents/weather)
-	$(call build-and-push-agent)
+### MODULE 5: AgentCore Runtime -----
 
-build-and-push-shopping-agent:
-	$(eval AGENT_IMAGE_NAME := $(shell cat ./tmp/ecr_repo_name_a2a-workshop-shopping-agent.txt))
-	$(eval AGENT_DIR := agents/shopping)
-	$(call build-and-push-agent)
-
-build-and-push-orchestrator-agent:
-	$(eval AGENT_IMAGE_NAME := $(shell cat ./tmp/ecr_repo_name_a2a-workshop-orchestrator-agent.txt))
-	$(eval AGENT_DIR := agents/orchestrator)
-	$(call build-and-push-agent)
-
-build-and-push-all-agents: build-and-push-weather-agent build-and-push-shopping-agent build-and-push-orchestrator-agent
-
-define build-and-push-agent
+build-and-push-agent:
+	@echo "> Building agent container image..."
 	$(call get-vars)
-	$(eval AGENT_ECR_REPO := $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(AGENT_IMAGE_NAME))
-	@echo "> Creating ECR repo (if doesn't exist)..."
-	aws ecr describe-repositories --repository-names "$(AGENT_IMAGE_NAME)" --no-cli-pager 2>/dev/null || \
-		aws ecr create-repository --repository-name "$(AGENT_IMAGE_NAME)" --no-cli-pager
+	$(eval ECR_REPO_URL := $(shell cat ./tmp/ecr_repo_url.txt))
+	cd src/agent && \
+		docker buildx build \
+			--platform linux/arm64 \
+			--no-cache \
+			--load \
+			-t "$(ECR_REPO_URL):latest" \
+			.
 
-	@echo "> Building container image from $(AGENT_DIR)..."
-	cd $(AGENT_DIR) && \
-	docker buildx build --platform linux/arm64 --no-cache --load -t "$(AGENT_ECR_REPO):latest" .
+	@echo "> Pushing agent image to ECR..."
+	docker push "$(ECR_REPO_URL):latest"
 
-	@echo "> Pushing to ECR..."
-	docker push "$(AGENT_ECR_REPO):latest"
-	@echo "All done!"
-endef
-
-
-test-weather-agent:
-	$(eval AGENT_RUNTIME_URL_FILE := ./tmp/weather_agent_runtime_url.txt)
-	$(eval AGENT_TEST_MESSAGE := What is the weather in Seattle next week?)
-	$(call test-agent)
-
-test-shopping-agent:
-	$(eval AGENT_RUNTIME_URL_FILE := ./tmp/shopping_agent_runtime_url.txt)
-	$(eval AGENT_TEST_MESSAGE := It is raining in Seattle. What should I wear?)
-	$(call test-agent)
-
-define test-agent
-	$(eval AGENT_RUNTIME_URL := $(shell cat $(AGENT_RUNTIME_URL_FILE)))
-	$(eval ACCESS_TOKEN := $(shell cat ./tmp/access_token.txt))
-
-	@echo "Starting tests..."
-	
-	@echo "The following test attempts to retrieve the agent-card"
-	@printf "Press ENTER to start..."; read _
-	@echo "> Retrieving agent card from $(AGENT_RUNTIME_URL)/.well-known/agent-card.json..."
-	@echo ""
-	curl "$(AGENT_RUNTIME_URL)/.well-known/agent-card.json" \
-		-H "Authorization: Bearer $(ACCESS_TOKEN)" | jq .
-
-	@echo ""
-	@echo "The following test attempts to ask the following question: $(AGENT_TEST_MESSAGE)"
-	@printf "Press ENTER to start..."; read _
-	@echo "> Sending A2A message..."
-	curl -X POST "$(AGENT_RUNTIME_URL)" \
-		-H "Content-Type: application/json" \
-		-H "Authorization: Bearer $(ACCESS_TOKEN)" \
-		-d '{"jsonrpc":"2.0","id":"1","method":"message/send","params":{"message":{"role":"user","messageId":"msg-001","parts":[{"kind":"text","text":"$(AGENT_TEST_MESSAGE)"}]}}}' \
-		| jq .result.artifacts
-endef
 
 # test-orchestrator:
 # 	python3 orchestrator_invoker.py

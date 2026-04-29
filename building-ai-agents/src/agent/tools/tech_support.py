@@ -2,9 +2,13 @@ import os
 import boto3
 from strands.tools import tool
 from strands_tools import retrieve
+from logger import get_logger
+
+l = get_logger("tech_support")
+
 
 TECH_SUPPORT_KB_ID = os.environ.get("TECH_SUPPORT_KB_ID")
-print(f"get_technical_support :: TECH_SUPPORT_KB_ID={TECH_SUPPORT_KB_ID}")
+l.info(f"ℹ️ TECH_SUPPORT_KB_ID={TECH_SUPPORT_KB_ID}")
 
 @tool
 def get_technical_support(issue_description: str) -> str:
@@ -30,7 +34,7 @@ def get_technical_support(issue_description: str) -> str:
             return f"Unable to access technical support documentation. Error: {result['content'][0]['text']}"
 
     except Exception as e:
-        print(f"Detailed error in get_technical_support: {str(e)}")
+        l.error(f"Detailed error in get_technical_support: {str(e)}")
         return f"Unable to access technical support documentation. Error: {str(e)}"
 
-print("✅ get_technical_support tool ready")
+l.info("✅ get_technical_support tool ready")

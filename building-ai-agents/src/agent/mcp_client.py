@@ -3,6 +3,10 @@ import boto3
 import requests
 from mcp.client.streamable_http import streamablehttp_client
 from strands.tools.mcp import MCPClient
+import logging
+
+logging.getLogger("mcp_client").setLevel(logging.INFO)
+l = logging.getLogger("mcp_client")
 
 GATEWAY_URL = os.environ.get("GATEWAY_URL")
 COGNITO_CLIENT_ID = os.environ.get("COGNITO_CLIENT_ID")
@@ -10,21 +14,21 @@ COGNITO_CLIENT_SECRET_ARN = os.environ.get("COGNITO_CLIENT_SECRET_ARN")
 COGNITO_TOKEN_ENDPOINT = os.environ.get("COGNITO_TOKEN_ENDPOINT")
 COGNITO_SCOPE = os.environ.get("COGNITO_SCOPE")
 
-print(f"mcp_client :: GATEWAY_URL={GATEWAY_URL}")
-print(f"mcp_client :: COGNITO_CLIENT_ID={COGNITO_CLIENT_ID}")
-print(f"mcp_client :: COGNITO_CLIENT_SECRET_ARN={COGNITO_CLIENT_SECRET_ARN}")
-print(f"mcp_client :: COGNITO_TOKEN_ENDPOINT={COGNITO_TOKEN_ENDPOINT}")
-print(f"mcp_client :: COGNITO_SCOPE={COGNITO_SCOPE}")
+l.info(f"mcp_client :: GATEWAY_URL={GATEWAY_URL}")
+l.info(f"mcp_client :: COGNITO_CLIENT_ID={COGNITO_CLIENT_ID}")
+l.info(f"mcp_client :: COGNITO_CLIENT_SECRET_ARN={COGNITO_CLIENT_SECRET_ARN}")
+l.info(f"mcp_client :: COGNITO_TOKEN_ENDPOINT={COGNITO_TOKEN_ENDPOINT}")
+l.info(f"mcp_client :: COGNITO_SCOPE={COGNITO_SCOPE}")
 
 _required = [GATEWAY_URL, COGNITO_CLIENT_ID, COGNITO_CLIENT_SECRET_ARN, COGNITO_TOKEN_ENDPOINT, COGNITO_SCOPE]
 
 if not all(_required):
-    print("mcp_client :: one or more required env vars are missing — Gateway tools disabled")
+    l.info("⚠️ mcp_client :: one or more required env vars are missing — Gateway tools disabled")
     mcp_tools_list = []
 else:
     sm = boto3.client("secretsmanager")
     cognito_client_secret = sm.get_secret_value(SecretId=COGNITO_CLIENT_SECRET_ARN)["SecretString"]
-    print(f"mcp_client :: cognito_client_secret={cognito_client_secret[:2]}.....")
+    l.info(f"mcp_client :: cognito_client_secret={cognito_client_secret[:2]}.....")
 
     def _get_gateway_token() -> str:
         response = requests.post(
@@ -40,7 +44,7 @@ else:
         return response.json()["access_token"]
 
     gateway_token = _get_gateway_token()
-    print(f"mcp_client :: gateway_token={gateway_token[:10]}.....")
+    l.info(f"ℹ️ mcp_client :: gateway_token={gateway_token[:10]}.....")
 
     mcp_client = MCPClient(lambda: streamablehttp_client(
         GATEWAY_URL,
@@ -50,3 +54,4 @@ else:
     mcp_client.start()
     mcp_tools_list = mcp_client.list_tools_sync()
 
+l.info("✅ mcp_client ready")

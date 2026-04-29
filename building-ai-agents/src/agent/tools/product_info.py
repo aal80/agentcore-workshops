@@ -1,4 +1,7 @@
 from strands.tools import tool
+from logger import get_logger
+
+l = get_logger("product_info")
 
 @tool
 def get_product_info(product_type: str) -> str:
@@ -55,4 +58,4 @@ def get_product_info(product_type: str) -> str:
     )
 
 
-print("✅ get_product_info tool ready")
+l.info("✅ get_product_info tool ready")

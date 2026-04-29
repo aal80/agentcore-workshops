@@ -14,20 +14,10 @@ locals {
   project_name       = "${local.prefix}-${local.project_name_short}"
 }
 
-# module "weather_agent_ecr_repo" {
-#   source = "./ecr"
-#   repo_name = "${local.project_name_short}-weather-agent"
-# }
-
-# module "shopping_agent_ecr_repo" {
-#   source = "./ecr"
-#   repo_name = "${local.project_name_short}-shopping-agent"
-# }
-
-# module "orchestrator_agent_ecr_repo" {
-#   source = "./ecr"
-#   repo_name = "${local.project_name_short}-orchestrator-agent"
-# }
+resource "aws_ecr_repository" "agent" {
+  name = "${local.project_name}"
+  force_delete = true
+}
 
 resource "local_file" "aws_region"{
     content = data.aws_region.current.region
@@ -37,4 +27,9 @@ resource "local_file" "aws_region"{
 resource "local_file" "aws_account_id"{
     content = data.aws_caller_identity.current.account_id
     filename = "${path.root}/../tmp/aws_account_id.txt"
+}
+
+resource "local_file" "ecr_repo_url"{
+    content = aws_ecr_repository.agent.repository_url
+    filename = "${path.root}/../tmp/ecr_repo_url.txt"
 }

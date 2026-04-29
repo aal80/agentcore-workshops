@@ -1,4 +1,7 @@
 from strands.tools import tool
+from logger import get_logger
+
+l = get_logger("return_policy")
 
 @tool
 def get_return_policy(product_category: str) -> str:
@@ -61,4 +64,4 @@ def get_return_policy(product_category: str) -> str:
     )
 
 
-print("✅ get_return_policy tool ready")
+l.info("✅ get_return_policy tool ready")

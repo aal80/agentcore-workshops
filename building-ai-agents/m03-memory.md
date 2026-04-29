@@ -36,7 +36,7 @@ When the agent starts a conversation, `AgentCoreMemorySessionManager` automatica
 
 Before you add memory capabilities to your agent, let's examine the problem. 
 
-Update `main.py` so only the prompt asking about overheating will be active, as shown below:
+Update `agent.py` so only the prompt asking about overheating will be active, as shown below:
 
 ```python
 if __name__ == "__main__":
@@ -126,7 +126,7 @@ memory_config = AgentCoreMemoryConfig(
 session_manager = AgentCoreMemorySessionManager(memory_config)
 ```
 
-Now open [src/agent/main.py](src/agent/main.py). The memory integration is already wired in but commented out. Uncomment the marked line:
+Now open [src/agent/agent.py](src/agent/agent.py). The memory integration is already wired in but commented out. Uncomment the marked line:
 
 ```python
 agent = Agent(

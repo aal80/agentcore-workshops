@@ -38,7 +38,7 @@ In this lab, Amazon Cognito acts as the IdP. The `make get-cognito-access-token`
 
 ## Step 1: Before using Gateway
 
-Before adding Gateway, let's confirm what the current agent is doing. Make sure the test prompt in [src/agent/main.py](src/agent/main.py) asks a warranty question:
+Before adding Gateway, let's confirm what the current agent is doing. Make sure the test prompt in [src/agent/agent.py](src/agent/agent.py) asks a warranty question:
 
 ```python
 if __name__ == "__main__":
@@ -111,7 +111,7 @@ This reads `tmp/cognito_token_endpoint.txt`, `tmp/cognito_client_id.txt`, and re
 
 ## Step 5: Connect the agent to Gateway
 
-Open [src/agent/main.py](src/agent/main.py). You'll find the Gateway integration already wired in but commented out. Make the following changes:
+Open [src/agent/agent.py](src/agent/agent.py). You'll find the Gateway integration already wired in but commented out. Make the following changes:
 
 **Import `mcp_tools_list` from the MCP client module:**
 

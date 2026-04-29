@@ -86,7 +86,7 @@ Explore the full file: [src/agent/tools/product_info.py](src/agent/tools/product
 
 Now that you understand how tools work, let's see how to create the agent and run it locally.
 
-The agent is defined in [src/agent/main.py](src/agent/main.py). It uses Amazon Nova 2 Lite via Bedrock and is initialized with a system prompt and the three tools:
+The agent is defined in [src/agent/agent.py](src/agent/agent.py). It uses Amazon Nova 2 Lite via Bedrock and is initialized with a system prompt and the three tools:
 
 ```python
 SYSTEM_PROMPT = """
@@ -112,7 +112,7 @@ agent = Agent(
 
 ## Testing the agent locally
 
-The agent code at the bottom of [src/agent/main.py](src/agent/main.py) has several prompts to test locally, let's try them one by one. 
+The agent code at the bottom of [src/agent/agent.py](src/agent/agent.py) has several prompts to test locally, let's try them one by one. 
 
 ```python
 if __name__ == "__main__":
