@@ -2,9 +2,9 @@
 
 In the previous module you built an agent with tools that return hardcoded mock data. In this module you'll replace that with a real **Bedrock Knowledge Base** backed by S3 vector storage, so the `get_technical_support` tool can answer questions from actual documentation.
 
-![](./images/m02-arch.png)
-
 By the end of this module your agent will implement a RAG workflow by querying a Bedrock Knowledge Base for technical support questions.
+
+![](./images/m02-arch.png)
 
 ## Knowledge Bases and RAG architecture
 
@@ -22,16 +22,19 @@ When a user asks a technical question, the agent needs to find the right answer 
 Edit `agent.py`, comment out all the prompts from the first module, and uncomment the prompt for Module 2: 
 
 ```python
+if __name__ == "__main__":
     # Prompts for Module 2 - uncomment when instructed
     prompt = "My wireless headphones are not turning on, I need technical support"
 ```
 
 Run `make test-agent-locally` again. 
 
-The agent responds with some information but cannot provide real technical support yet since `get_technical_support` tool is not implemented yet. 
+The agent responds with some information but cannot provide real technical support since `get_technical_support` tool is not implemented yet. 
 
 ```
-I appreciate you reaching out! I'd like to help you troubleshoot your wireless headphones. However, I notice that I don't have access to a technical support tool at the moment that would provide me with our comprehensive troubleshooting guides and step-by-step solutions.
+I appreciate you reaching out! I'd like to help you troubleshoot your wireless headphones. 
+However, I notice that I don't have access to a technical support tool at the moment that 
+would provide me with our comprehensive troubleshooting guides and step-by-step solutions.
 ```
 
 Let's fix that!
@@ -89,7 +92,7 @@ You can click `Details` to see result scores.
 
 > If the results are empty, ingestion may still be in progress — refresh the data source status and try again in a moment.
 
-## Step 3: Enable the `get_technical_support` tool
+## Step 3: Using the `get_technical_support` tool
 
 Examine the [src/agent/tools/tech_support.py](src/agent/tools/tech_support.py) file. The tool reads the KB ID from the `TECH_SUPPORT_KB_ID` environment variable at loading. Then it uses the `retrieve` tool available from Strands SDK to retrieve information from the Knowledge Base. 
 
@@ -117,6 +120,7 @@ def get_technical_support(issue_description: str) -> str:
 See [src/agent/agent.py](src/agent/agent.py), around line 20. The tools list already contains `get_technical_support` and now it is actually connected to the real Knowledge Base. 
 
 ```python
+# agent.py
 tools = [
     get_return_policy, 
     get_product_info, 

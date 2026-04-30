@@ -4,9 +4,10 @@ In Module 3 your agent gained persistent memory. But every tool it uses — `get
 
 Imagine you now have to build a Sales Agent that needs `get_product_info`, a Returns Agent that needs `get_return_policy`, and an Inventory Agent that needs both. You'd copy the same tool code into every agent. Any fix or change has to be replicated everywhere. There's no central place to control which agent is allowed to call which tool.
 
+In this module you'll solve that with **Amazon Bedrock AgentCore Gateway**. Gateway converts a wide variety of targets, such as Lambda functions or HTTP endpoints, into [Model Context Protocol (MCP)](https://modelcontextprotocol.io/docs/getting-started/intro) endpoints — a standard that any agent framework understands. Your agents connect to a single Gateway URL and discover all available tools through the MCP protocol, regardless of where the underlying implementations are deployed.
+
 ![](./images/m04-arch.png)
 
-In this module you'll solve that with **Amazon Bedrock AgentCore Gateway**. Gateway converts a wide variety of targets, such as Lambda functions or HTTP endpoints, into [Model Context Protocol (MCP)](https://modelcontextprotocol.io/docs/getting-started/intro) endpoints — a standard that any agent framework understands. Your agents connect to a single Gateway URL and discover all available tools through the MCP protocol, regardless of where the underlying implementations are deployed.
 
 ## Why this  matters
 
@@ -41,7 +42,7 @@ if __name__ == "__main__":
 make test-agent-locally
 ```
 
-The agent has no `check_warranty_status` tool yet — it will fall back to the knowledge base or admit it can't answer. There's nothing stopping any future agent from calling the same tools with no authentication.
+The agent has no `check_warranty_status` tool yet — it will fall back to the knowledge base or admit it can't answer. 
 
 ## Step 2: Deploy the Gateway infrastructure
 
@@ -137,23 +138,25 @@ def lambda_handler(event, context):
     # looks up warranty coverage from customer database
 ```
 
-The tool schema that describes this to the Gateway is defined inline in [terraform/gateway/gateway.tf](terraform/gateway/gateway.tf) as an `inline_payload` block. It tells Gateway the tool name, description, and input parameters — the same information the `@tool` docstring would provide locally.
+The tool schema that describes this to the Gateway is defined inline in [terraform/gateway/gateway.tf](terraform/gateway/gateway.tf) as an `inline_payload` block (illustrated above). It tells Gateway the tool name, description, and input parameters — the same information the `@tool` docstring would provide locally.
 
 ## Step 4: Get a Cognito access token
 
-The Gateway requires a valid JWT token for every request. Let's test that one can be fetched using Cognito credentials. This step is here for illustration purposes only, the agent will fetch access tokens on its own. 
+The Gateway requires a valid JWT token for every request. Let's test that one can be fetched using Cognito credentials. 
+
+> This step is for illustration purposes only, the agent will fetch access tokens on its own. 
 
 ```bash
 make get-cognito-access-token
 ```
 
-This reads `tmp/cognito_token_endpoint.txt`, `tmp/cognito_client_id.txt`, and retrieves the client secret from AWS Secrets Manager using the ARN in `tmp/cognito_client_secret_arn.txt`, then calls the Cognito token endpoint and writes the resulting token to `tmp/access_token.txt`.
+This reads `tmp/cognito_token_endpoint.txt`, `tmp/cognito_client_id.txt`, and retrieves the client secret from AWS Secrets Manager using the ARN in `tmp/cognito_client_secret_arn.txt`, then calls the Cognito token endpoint and outputs the retrieved token.
 
 ## Step 5: Connect the agent to Gateway
 
-Unline local tools you've implemented previously, you do not need to declare tools available through MCP and AgentCore gateway one by one. MCP supports automatic tool discovery, so you only need to point your agaent at the Gateway andpoing. 
+Unlike local tools you've implemented previously, you do not need to declare tools available through MCP and AgentCore gateway one by one. MCP supports automatic tool discovery, so you only need to point your agent at the Gateway andpoing. 
 
-Explore [src/agent/mcp_client.py](src/agent/mcp_client.py). There are several major areas to understand. 
+Explore [src/agent/mcp_client.py](src/agent/mcp_client.py). There are several important segments to understand. 
 
 First, on initialization this module imports required configuration from environment variables:
 
@@ -213,6 +216,14 @@ tools = [
     get_technical_support,
     mcp_tools_list # <-- here
 ]
+
+agent = Agent(
+    model=model,
+    system_prompt=SYSTEM_PROMPT,
+    tools=tools,
+    session_manager=session_manager,
+)
+
 ```
 
 The agent sees remote tools exactly like a local `@tool`-decorated function.

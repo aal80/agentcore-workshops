@@ -2,14 +2,12 @@
 
 In this first module, you'll build a locally running prototype of a Customer Support Agent. Throughout this workshop, you'll evolve this prototype into a production-ready system running on Bedrock AgentCore, serving multiple customers with persistent memory, knowledge base, shared tools, and full OTEL-based observability.
 
+![](./images/m01-arch.png)
+
 But to start with, your agent will have the following tools available:
 
 - `get_return_policy()` - Get return policy for specific products
 - `get_product_info()` - Get product information
-
-## Architecture for Module 1
-
-![](./images/m01-arch.png)
 
 ## Creating agent tools with Strands Agents SDK
 
