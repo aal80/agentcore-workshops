@@ -1,29 +1,40 @@
 # Module 2: Adding a Knowledge Base
 
-In Module 1 you built an agent with tools that return hardcoded mock data. In this module you'll replace that with a real **Bedrock Knowledge Base** backed by S3 vector storage, so the `get_technical_support` tool can answer questions from actual documentation.
+In the previous module you built an agent with tools that return hardcoded mock data. In this module you'll replace that with a real **Bedrock Knowledge Base** backed by S3 vector storage, so the `get_technical_support` tool can answer questions from actual documentation.
+
+![](./images/m02-arch.png)
 
 By the end of this module your agent will implement a RAG workflow by querying a Bedrock Knowledge Base for technical support questions.
 
-## How Knowledge Bases and RAG work
+## Knowledge Bases and RAG architecture
 
 When a user asks a technical question, the agent needs to find the right answer from a large set of documents. Rather than injecting all this knowledge into every prompt (expensive and limited by context size), you're going to use a technique called **Retrieval-Augmented Generation (RAG)**:
 
-1. **Ingestion** — you upload source documents (text files in this module) to an S3 bucket. Then you configure a Data Source to point at that bucket. The last step is to trigger an ingestion job. In this module this will be fully automated with Terraform. 
-1. **At index time** — when ingestion job is triggered, Knowledge Base Data Source will read the documents, split them into chunks and converted each chunk into a vector embedding (a list of numbers that captures the semantic meaning of the text) using Amazon Titan Embed v2. These embeddings are then stored in the S3 vector index. This is fully automatic. 
-1. **At query time** — the user's question is embedded the same way, then a similarity search finds the chunks whose embeddings are closest to the question embedding. Closeness in vector space means similarity in meaning. Corresponding chunks are returned back to your agent. 
-1. **Generation** — The agent passes retrieved chunks to the LLM as context, and the LLM composes an answer grounded in knowledge.
+![](./images/m02-rag-arch.png)
 
-## Architecture
+* **Ingestion** — you upload source documents (text files in this module) to an S3 bucket. Then you configure a Data Source to point at that bucket. The last step is to trigger an ingestion job. In this module this will be fully automated with Terraform. 
+* **At index time** — when ingestion job is triggered, Knowledge Base Data Source will read the documents, split them into chunks and converted each chunk into a vector embedding (a list of numbers that captures the semantic meaning of the text) using Amazon Titan Embed v2. These embeddings are then stored in the S3 vector index. This is fully automatic. 
+* **At query time** — the user's question is embedded the same way, then a similarity search finds the chunks whose embeddings are closest to the question embedding. Closeness in vector space means similarity in meaning. Corresponding chunks are returned back to your agent. 
+* **Generation** — The agent passes retrieved chunks to the LLM as context, and the LLM composes an answer grounded in knowledge.
 
-The knowledge base infrastructure consists of:
+## Before you start implementing
 
-| Resource | Purpose |
-|---|---|
-| S3 bucket (`*-kb-source`) | Stores the source documentation files |
-| S3 vector bucket + index | Stores the vector embeddings (S3 Vectors) |
-| Bedrock Knowledge Base | Orchestrates retrieval using Titan Embed v2 |
-| Bedrock Data Source | Links the S3 bucket to the KB with fixed-size chunking |
-| `null_resource` | Triggers ingestion sync after every deploy |
+Edit `agent.py`, comment out all the prompts from the first module, and uncomment the prompt for Module 2: 
+
+```python
+    # Prompts for Module 2 - uncomment when instructed
+    prompt = "My wireless headphones are not turning on, I need technical support"
+```
+
+Run `make test-agent-locally` again. 
+
+The agent responds with some information but cannot provide real technical support yet since `get_technical_support` tool is not implemented yet. 
+
+```
+I appreciate you reaching out! I'd like to help you troubleshoot your wireless headphones. However, I notice that I don't have access to a technical support tool at the moment that would provide me with our comprehensive troubleshooting guides and step-by-step solutions.
+```
+
+Let's fix that!
 
 ## Step 1: Deploy the Knowledge Base infrastructure
 
@@ -43,20 +54,22 @@ Then deploy:
 make deploy-infra
 ```
 
-This will:
-1. Create an S3 source bucket and upload the 6 documentation files from [knowledge-base/](knowledge-base/). Explore these files in VS Code to see what information is going into the Knowledge Base.
-2. Create an S3 vector bucket and index (1024 dimensions, cosine similarity, float32)
-3. Create the Bedrock Knowledge Base and configure it to use Amazon Titan Embed v2
-4. Start an ingestion job to embed and index all documents
-5. Write the Knowledge Base ID to `tmp/tech_support_kb_id.txt` (so you can do local testing)
+This will perform the following actions:
+1. Create an S3 bucket to store original knowledge documents and upload the 6 documentation files from [knowledge-base/](knowledge-base/). Explore these files in VS Code to see what information is going into the Knowledge Base.
+1. Create an S3 vector bucket and index (1024 dimensions, cosine similarity, float32)
+1. Create the Bedrock Knowledge Base and configure it to use Amazon Titan Embed v2 model.
+1. Start an ingestion job to embed and index all documents
+1. Write the Knowledge Base ID to `tmp/tech_support_kb_id.txt` (so you can do local testing).
 
-Typically ingestion takes 1-2 minutes. Monitor progress in the AWS Console:
+Typically, ingestion takes 1-2 minutes. You can explore Terraform configuration under `./terraform/module/knowledge_base` in the meanwhile. 
+
+Once deployment completes, monitor the ingestion progress using AWS Console:
 
 1. Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/)
-2. In the left navigation panel, go to **Build -> Knowledge bases**
-3. Click on your knowledge base (named `<prefix>-building-ai-agents-tech-support`)
-4. Under the **Data source** section, click the datasource named `<prefix>-building-ai-agents-from-s3`
-5. See the **Sync history** section. You should see an entry with a `Complete` status. 
+1. In the left navigation panel, go to **Build -> Knowledge bases**
+1. Click on your knowledge base (named `<prefix>-building-ai-agents-tech-support`)
+1. Under the **Data source** section, click the datasource named `<prefix>-building-ai-agents-from-s3`
+1. See the **Sync history** section. You should see an entry with a `Complete` status. 
 
 ![](./images/lab01-kb-sync-complete.png)
 
@@ -64,22 +77,25 @@ Typically ingestion takes 1-2 minutes. Monitor progress in the AWS Console:
 
 Once ingestion is complete, test it directly from the AWS Console:
 
-1. In your knowledge base page, click **Test knowledge base** (top right)
-2. Select `Retrieval only: data sources`, this restricts Knowledge Base to return information as received from the vector database, without any additional LLM processing. 
-2. In the test panel, type: `how do I fix Wi-Fi connection problems`
-3. Click **Run**
+1. Return to the Tech Support knowledge base page, click the **Test knowledge base** button on top right. 
+1. Select `Retrieval only: data sources`, this restricts Knowledge Base to return information as received from the vector database, without any additional LLM processing. 
+1. In the test panel, type `How do I fix Wi-Fi connection problems` and hit **Enter**.
 
-You should see scored text chunks returned from the documentation. Click `Details` to see result scores. If the results are empty, ingestion may still be in progress — refresh the data source status and try again in a moment.
+You should see scored text chunks returned from the documentation. 
+
+![](./images/m02-kb-test-results.png)
+
+You can click `Details` to see result scores. 
+
+> If the results are empty, ingestion may still be in progress — refresh the data source status and try again in a moment.
 
 ## Step 3: Enable the `get_technical_support` tool
 
-Examine the [src/agent/tools/tech_support.py](src/agent/tools/tech_support.py). The tool reads the KB ID from the `TECH_SUPPORT_KB_ID` environment variable at import time:
+Examine the [src/agent/tools/tech_support.py](src/agent/tools/tech_support.py) file. The tool reads the KB ID from the `TECH_SUPPORT_KB_ID` environment variable at loading. Then it uses the `retrieve` tool available from Strands SDK to retrieve information from the Knowledge Base. 
 
 ```python
-#Retrieve Knowledge Base ID from environment variable
 TECH_SUPPORT_KB_ID = os.environ.get("TECH_SUPPORT_KB_ID")
-if not TECH_SUPPORT_KB_ID:
-    raise ValueError("TECH_SUPPORT_KB_ID environment variable is not set.")
+l.info(f"ℹ️ TECH_SUPPORT_KB_ID={TECH_SUPPORT_KB_ID}")
 
 @tool
 def get_technical_support(issue_description: str) -> str:
@@ -98,56 +114,47 @@ def get_technical_support(issue_description: str) -> str:
     return result["content"][0]["text"]
 ```
 
-Now open [src/agent/agent.py](src/agent/agent.py) and uncomment the `get_technical_support` tool usage:
+See [src/agent/agent.py](src/agent/agent.py), around line 20. The tools list already contains `get_technical_support` and now it is actually connected to the real Knowledge Base. 
 
 ```python
-agent = Agent(
-    model=model,
-    system_prompt=SYSTEM_PROMPT,
-    tools=[
-        get_product_info,
-        get_return_policy,
-
-        # Uncomment below line
-        get_technical_support,
-    ],
-)
+tools = [
+    get_return_policy, 
+    get_product_info, 
+    get_technical_support,
+]
 ```
+
+## Step 4: Run the agent
 
 Make sure that the test prompt at the bottom is requiesting technical support:
 
 ```python
 if __name__ == "__main__":
-    # agent("How can you help me?")
-    # agent("My headphones are broken, what's the return policy?")
-    agent("My headphones are broken, I need technical support")
+    # Prompts for Module 2 - uncomment when instructed
+    prompt = "My wireless headphones are not turning on, I need technical support"
 ```
 
-## Step 4: Run the agent
-
-`make test-agent-locally` automatically reads `tmp/tech_support_kb_id.txt` and passes it as the `TECH_SUPPORT_KB_ID` environment variable:
-
-```bash
-make test-agent-locally
-```
+Run `make test-agent-locally` again. 
 
 This time the agent will invoke `get_technical_support` and return content retrieved from the Knowledge Base:
 
 ```
+I'll help you troubleshoot your wireless headphones. Let me get our technical support documentation for this issue.
+
 Tool #1: get_technical_support
-I can help you troubleshoot your broken headphones. Based on the technical support information, here are some common solutions for headphone issues:
+Great! I found some troubleshooting guidance. Here are the steps to help get your wireless headphones turning on:
 
-### Basic Troubleshooting Steps:
+## **Troubleshooting Steps for Wireless Headphones Not Turning On:**
 
-1. **Check Power and Connections:**
-   - Make sure your headphones are properly charged or connected to power
-   - Verify all cables are securely connected
-   - Try a different cable if available
-
+### **1. Check the Battery/Power**
+   - **Charge your headphones** - Connect them to a charger and let them charge for at least 15-30 minutes
+   - Check if the charging cable is properly connected
+   - Try a different USB cable or power adapter if available
+   - Look for LED indicators that show charging status
 ... REDACTED ...   
 ```
 
-The agent is now answering from real documentation rather than hardcoded strings.
+The agent is now grounding it's answers using real documentation rather than hardcoded strings.
 
 ## How it works under the hood
 
@@ -163,6 +170,8 @@ The agent is now answering from real documentation rather than hardcoded strings
 
 You've just integrated a real Bedrock Knowledge Base into your agent!
 
-In the next module you'll learn how to add memory to your agent so it can remember past sessions and interactions.
+## Next step
+
+Proceed to [Module 3](m03-memory.md) to integrate your agent with a AgentCore Memory so it can remember past sessions and interactions.
 
 

@@ -74,9 +74,9 @@ get-cognito-access-token:
 		| jq -r '.access_token'))
 	@echo ""
 	@echo "Retrieved access token: $(ACCESS_TOKEN)"
-	@echo $(ACCESS_TOKEN) > ./tmp/access_token.txt
-	@echo ""
-	@echo "Token saved to ./tmp/access_token.txt"
+# 	@echo $(ACCESS_TOKEN) > ./tmp/access_token.txt
+# 	@echo ""
+# 	@echo "Token saved to ./tmp/access_token.txt"
 
 test-gateway:
 	@echo "Getting a list of tools from the gateway..."

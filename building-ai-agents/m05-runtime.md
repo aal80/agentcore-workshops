@@ -64,6 +64,15 @@ Both files share the same tools, system prompt, and memory configuration — onl
 
 ## Step 2: Deploy the infrastructure
 
+## Login to ECR
+
+```
+make login-to-ecr
+```
+
+This authenticates Docker against your ECR registry using the account ID and region cached in ./tmp/.
+
+
 Open [terraform/workshop.tf](terraform/workshop.tf) and uncomment the `runtime` module:
 
 ```hcl

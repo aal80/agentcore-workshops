@@ -2,11 +2,15 @@
 
 This module explains how to set up your local environment and bootstrap the base AWS infrastructure required for the workshop. This takes about 5 minutes.
 
+> If you're using AWS-Provided Workshop accounts the below dependencies come pre-installed. You can skip directly to the [Clone the Workshop from Github](#clone-the-workshop-from-github-section) section.
+
+## Prerequisites (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
+
+- AWS Account with appropriate permissions
+- Python 3.13+ installed locally
+- AWS CLI configured with credentials
+
 ## Install dependencies (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
-
-If you're using AWS-Provided Workshop accounts the below dependencies come pre-installed. You can skip to the [Clone the Workshop from Github](#clone-the-workshop-from-github-section) section.
-
-## Prerequisites
 
 Make sure you have the following installed and configured:
 
@@ -68,11 +72,12 @@ make deploy-infra
 This runs `terraform init && terraform apply --auto-approve` and creates:
 
 - A random project name prefix to avoid naming conflicts
-- `tmp/aws_region.txt` and `tmp/aws_account_id.txt` for use in later make targets
+- An ECR registry you'll be using later in the workshop
+- `tmp/aws_region.txt` and `tmp/aws_account_id.txt`
 
-> All the modules in [terraform/workshop.tf](terraform/workshop.tf) are commented out at this point — this is expected, you'll enable them as you progress with the workshop.
+> During the workshop you will gradually enable modules in [terraform/workshop.tf](terraform/workshop.tf). Currently all of these modules are commented.
 
-After apply completes, verify the `tmp/` files were created:
+Once Terraform completes, run the following command to confirm required files under `tmp/` were created:
 
 ```bash
 make test-vars
@@ -85,13 +90,7 @@ You should see the below output (account ID and region might have different valu
 > AWS_REGION=us-west-2
 ```
 
-## Login to ECR
-
-```
-make login-to-ecr
-```
-
-This authenticates Docker against your ECR registry using the account ID and region cached in ./tmp/.
+Congratulations! You're ready to start building! 
 
 ## Next Step
 

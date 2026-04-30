@@ -18,12 +18,8 @@ model = BedrockModel(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", tem
 tools = [
     get_return_policy, 
     get_product_info, 
-    
-    # Uncomment when instructed in Module 2
-    get_technical_support
-
-    # Uncomment when instructed in Module 4
-    # mcp_tools_list
+    get_technical_support,
+    mcp_tools_list
 ]
 
 app = BedrockAgentCoreApp()  
@@ -39,8 +35,6 @@ async def invoke(payload, context=None):
         model=model,
         system_prompt=SYSTEM_PROMPT,
         tools=tools,
-    
-        # Uncomment when instructed in Module 3
         session_manager=session_manager,
     )
     response = agent(user_prompt)

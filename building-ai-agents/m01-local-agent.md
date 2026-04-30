@@ -2,29 +2,29 @@
 
 In this first module, you'll build a locally running prototype of a Customer Support Agent. Throughout this workshop, you'll evolve this prototype into a production-ready system running on Bedrock AgentCore, serving multiple customers with persistent memory, knowledge base, shared tools, and full OTEL-based observability.
 
-
 But to start with, your agent will have the following tools available:
 
 - `get_return_policy()` - Get return policy for specific products
 - `get_product_info()` - Get product information
-- `get_technical_support()` - Search a Bedrock Knowledge Base (added in Module 2)
 
 ## Architecture for Module 1
 
-![](./images/lab01-arch.png)
+![](./images/m01-arch.png)
 
 ## Creating agent tools with Strands Agents SDK
 
-Defining tools in Strands Agents is extremely simple — add a `@tool` decorator to your function and provide a description in the docstring. Strands Agents uses the function documentation, typing, and arguments to provide context on the tool to your agent. Let's see this in action. 
+We'll start with a couple of local tools, meaning tools that run within the same process as agent itself. 
+
+Defining local tools in Strands SDK is simple — add a `@tool` decorator to your function and provide a description in the docstring. Strands SDK uses the function documentation, typing, and arguments to provide context on the tool to your agent. Let's see this in action. 
 
 ### Tool 1: Get Return Policy
 
-**Purpose:** Helps customers understand return policies for different product categories. Provides information about return windows, conditions, processes, and refund timelines.
+**Tool Purpose:** Helps customers understand return policies for different product categories. Provides information about return windows, conditions, processes, and refund timelines. 
 
 ```python
 from strands.tools import tool
 
-@tool
+@tool # <-- Turns a Python function into agentic tool
 def get_return_policy(product_category: str) -> str:
     """
     Get return policy information for a specific product category.
@@ -35,6 +35,7 @@ def get_return_policy(product_category: str) -> str:
     Returns:
         Formatted return policy details including timeframes and conditions
     """
+
     return_policies = {
         "smartphones": {
             "window": "30 days",
@@ -44,21 +45,20 @@ def get_return_policy(product_category: str) -> str:
             "shipping": "Free return shipping, prepaid label provided",
             "warranty": "1-year manufacturer warranty included",
         },
-        ...
+        ...REDACTED...
     }
-    ...
 ```
 
-Explore the full file at [src/agent/tools/return_policy.py](src/agent/tools/return_policy.py)
+Explore the full file at [src/agent/tools/return_policy.py](src/agent/tools/return_policy.py). 
 
 ### Tool 2: Get Product Information
 
-**Purpose:** Provides customers with product specs, warranties, features, and compatibility information to help them make informed decisions.
+**Tool purpose:** Provides customers with product specs, warranties, features, and compatibility information to help them make informed decisions.
 
 ```python
 from strands.tools import tool
 
-@tool
+@tool # <-- Turns a Python function into agentic tool
 def get_product_info(product_type: str) -> str:
     """
     Get detailed technical specifications and information for electronics products.
@@ -76,37 +76,41 @@ def get_product_info(product_type: str) -> str:
             "compatibility": "Windows 11, macOS, Linux support varies by model",
             "support": "Technical support and driver updates included",
         },
-        ...
+        ...REDACTED...
     }
-    ...
 ```
 Explore the full file: [src/agent/tools/product_info.py](src/agent/tools/product_info.py)
 
 ## Create and Configure the Customer Support Agent
 
-Now that you understand how tools work, let's see how to create the agent and run it locally.
+Now that you understand how to create local tools, let's see how to create the agent, attach to these tools, and run it locally.
 
-The agent is defined in [src/agent/agent.py](src/agent/agent.py). It uses Amazon Nova 2 Lite via Bedrock and is initialized with a system prompt and the three tools:
+Explore [src/agent/agent.py](src/agent/agent.py). It uses Anthropic Claude Haiku 4.5 model via Bedrock, initialized with a system prompt, and the above two tools attached:
 
 ```python
-SYSTEM_PROMPT = """
-You are a helpful and professional customer support assistant for an electronics e-commerce company.
+# See system_prompt.py for System Prompt
+from system_prompt import SYSTEM_PROMPT
 
-Your role is to...
-"""
-
+# Picking the model
 model = BedrockModel(
-    model_id="global.amazon.nova-2-lite-v1:0",
-    temperature=0.3,
+    model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    temperature=0.3
 )
 
+# The list of tools
+tools = [
+    get_product_info,
+    get_return_policy,
+    get_technical_support, # Not implemented yet
+    mcp_tools_list         # Not implemented yet
+]
+
+# Defining the agent
 agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
-    tools=[
-        get_product_info,
-        get_return_policy,
-    ],
+    tools=tools,
+    session_manager=session_manager, # Not implemented yet
 )
 ```
 
@@ -116,10 +120,9 @@ The agent code at the bottom of [src/agent/agent.py](src/agent/agent.py) has sev
 
 ```python
 if __name__ == "__main__":
-    agent("How can you help me?")
-    # agent("Tell me what you know about headphones?")
-    # agent("My headphones are broken, what's the return policy?")
-    # agent("My headphones are broken, I need technical support")
+    prompt = "How can you help me?"
+    # prompt = "Tell me what you know about headphones?"
+    # prompt = "My headphones are broken, what's the return policy?"
 ```
 
 Run the agent with:
@@ -152,12 +155,13 @@ if __name__ == "__main__":
     # agent("How can you help me?")
     agent("Tell me what you know about headphones?")
     # agent("My headphones are broken, what's the return policy?")
-    # agent("My headphones are broken, I need technical support")
 ```
 
 Run `make test-agent-locally` again. The agent automatically invokes `get_product_info` based on the prompt:
 
 ```text
+I'd be happy to help you learn about headphones! Let me pull up our detailed product information for you.
+
 Tool #1: get_product_info
 ### Headphones Information
 
@@ -182,13 +186,14 @@ if __name__ == "__main__":
     # agent("How can you help me?")
     # agent("Tell me what you know about headphones?")
     agent("My headphones are broken, what's the return policy?")
-    # agent("My headphones are broken, I need technical support")
 ```
 
 
 Run `make test-agent-locally` again. The agent automatically invokes `get_return_policy` based on the prompt:
 
 ```text
+I'll get the return policy information for headphones for you.
+
 Tool #1: get_return_policy
 According to our return policy for headphones:
 
@@ -202,34 +207,26 @@ According to our return policy for headphones:
 ...REDACTED...
 ```
 
-The agentic loop is working — the agent chose the right tool automatically!
-
-Now try the last prompt. Update the agent code as shown below and run `make test-agent-locally` again. 
-
-```python
-if __name__ == "__main__":
-    # agent("How can you help me?")
-    # agent("Tell me what you know about headphones?")
-    # agent("My headphones are broken, what's the return policy?")
-    agent("My headphones are broken, I need technical support")
-```
-
-The agent responds with product information but cannot provide real technical support yet since `get_technical_support` tool is not implemented yet. Unlike the other tools which use hardcoded mock data, `get_technical_support` uses RAG to query a real **Bedrock Knowledge Base**. You'll set that up in the next module. But for now...
+The agentic loop is working — the agent is picking the right tools automatically!
 
 ## Congratulations!
 
 You've just created a real AI Agent using Strands Agents SDK and Amazon Bedrock!
 
-- Built an agent with 2 custom tools (`get_return_policy`, `get_product_info`)
+- Built an agent with 2 custom local tools (`get_return_policy`, `get_product_info`)
 - Tested the agentic loop — the agent selects tools automatically based on context
 - Established the foundation for the next modules
 
 Current limitations you'll address in upcoming modules:
 
-- No knowledge base integration — context is hardcoded into the tools
+- No knowledge base integration — knowledge is hardcoded into the tools
 - No memory — the agent doesn't remember past conversations
 - Tools are embedded in the app — not reusable across agents
 - Running locally only — not scalable
 - No authentication, authorization, or access controls
 - Minimal observability — debugging is done locally
 - No access to enterprise APIs or customer data
+
+## Next step
+
+Proceed to [Module 2](m02-knowledge-base.md) to integrate your agent with a Knowledge Base.

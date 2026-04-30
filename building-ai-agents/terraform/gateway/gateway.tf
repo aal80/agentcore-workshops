@@ -52,7 +52,6 @@ resource "aws_bedrockagentcore_gateway" "customer_support" {
       allowed_scopes = [local.cognito_scope]
     }
   }
-
 }
 
 resource "aws_bedrockagentcore_gateway_target" "check_warranty_status" {
