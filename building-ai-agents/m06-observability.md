@@ -47,7 +47,7 @@ resource "aws_cloudwatch_log_delivery" "runtime_logs" {
 
 ## Built-in Observability Dashboard
 
-In addition to raw telemetry AgentCore can emit to CloudWatch, S3, or Kinesis, you can leverage CloudWatch GenAI Observability dashboard to see all the information in one place, such as:
+In addition to raw telemetry that AgentCore emits to CloudWatch, S3, or Kinesis, you can leverage CloudWatch GenAI Observability dashboard to see all the information in one place, such as:
 
 ### Agents
 
