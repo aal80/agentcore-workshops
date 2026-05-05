@@ -1,5 +1,6 @@
 # Runtime outputs
 tmp/
+.$diagrams.drawio.bkp
 
 # Python
 __pycache__/
@@ -18,7 +19,6 @@ src/lambdas/tool-web-search/bin/
 
 # Terraform
 .terraform/
-.terraform.lock.hcl
 terraform.tfstate
 terraform.tfstate.backup
 *.tfplan

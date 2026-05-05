@@ -1,4 +1,4 @@
-FROM --platform=linux/arm64 ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 WORKDIR /app
 
@@ -10,4 +10,5 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["uv", "run", "cloud_agent.py"]
+# CMD ["uv", "run", "agent.py"]
+CMD ["uv", "run", "opentelemetry-instrument", "python", "agent.py"]

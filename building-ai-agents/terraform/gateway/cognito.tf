@@ -27,6 +27,10 @@ resource "aws_cognito_user_pool_client" "gateway" {
   allowed_oauth_flows                  = ["client_credentials"]
   allowed_oauth_scopes                 = [local.cognito_scope]
   supported_identity_providers         = ["COGNITO"]
+  access_token_validity                = 3
+  token_validity_units {
+    access_token = "hours"
+  }
   depends_on                           = [aws_cognito_resource_server.gateway]
 }
 
@@ -67,3 +71,18 @@ resource "local_file" "cognito_scope" {
   filename = "${path.root}/../tmp/cognito_scope.txt"
 }
 
+output "cognito_token_endpoint" {
+  value = local.cognito_token_endpoint
+}
+
+output "cognito_client_id" {
+  value = aws_cognito_user_pool_client.gateway.id
+}
+
+output "cognito_client_secret_arn" {
+  value = aws_secretsmanager_secret.cognito_client_secret.arn
+}
+
+output "cognito_scope" {
+  value = local.cognito_scope
+}

@@ -3,12 +3,10 @@ data "aws_ecr_image" "agent" {
   image_tag       = "latest"
 }
 
-
 locals {
   project_name_underscore = replace(var.project_name, "-", "_")
   agent_ecr_uri           = "${var.ecr_repo_url}@${data.aws_ecr_image.agent.image_digest}"
 }
-
 
 resource "aws_iam_role" "agent" {
   name = "${var.project_name}-agent"
@@ -59,6 +57,11 @@ resource "aws_iam_role_policy" "agent" {
           "xray:PutTelemetryRecords",
         ]
         Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = var.cognito_client_secret_arn
       }
     ]
   })
@@ -77,6 +80,11 @@ resource "aws_bedrockagentcore_agent_runtime" "agent" {
   environment_variables = {
     "MEMORY_ID" = var.agentcore_memory_id
     "TECH_SUPPORT_KB_ID"=var.tech_support_knowledgebase_id
+    "GATEWAY_URL"=var.gateway_url
+    COGNITO_CLIENT_ID=var.cognito_client_id
+    COGNITO_CLIENT_SECRET_ARN=var.cognito_client_secret_arn
+    COGNITO_TOKEN_ENDPOINT=var.cognito_token_endpoint
+    COGNITO_SCOPE=var.cognito_scope
   }
 
   network_configuration {

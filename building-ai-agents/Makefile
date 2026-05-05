@@ -74,9 +74,9 @@ get-cognito-access-token:
 		| jq -r '.access_token'))
 	@echo ""
 	@echo "Retrieved access token: $(ACCESS_TOKEN)"
-# 	@echo $(ACCESS_TOKEN) > ./tmp/access_token.txt
-# 	@echo ""
-# 	@echo "Token saved to ./tmp/access_token.txt"
+	@echo $(ACCESS_TOKEN) > ./tmp/access_token.txt
+	@echo ""
+	@echo "Token saved to ./tmp/access_token.txt"
 
 test-gateway:
 	@echo "Getting a list of tools from the gateway..."
@@ -91,9 +91,6 @@ test-gateway:
 		-H "Authorization: Bearer $(ACCESS_TOKEN)" \
 		-d '{"jsonrpc":"2.0","id":"1","method":"tools/list","params":{}}' \
 		| jq .
-
-
-### MODULE 5: AgentCore Runtime -----
 
 build-and-push-agent:
 	@echo "> Building agent container image..."
@@ -110,27 +107,27 @@ build-and-push-agent:
 	@echo "> Pushing agent image to ECR..."
 	docker push "$(ECR_REPO_URL):latest"
 
+invoke-agent:
+	@echo "Invoking agent...."
+	$(eval AGENT_RUNTIME_ARN := $(shell cat ./tmp/agent_runtime_arn.txt))
+	$(info > AGENT_RUNTIME_ARN=$(AGENT_RUNTIME_ARN))
 
-# test-orchestrator:
-# 	python3 orchestrator_invoker.py
-# 	$(eval RUNTIME_AGENT_ARN := $(shell cat ./tmp/orchestrator_agent_runtime_arn.txt))
-# 	$(info > RUNTIME_AGENT_ARN=$(RUNTIME_AGENT_ARN))
+	$(eval PROMPT := My headphones are broken, whats the return policy?)
+	$(eval PAYLOAD := $(shell echo '{"prompt":"$(PROMPT)"}' | base64))
 
-# 	$(eval PROMPT := Find me running shoes for a marathon in Seattle next week)
-# 	$(eval PAYLOAD := $(shell echo '{"prompt":"$(PROMPT)"}' | base64))
+	@echo ""
+	@echo "Testing with prompt: $(PROMPT)"
+	@printf "Press ENTER to start..."; read _
 	
-# 	@echo ""
-# 	@echo "Testing with prompt: $(PROMPT)"
-# 	@printf "Press ENTER to start..."; read _
-# 	aws bedrock-agentcore invoke-agent-runtime \
-#   		--agent-runtime-arn "$(RUNTIME_AGENT_ARN)" \
-# 		--payload "$(PAYLOAD)" \
-# 		--content-type "application/json" \
-# 		tmp/invoke_output.txt \
-# 		--no-cli-pager
+	aws bedrock-agentcore invoke-agent-runtime \
+  		--agent-runtime-arn "$(AGENT_RUNTIME_ARN)" \
+		--payload "$(PAYLOAD)" \
+		--content-type "application/json" \
+		tmp/invoke_output.txt \
+		--no-cli-pager
 
-# 	@echo "> Invocation output:"
-# 	@cat tmp/invoke_output.txt
+	@echo "> Invocation output:"
+	@cat tmp/invoke_output.txt
 
 
 

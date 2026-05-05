@@ -93,10 +93,12 @@ The Gateway target resource defines outbound authorization with IAM Role as well
 resource "aws_bedrockagentcore_gateway_target" "check_warranty_status" {
   name               = "check-warranty-status"
 
+  # Outbound authorization
   credential_provider_configuration {
     gateway_iam_role {}
   }
 
+  # Target configuration and tool schema
   target_configuration {
     mcp {
       lambda {
@@ -129,7 +131,7 @@ Once Terraform completes, verify the Gateway is active in the AWS Console:
 
 ## Step 3: Understand the centralized tool
 
-Examine the Lambda function code at [src/lambdas/tool-check-warranty-status/handler.py](src/lambdas/tool-check-warranty-status/handler.py). It implements mock warranty database, checking warranty coverage given a product serial number and optionally a customer email: 
+Examine the Lambda function code at [src/lambdas/tool-check-warranty-status/handler.py](src/lambdas/tool-check-warranty-status/handler.py). It implements a mock warranty database, checking warranty coverage given a product serial number and optionally a customer email: 
 
 ```python
 def lambda_handler(event, context):
@@ -140,11 +142,13 @@ def lambda_handler(event, context):
 
 The tool schema that describes this to the Gateway is defined inline in [terraform/gateway/gateway.tf](terraform/gateway/gateway.tf) as an `inline_payload` block (illustrated above). It tells Gateway the tool name, description, and input parameters — the same information the `@tool` docstring would provide locally.
 
-## Step 4: Get a Cognito access token
+## Step 4: Test AgentCore Gateway is working 
 
 The Gateway requires a valid JWT token for every request. Let's test that one can be fetched using Cognito credentials. 
 
-> This step is for illustration purposes only, the agent will fetch access tokens on its own. 
+> This step is for testing purposes only! When running on AgentCore, the agent will fetch required access tokens on its own.
+
+Run below command:
 
 ```bash
 make get-cognito-access-token
@@ -152,9 +156,51 @@ make get-cognito-access-token
 
 This reads `tmp/cognito_token_endpoint.txt`, `tmp/cognito_client_id.txt`, and retrieves the client secret from AWS Secrets Manager using the ARN in `tmp/cognito_client_secret_arn.txt`, then calls the Cognito token endpoint and outputs the retrieved token.
 
+Run below command:
+```bash
+make test-gateway 
+```
+
+This will use access token retrieved in previous step and make a `tools/list` call to the gateway endpoint using `curl`. 
+
+Response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "1",
+  "result": {
+    "tools": [
+      {
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "customer_email": {
+              "description": "Customer email address to verify ownership (optional)",
+              "type": "string"
+            },
+            "serial_number": {
+              "description": "Product serial number to look up",
+              "type": "string"
+            }
+          },
+          "required": [
+            "serial_number"
+          ]
+        },
+        "name": "check-warranty-status___check_warranty_status",
+        "description": "Check warranty coverage for a product given its serial number. Optionally verifies against the registered customer email."
+      }
+    ]
+  }
+}
+```
+
+Now that you've confirmed Gateway is working, it's time to integrate it with the agent.
+
 ## Step 5: Connect the agent to Gateway
 
-Unlike local tools you've implemented previously, you do not need to declare tools available through MCP and AgentCore gateway one by one. MCP supports automatic tool discovery, so you only need to point your agent at the Gateway andpoing. 
+Unlike local tools you've implemented in the agent previously, you do not need to declare tools available through MCP and AgentCore Gateway one by one. MCP supports automatic tool discovery, so you only need to point your agent at the Gateway andpoing. 
 
 Explore [src/agent/mcp_client.py](src/agent/mcp_client.py). There are several important segments to understand. 
 
@@ -190,7 +236,7 @@ Second, it retrieves the access token required to invoke the Gateway from Cognit
     gateway_token = _get_gateway_token()
 ```
 
-> Note that for brevity this sample code does not implement token renewal. You will need to monitor expiration date and renew tokens in your real agents. 
+> For brevity this sample code does not implement automated token renewal. 
 
 Lastly, the MCP client retrieves the list of tools using `GATEWAY_URL` and previously obtained access token:
 
@@ -228,9 +274,9 @@ agent = Agent(
 
 The agent sees remote tools exactly like a local `@tool`-decorated function.
 
-## Step 6: Run the agent with Gateway tools
+## Step 6: Test the agent locally with Gateway tools
 
-Run `make test-agent-locally` and see the result:
+Run `make test-agent-locally` and observe the result:
 
 ```
 I'll check the warranty status for your Gaming Console Pro right away.
@@ -258,8 +304,7 @@ Your warranty is active and valid, so you're well protected! You have coverage f
 6. Lambda executes and returns the result
 7. Gateway returns the result back to the MCP client, which surfaces it to the agent
 
-Authentication is enforced at Step 2 — no valid JWT means no tool access, regardless of which agent is calling.
-
+Authentication is enforced at Step 2 — no valid JWT means no tool access!
 
 ## Congratulations!
 

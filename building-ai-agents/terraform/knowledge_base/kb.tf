@@ -38,6 +38,15 @@ resource "aws_iam_role_policy" "bedrock_kb" {
                 ]
                 Resource = "*"
             },
+            {
+                Effect = "Allow"
+                Action = [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                ]
+                Resource = aws_cloudwatch_log_group.kb_logs.arn
+            },
         ]
     })
 }

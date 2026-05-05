@@ -74,7 +74,7 @@ Once deployment completes, monitor the ingestion progress using AWS Console:
 1. Under the **Data source** section, click the datasource named `<prefix>-building-ai-agents-from-s3`
 1. See the **Sync history** section. You should see an entry with a `Complete` status. 
 
-![](./images/lab01-kb-sync-complete.png)
+![](./images/m02-kb-sync-complete.png)
 
 ## Step 2: Verify the Knowledge Base is working
 
