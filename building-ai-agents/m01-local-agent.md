@@ -2,18 +2,18 @@
 
 In this first module, you'll build a locally running prototype of a Customer Support Agent. Throughout this workshop, you'll evolve this prototype into a production-ready system running on Bedrock AgentCore, serving multiple customers with persistent memory, knowledge base, shared tools, and full OTEL-based observability.
 
-![](./images/m01-arch.png)
-
-But to start with, your agent will have the following tools available:
+But to start with, your agent will run locally, use Bedrock-provided model for reasoning, and have the following tools available:
 
 - `get_return_policy()` - Get return policy for specific products
 - `get_product_info()` - Get product information
 
+![](./images/m01-arch.png)
+
 ## Creating agent tools with Strands Agents SDK
 
-We'll start with a couple of local tools, meaning tools that run within the same process as agent itself. 
+Let's start with creating two **local** tools - the tools that run within the same process as the agent itself. 
 
-Defining local tools in Strands SDK is simple — add a `@tool` decorator to your function and provide a description in the docstring. Strands SDK uses the function documentation, typing, and arguments to provide context on the tool to your agent. Let's see this in action. 
+Defining local tools in Strands SDK is simple — add a `@tool` decorator to a Python method and provide a description in the docstring. Strands SDK uses the function documentation, types, and arguments to provide context on the tool to your agent. Let's see this in action. 
 
 ### Tool 1: Get Return Policy
 

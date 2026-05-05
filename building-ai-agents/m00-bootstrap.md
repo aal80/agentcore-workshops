@@ -61,6 +61,18 @@ git checkout
 cd building-ai-agents
 ```
 
+## Explore the project structure in Visual Studio Code
+
+![](./images/m00-vscode.png)
+
+Below are the assets you can find in Visual Studio Code that you'll be using throughout the workshop:
+
+1. Source code of the agent and MCP tools implemented as Lambda functions.
+1. Terraform configuration for deploying AgentCore resources. You'll be updating the `workshop.tf` as you progress to introduce new resource types. 
+1. Text files representing the technical support Knowledge Base.
+1. Main editing window. This is where you'll be making changes to project files. 
+1. Terminal window. This is where you'll be running commands. 
+
 ## Bootstrap the infrastructure
 
 The Terraform configuration in [terraform/](terraform/) sets up shared resources used across all modules. Deploy it now:
