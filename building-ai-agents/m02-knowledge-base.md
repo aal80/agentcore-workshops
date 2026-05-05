@@ -1,35 +1,33 @@
 # Module 2: Adding a Knowledge Base
 
-In the previous module you built an agent with tools that return hardcoded mock data. In this module you'll replace that with a real **Bedrock Knowledge Base** backed by S3 vector storage, so the `get_technical_support` tool can answer questions from actual documentation.
-
-By the end of this module your agent will implement a RAG workflow by querying a Bedrock Knowledge Base for technical support questions.
+In the previous module you built an agent with tools that return hardcoded mock data. In this module you'll replace such a tool with a real **Bedrock Knowledge Base** backed by S3 vector storage, so the `get_technical_support` tool can answer questions from actual documentation.
 
 ![](./images/m02-arch.png)
 
+By the end of this module your agent will implement a RAG workflow by querying a Bedrock Knowledge Base for technical support questions.
+
 ## Knowledge Bases and RAG architecture
 
-When a user asks a technical question, the agent needs to find the right answer from a large set of documents. Rather than injecting all this knowledge into every prompt (expensive and limited by context size), you're going to use a technique called **Retrieval-Augmented Generation (RAG)**:
+When a user asks a technical support question, the agent needs to find the right answer from a large set of documents. Rather than injecting all this knowledge into every prompt (expensive and limited by context size), you're going to use a technique called **Retrieval-Augmented Generation (RAG)**:
 
 ![](./images/m02-rag-arch.png)
 
-* **Ingestion** — you upload source documents (text files in this module) to an S3 bucket. Then you configure a Data Source to point at that bucket. The last step is to trigger an ingestion job. In this module this will be fully automated with Terraform. 
-* **At index time** — when ingestion job is triggered, Knowledge Base Data Source will read the documents, split them into chunks and converted each chunk into a vector embedding (a list of numbers that captures the semantic meaning of the text) using Amazon Titan Embed v2. These embeddings are then stored in the S3 vector index. This is fully automatic. 
-* **At query time** — the user's question is embedded the same way, then a similarity search finds the chunks whose embeddings are closest to the question embedding. Closeness in vector space means similarity in meaning. Corresponding chunks are returned back to your agent. 
+* **Ingestion** — you upload source documents (text files in this module) to an S3 bucket. Then you configure a **Data Source** to point at that bucket and trigger an **ingestion job**. In this module this will be fully automated with Terraform. 
+* **At index time** — Knowledge Base Data Source will read the documents, split them into chunks and converted each chunk into a vector embedding (a list of numbers that captures the semantic meaning of the text) using **Amazon Titan Embed v2**. These embeddings are then stored in the S3 vector index. This is fully automatic. 
+* **At query time** — the user's prompt is embedded the same way, then a similarity search finds the chunks whose embeddings are closest to the question embedding. Closeness in vector space means similarity in meaning. Corresponding chunks are returned back to your agent. 
 * **Generation** — The agent passes retrieved chunks to the LLM as context, and the LLM composes an answer grounded in knowledge.
 
 ## Before you start implementing
 
-Edit `agent.py`, comment out all the prompts from the first module, and uncomment the prompt for Module 2: 
+Start the agent and ask a technical support question:
 
-```python
-if __name__ == "__main__":
-    # Prompts for Module 2 - uncomment when instructed
-    prompt = "My wireless headphones are not turning on, I need technical support"
+```bash
+make run-agent-locally
 ```
 
-Run `make test-agent-locally` again. 
+Type: `My wireless headphones are not turning on, I need technical support`
 
-The agent responds with some information but cannot provide real technical support since `get_technical_support` tool is not implemented yet. 
+The agent responds with some information but cannot provide real technical support since `get_technical_support` tool is not implemented yet:
 
 ```
 I appreciate you reaching out! I'd like to help you troubleshoot your wireless headphones. 
@@ -37,13 +35,14 @@ However, I notice that I don't have access to a technical support tool at the mo
 would provide me with our comprehensive troubleshooting guides and step-by-step solutions.
 ```
 
-Let's fix that!
+Type `exit` to quit. Let's fix that!
 
 ## Step 1: Deploy the Knowledge Base infrastructure
 
-Open [terraform/workshop.tf](terraform/workshop.tf) and uncomment the `knowledge_base` module:
+Open `./terraform/workshop.tf` and uncomment the `knowledge_base` module:
 
 ```hcl
+# --- Module 2: Uncomment to deploy the Knowledge Base
 module "knowledge_base" {
   source       = "./knowledge_base"
   project_name = local.project_name
@@ -57,14 +56,15 @@ Then deploy:
 make deploy-infra
 ```
 
-This will perform the following actions:
-1. Create an S3 bucket to store original knowledge documents and upload the 6 documentation files from [knowledge-base/](knowledge-base/). Explore these files in VS Code to see what information is going into the Knowledge Base.
-1. Create an S3 vector bucket and index (1024 dimensions, cosine similarity, float32)
-1. Create the Bedrock Knowledge Base and configure it to use Amazon Titan Embed v2 model.
-1. Start an ingestion job to embed and index all documents
-1. Write the Knowledge Base ID to `tmp/tech_support_kb_id.txt` (so you can do local testing).
+Terraform will perform the following actions:
 
-Typically, ingestion takes 1-2 minutes. You can explore Terraform configuration under `./terraform/module/knowledge_base` in the meanwhile. 
+1. Create an S3 bucket to store original knowledge documents and upload the 6 documentation files from `./knowledge-base`. Explore these files in VS Code to see what information is going into the Knowledge Base.
+1. Create an S3 vector bucket and index (1024 dimensions, cosine similarity, float32)
+1. Create the **Bedrock Knowledge Base** and configure it to use **Amazon Titan Embed v2 model**.
+1. Start an ingestion job to embed and index all documents
+1. Write the Knowledge Base ID to `./tmp/tech_support_kb_id.txt` so you can do local testing.
+
+Typically, ingestion takes 1-2 minutes. In the meanwhile, you can explore Terraform configuration under `./terraform/module/knowledge_base`.
 
 Once deployment completes, monitor the ingestion progress using AWS Console:
 
@@ -81,7 +81,7 @@ Once deployment completes, monitor the ingestion progress using AWS Console:
 Once ingestion is complete, test it directly from the AWS Console:
 
 1. Return to the Tech Support knowledge base page, click the **Test knowledge base** button on top right. 
-1. Select `Retrieval only: data sources`, this restricts Knowledge Base to return information as received from the vector database, without any additional LLM processing. 
+1. Select `Retrieval only: data sources`, this restricts Knowledge Base to return information retrieved from the vector database only, without any additional information added by the model. 
 1. In the test panel, type `How do I fix Wi-Fi connection problems` and hit **Enter**.
 
 You should see scored text chunks returned from the documentation. 
@@ -94,7 +94,7 @@ You can click `Details` to see result scores.
 
 ## Step 3: Using the `get_technical_support` tool
 
-Examine the [src/agent/tools/tech_support.py](src/agent/tools/tech_support.py) file. The tool reads the KB ID from the `TECH_SUPPORT_KB_ID` environment variable at loading. Then it uses the `retrieve` tool available from Strands SDK to retrieve information from the Knowledge Base. 
+Examine the `./src/agent/tools/tech_support.py` file. The tool reads the Knowledge Base ID from the `TECH_SUPPORT_KB_ID` environment variable at loading. Then it uses the `retrieve` tool available from Strands SDK to retrieve information from the Knowledge Base. 
 
 ```python
 TECH_SUPPORT_KB_ID = os.environ.get("TECH_SUPPORT_KB_ID")
@@ -117,28 +117,27 @@ def get_technical_support(issue_description: str) -> str:
     return result["content"][0]["text"]
 ```
 
-See [src/agent/agent.py](src/agent/agent.py), around line 20. The tools list already contains `get_technical_support` and now it is actually connected to the real Knowledge Base. 
+See `./src/agent/agent.py`, around line 20. The tools list already contains `get_technical_support` and now it is actually connected to the real Knowledge Base. 
 
 ```python
 # agent.py
 tools = [
     get_return_policy, 
     get_product_info, 
-    get_technical_support,
+    get_technical_support, # <-- this is the tool
+    mcp_tools_list
 ]
 ```
 
 ## Step 4: Run the agent
 
-Make sure that the test prompt at the bottom is requiesting technical support:
+Start the agent again and ask the same question:
 
-```python
-if __name__ == "__main__":
-    # Prompts for Module 2 - uncomment when instructed
-    prompt = "My wireless headphones are not turning on, I need technical support"
+```bash
+make run-agent-locally
 ```
 
-Run `make test-agent-locally` again. 
+Type: `My wireless headphones are not turning on, I need technical support`
 
 This time the agent will invoke `get_technical_support` and return content retrieved from the Knowledge Base:
 
@@ -172,7 +171,7 @@ The agent is now grounding it's answers using real documentation rather than har
 
 ## Congratulations!
 
-You've just integrated a real Bedrock Knowledge Base into your agent!
+You've just integrated your agent with a real Bedrock Knowledge Base! Now the answers your agent provided are grounded in facts.
 
 ## Next step
 

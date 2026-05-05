@@ -78,9 +78,9 @@ resource "aws_bedrockagentcore_agent_runtime" "agent" {
   }
 
   environment_variables = {
-    "MEMORY_ID" = var.agentcore_memory_id
-    "TECH_SUPPORT_KB_ID"=var.tech_support_knowledgebase_id
-    "GATEWAY_URL"=var.gateway_url
+    MEMORY_ID = var.agentcore_memory_id
+    TECH_SUPPORT_KB_ID=var.tech_support_knowledgebase_id
+    GATEWAY_URL=var.gateway_url
     COGNITO_CLIENT_ID=var.cognito_client_id
     COGNITO_CLIENT_SECRET_ARN=var.cognito_client_secret_arn
     COGNITO_TOKEN_ENDPOINT=var.cognito_token_endpoint

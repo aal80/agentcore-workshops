@@ -32,8 +32,8 @@ login-to-ecr:
 	docker logout "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 	aws ecr get-login-password | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
-test-agent-locally:
-	@echo "Testing agent locally..."
+run-agent-locally:
+	@echo "Run agent locally..."
 	$(eval TECH_SUPPORT_KB_ID := $(shell cat ./tmp/tech_support_kb_id.txt))
 	$(eval MEMORY_ID := $(shell cat ./tmp/memory_id.txt))
 	$(eval GATEWAY_URL := $(shell cat ./tmp/gateway_url.txt))
@@ -125,8 +125,9 @@ invoke-agent:
 		tmp/invoke_output.txt \
 		--no-cli-pager
 
-	@echo "> Invocation output:"
-	@cat tmp/invoke_output.txt
+test-remote-agent:
+	@echo "Testing remote agent..."
+	cd src/agent && uv run remote_agent_invoker.py
 
 
 

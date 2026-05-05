@@ -47,7 +47,7 @@ def get_return_policy(product_category: str) -> str:
     }
 ```
 
-Explore the full file at [src/agent/tools/return_policy.py](src/agent/tools/return_policy.py). 
+Explore the full file at `src/agent/tools/return_policy.py`. 
 
 ### Tool 2: Get Product Information
 
@@ -77,13 +77,13 @@ def get_product_info(product_type: str) -> str:
         ...REDACTED...
     }
 ```
-Explore the full file: [src/agent/tools/product_info.py](src/agent/tools/product_info.py)
+Explore the full file: `src/agent/tools/product_info.py`
 
 ## Create and Configure the Customer Support Agent
 
 Now that you understand how to create local tools, let's see how to create the agent, attach to these tools, and run it locally.
 
-Explore [src/agent/agent.py](src/agent/agent.py). It uses Anthropic Claude Haiku 4.5 model via Bedrock, initialized with a system prompt, and the above two tools attached:
+Explore `src/agent/agent.py`. You can see that it uses Anthropic Claude Haiku 4.5 model via Bedrock, initialized with a system prompt, and the above two tools attached:
 
 ```python
 # See system_prompt.py for System Prompt
@@ -112,24 +112,47 @@ agent = Agent(
 )
 ```
 
-## Testing the agent locally
+## Running locally vs in cloud
 
-The agent code at the bottom of [src/agent/agent.py](src/agent/agent.py) has several prompts to test locally, let's try them one by one. 
+The same `agent.py` file runs both locally and on AgentCore Runtime (you'll deploy to the cloud in Module 5). The bottom of the file detects the environment using the `AGENTCORE_RUNTIME_URL` environment variable, which AgentCore sets automatically when running in the cloud:
 
 ```python
 if __name__ == "__main__":
-    prompt = "How can you help me?"
-    # prompt = "Tell me what you know about headphones?"
-    # prompt = "My headphones are broken, what's the return policy?"
+    if os.environ.get("AGENTCORE_RUNTIME_URL"):
+        print("Running on AgentCore, starting server...")
+        app.run()          # starts the AgentCore HTTP server
+    else:
+        print("Running locally...")
+        run_locally()      # starts an interactive REPL loop
 ```
 
-Run the agent with:
+When running locally, `run_locally()` starts an interactive prompt loop so you can type questions and see responses without editing any code.
+
+## Testing the agent locally
+
+Start the agent:
 
 ```bash
-make test-agent-locally
+make run-agent-locally
 ```
 
-Since you've asked the agent how it can help, it describes its capabilities as defined in the system prompt:
+> Ignore warnings about MEMORY_ID and mcp_client. You'll add these components in upcoming modules.
+
+You'll see an interactive prompt:
+
+```
+--------------------
+Welcome to the AwesomeCorp Customer Support Agent
+
+--------------------
+User prompt (type 'exit' to quit):
+```
+
+### Test general capabilities
+
+Type: `How can you help me?`
+
+The agent describes its capabilities as defined in the system prompt:
 
 ```
 Hello! I can assist you with a variety of things related to electronics products, including:
@@ -139,23 +162,16 @@ Hello! I can assist you with a variety of things related to electronics products
 - **Return policies and warranties** - I can explain our return and warranty processes
 - **Setup guides and maintenance tips** - I can offer step-by-step instructions for using your devices
 
-What would you like help with today?
+...REDACTED...
 ```
 
-> Keep in mind, LLMs are non-deterministic. The replies you receive might differ from examples shown in this tutorial. 
+> Keep in mind, LLMs are non-deterministic. The response you receive is expected to differ from examples shown in this workshop.
 
 ### Test the `get_product_info` tool
 
-Now comment out the first prompt and uncomment the second one:
+Type: `Tell me what you know about headphones?`
 
-```python
-if __name__ == "__main__":
-    # agent("How can you help me?")
-    agent("Tell me what you know about headphones?")
-    # agent("My headphones are broken, what's the return policy?")
-```
-
-Run `make test-agent-locally` again. The agent automatically invokes `get_product_info` based on the prompt:
+The agent automatically invokes `get_product_info` based on the prompt:
 
 ```text
 I'd be happy to help you learn about headphones! Let me pull up our detailed product information for you.
@@ -177,17 +193,9 @@ Here's what I know about our headphones:
 
 ### Test the `get_return_policy` tool
 
-Comment out the second prompt and uncomment the one about return policy:
+Type: `My headphones are broken, what's the return policy?`
 
-```python
-if __name__ == "__main__":
-    # agent("How can you help me?")
-    # agent("Tell me what you know about headphones?")
-    agent("My headphones are broken, what's the return policy?")
-```
-
-
-Run `make test-agent-locally` again. The agent automatically invokes `get_return_policy` based on the prompt:
+The agent automatically invokes `get_return_policy` based on the prompt:
 
 ```text
 I'll get the return policy information for headphones for you.
@@ -205,17 +213,17 @@ According to our return policy for headphones:
 ...REDACTED...
 ```
 
-The agentic loop is working — the agent is picking the right tools automatically!
+Type `exit` to quit. The agentic loop is working — the agent is picking the right tools automatically!
 
 ## Congratulations!
 
-You've just created a real AI Agent using Strands Agents SDK and Amazon Bedrock!
+You've just learned to create a real AI Agent using Strands Agents SDK and Amazon Bedrock!
 
 - Built an agent with 2 custom local tools (`get_return_policy`, `get_product_info`)
 - Tested the agentic loop — the agent selects tools automatically based on context
-- Established the foundation for the next modules
+- Established the foundation for the upcoming modules
 
-Current limitations you'll address in upcoming modules:
+Current limitations you'll address in next steps:
 
 - No knowledge base integration — knowledge is hardcoded into the tools
 - No memory — the agent doesn't remember past conversations

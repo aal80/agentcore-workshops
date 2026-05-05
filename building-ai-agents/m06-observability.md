@@ -71,6 +71,10 @@ Trace view lists all traces from your agents in this account. To work with trace
 
 ![](./images/m06-img3.png)
 
+## Congratulations!
+
+You've completed the workshop! 
+
 ## Next Steps
 
 - Proceed to [Module 7](m07-conclusion.md) to summarize what you've learned and see a list of further learning materials. 

@@ -35,35 +35,21 @@ When the agent starts a conversation, `AgentCoreMemorySessionManager` class prov
 
 ## Step 1: Before enabling memory
 
-Before you add memory capabilities to your agent, let's illustrate the problem. 
+Before you add memory capabilities to your agent, let's illustrate the problem.
 
-Update `agent.py` so only the prompt asking about overheating will be active, as shown below, and test the agent:
-
-```python
-if __name__ == "__main__":
-    # Prompts for Module 3 - uncomment when instructed
-    prompt = "My MacBook Pro overheating during video editing, what's the return policy?"
-    # prompt = "What was my previous problem?"
-```
+Start the agent and ask about an overheating issue:
 
 ```bash
-make test-agent-locally
+make run-agent-locally
 ```
 
-Then switch to the follow-up prompt and run the test again:
+Type: `My MacBook Pro overheating during video editing, what's the return policy?`
 
-```python
-if __name__ == "__main__":
-    # Prompts for Module 3 - uncomment when instructed
-    # prompt = "My MacBook Pro overheating during video editing, what's the return policy?"
-    prompt = "What was my previous problem?"
-```
+Wait for the agent to answer. 
 
-```bash
-make test-agent-locally
-```
+Type: `What was my previous problem?`
 
-The agent has no idea what you're referring to:
+The agent has no idea what you've asked it just a moment ago:
 
 ```
 I don't have access to your previous conversation history, so I can't see what your previous problem was. 
@@ -74,13 +60,14 @@ To help you effectively, could you please share some details about:
 - When the problem started
 ```
 
-It starts each run completely fresh. This is exactly the limitation you're fixing.
+It starts each iteration completely fresh. This is exactly the limitation you're fixing.
 
 ## Step 2: Enable AgentCore Memory
 
-Open [terraform/workshop.tf](terraform/workshop.tf) and uncomment the `memory` module:
+Open `./terraform/workshop.tf` and uncomment the `memory` module:
 
 ```hcl
+# --- Module 3: Uncomment to deploy AgentCore Memory
 module "memory" {
   source       = "./memory"
   project_name = local.project_name
@@ -94,10 +81,9 @@ Then deploy changes:
 make deploy-infra
 ```
 
-This creates the AgentCore Memory resources with two strategies configured and writes the Memory ID to `tmp/memory_id.txt`.
+This creates the AgentCore Memory resources with two strategies configured and writes the Memory ID to `tmp/memory_id.txt` so you can test it locally. 
 
-Deployment can take several minutes. In the meanwhile, explore `./terraform/module/memory` resources, for example, this is how you define the memory and strategy:
-
+Memory deployment can take several minutes. In the meanwhile, explore `./terraform/module/memory` resources. For example, this is how you define the memory and strategy:
 
 ```hcl
 resource "aws_bedrockagentcore_memory" "customer_support" {
@@ -123,7 +109,7 @@ Once Terraform completes, verify the memory resources were created using the AWS
 
 ## Step 3: Understand AgentCoreMemorySessionManager usage
 
-The memory configuration for Agent is implemented in [src/agent/memory_config.py](src/agent/memory_config.py). Explore this file to understand what's being configured. Memory ID is retrieved from an environment variable, `AgentCoreMemoryConfig` defines retrieval config, and an instance of `AgentCoreMemorySessionManager` is created:
+The memory configuration for Agent is implemented in `./src/agent/memory_config.py`. Explore this file to understand what's being configured. Memory ID is retrieved from an environment variable, `AgentCoreMemoryConfig` defines memory configuration, and an instance of `AgentCoreMemorySessionManager` is created:
 
 ```python
 MEMORY_ID = os.environ.get("MEMORY_ID")
@@ -157,37 +143,21 @@ agent = Agent(
 
 ## Step 4: Repeat the test with memory enabled
 
-Repeat the same two runs from previous step.
+Repeat the same two runs from Step 1. Restart your agent by running
+
+```bash
+make run-agent-locally
+```
 
 **First run** — same prompt, now with memory enabled:
 
-```python
-if __name__ == "__main__":
-    # Other questions
-    prompt = "My MacBook Pro overheating during video editing, what's the return policy?"
-    # prompt = "What was my previous problem?"
-```
+Type: `My MacBook Pro overheating during video editing, what's the return policy?`
 
-```bash
-make test-agent-locally
-```
+The agent answers as before, but this time the agent immediatelly persists conversation in the short-term memory. 
 
-The agent answers as before, but this time the conversation is stored in the Short-term Memory. AgentCore asynchronously extracts it into Long-term memory — wait for about a minute before the next run.
+**Second run** — ask the follow-up without any additional context:
 
-**Second run** — switch back to the follow-up:
-
-```python
-if __name__ == "__main__":
-    # Other questions
-    # agent("My MacBook Pro overheating during video editing, what's the return policy?")
-    agent("what was my previous problem?")
-```
-
-```bash
-make test-agent-locally
-```
-
-This time the agent recalls the MacBook Pro overheating issue from the previous session — without you mentioning it. 
+Type: `What was my previous problem?`
 
 ```
 Your previous problem was **overheating issues with your MacBook Pro specifically during video editing**. 
@@ -196,6 +166,8 @@ Since you mentioned this is a new MacBook Pro that you use for video editing wor
 intensive tasks like video editing is a common concern, especially when rendering large files or 
 using demanding software.
 ```
+
+In addition, within a few minutes AgentCore Memory asynchronously extracts information from short-term memory and stores it in the long-term memory, so memory can persist across different sessions of the same user as well.
 
 That's memory persistance, consolidation, extraction, and retrieval in action!
 

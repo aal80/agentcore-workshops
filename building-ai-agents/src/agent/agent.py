@@ -10,6 +10,7 @@ from memory_config import session_manager
 import asyncio
 from logger import get_logger
 from mcp_client import mcp_tools_list
+import os
 
 l = get_logger("agent")
 
@@ -22,21 +23,20 @@ tools = [
     mcp_tools_list
 ]
 
-app = BedrockAgentCoreApp()  
-@app.entrypoint  
-async def invoke(payload, context=None):
+agent = Agent(
+    model=model,
+    system_prompt=SYSTEM_PROMPT,
+    tools=tools,
+    session_manager=session_manager,
+)
+
+app = BedrockAgentCoreApp()
+@app.entrypoint
+async def invoke(payload, _context=None):
     user_prompt = payload.get("prompt", "Hey there!")
-    actor_id   = payload.get("actor_id", "customer-123")
-    session_id = context.session_id if context else str(__import__("uuid").uuid4())
 
     l.info(f"ℹ️ user_prompt={user_prompt}")
 
-    agent = Agent(
-        model=model,
-        system_prompt=SYSTEM_PROMPT,
-        tools=tools,
-        session_manager=session_manager,
-    )
     response = agent(user_prompt)
     response_text = response.message["content"][0]["text"]
 
@@ -44,25 +44,27 @@ async def invoke(payload, context=None):
 
     return response_text
 
+def run_locally():
+    print("-" * 20)
+    print("Welcome to the AwesomeCorp Customer Support Agent")
+    while True:
+        print("\n" + "-" * 20)
+        prompt = input("User prompt (type 'exit' to quit): ").strip()
+        if prompt.lower() == "exit":
+            break
+        if not prompt:
+            continue
+        asyncio.run(invoke({"prompt": prompt}))
+
 if __name__ == "__main__":
-    
-    # Prompts for Module 1
-    prompt = "How can you help me?"
-    # prompt = "Tell me what you know about headphones?"
-    # prompt = "My headphones are broken, what's the return policy?"
-
-    # Prompts for Module 2 - uncomment when instructed
-    # prompt = "My wireless headphones are not turning on, I need technical support"
-
-    # Prompts for Module 3 - uncomment when instructed
-    # prompt = "My MacBook Pro overheating during video editing, what's the return policy?"
-    # prompt = "What was my previous problem?"
-
-    # Prompts for Module 4 - uncomment when instructed
-    # prompt = "I have a Gaming Console Pro. My warranty serial number is MNO33333333. Am I covered?"
-
-    asyncio.run(invoke({"prompt":prompt}))
-
-    # You'll use this line in Module 5 - uncomment when instructed
-    # app.run()
+    # print("===" * 20)
+    # for k, v in sorted(os.environ.items()):
+    #     print(f"  {k}={v}")
+    # print("===" * 20)
+    if os.environ.get("AGENTCORE_RUNTIME_URL"):
+        print("Running on AgentCore, starting server...")
+        app.run()
+    else:
+        print("Running locally...")
+        run_locally()
 
