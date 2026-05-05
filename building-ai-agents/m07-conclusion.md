@@ -1,4 +1,4 @@
-# Module 8: Conclusion and Cleanup
+# Module 7: Conclusion and Cleanup
 
 ## Congratulations!
 
@@ -21,7 +21,7 @@ The patterns you learned here aren't specific to customer support. Every piece â
 
 ## Cleanup
 
-> You can skip this step if you're running the workshop in an AWS-provided accound
+> You can skip this step if you're running the workshop in an AWS-provided account
 
 ```bash
 terraform destroy

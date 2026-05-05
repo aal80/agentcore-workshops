@@ -71,21 +71,6 @@ Trace view lists all traces from your agents in this account. To work with trace
 
 ![](./images/m06-img3.png)
 
-## Congratulations!
-
-You've completed the workshop! Here's what you built across all six modules:
-
-| Module | What you added |
-|---|---|
-| 1 | Local agent prototype with `get_return_policy` and `get_product_info` tools |
-| 2 | RAG with Bedrock Knowledge Base — `get_technical_support` answers from real docs |
-| 3 | Persistent memory via AgentCore Memory — agent remembers customers across sessions |
-| 4 | Centralized, authenticated tools via AgentCore Gateway — `check_warranty_status` over MCP |
-| 5 | Production deployment on AgentCore Runtime — containerized, scalable, cloud-hosted |
-| 6 | End-to-end observability — OTEL traces, sessions, and logs in CloudWatch GenAI |
-
-You started with a handful of hardcoded mock tools running on your laptop and ended with a production-ready, multi-tenant customer support agent running on fully managed infrastructure — with memory, a knowledge base, centralized tools, authentication, and a complete observability pipeline.
-
 ## Next Steps
 
 - Proceed to [Module 7](m07-conclusion.md) to summarize what you've learned and see a list of further learning materials. 

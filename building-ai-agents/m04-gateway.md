@@ -30,7 +30,7 @@ In addition to scaling, AgentCore Gateway adds the security layer. It requires a
 
 ## Step 1: Before using Gateway
 
-Before adding Gateway, let's confirm what the current agent is doing. Make sure the test prompt in [src/agent/local_agent.py](src/agent/local_agent.py) asks a warranty question:
+Before adding Gateway, let's confirm what the current agent is doing. Make sure the test prompt in [src/agent/agent.py](src/agent/agent.py) asks a warranty question:
 
 ```python
 if __name__ == "__main__":
@@ -200,7 +200,7 @@ Now that you've confirmed Gateway is working, it's time to integrate it with the
 
 ## Step 5: Connect the agent to Gateway
 
-Unlike local tools you've implemented in the agent previously, you do not need to declare tools available through MCP and AgentCore Gateway one by one. MCP supports automatic tool discovery, so you only need to point your agent at the Gateway andpoing. 
+Unlike local tools you've implemented in the agent previously, you do not need to declare tools available through MCP and AgentCore Gateway one by one. MCP supports automatic tool discovery, so you only need to point your agent at the Gateway endpoing. 
 
 Explore [src/agent/mcp_client.py](src/agent/mcp_client.py). There are several important segments to understand. 
 

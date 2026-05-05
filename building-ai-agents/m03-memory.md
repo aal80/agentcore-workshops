@@ -179,7 +179,7 @@ The agent answers as before, but this time the conversation is stored in the Sho
 ```python
 if __name__ == "__main__":
     # Other questions
-    # agent("My new MacBook Pro overheating during video editing, what's the return policy?")
+    # agent("My MacBook Pro overheating during video editing, what's the return policy?")
     agent("what was my previous problem?")
 ```
 

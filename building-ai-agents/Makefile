@@ -42,7 +42,6 @@ test-agent-locally:
 	$(eval COGNITO_TOKEN_ENDPOINT := $(shell cat ./tmp/cognito_token_endpoint.txt))
 	$(eval COGNITO_SCOPE := $(shell cat ./tmp/cognito_scope.txt))
 	
-	
 	cd src/agent && \
 		TECH_SUPPORT_KB_ID=$(TECH_SUPPORT_KB_ID) \
 		MEMORY_ID=$(MEMORY_ID) \
