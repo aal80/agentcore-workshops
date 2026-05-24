@@ -6,15 +6,16 @@ from tools.return_policy import get_return_policy
 from tools.product_info import get_product_info
 from tools.tech_support import get_technical_support
 from system_prompt import SYSTEM_PROMPT
-from memory_config import session_manager
+from memory_config import get_session_manager
 import asyncio
+import uuid
 from logger import get_logger
 from mcp_client import mcp_tools_list
 import os
 
 l = get_logger("agent")
 
-model = BedrockModel(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", temperature=0.3)
+model = BedrockModel(model_id="us.anthropic.claude-sonnet-4-6")
 
 tools = [
     get_return_policy, 
@@ -23,12 +24,7 @@ tools = [
     mcp_tools_list
 ]
 
-agent = Agent(
-    model=model,
-    system_prompt=SYSTEM_PROMPT,
-    tools=tools,
-    session_manager=session_manager,
-)
+session_id = str(uuid.uuid4())
 
 app = BedrockAgentCoreApp()
 @app.entrypoint
@@ -36,6 +32,15 @@ async def invoke(payload, _context=None):
     user_prompt = payload.get("prompt", "Hey there!")
 
     l.info(f"ℹ️ user_prompt={user_prompt}")
+
+    session_manager=get_session_manager(session_id)
+
+    agent = Agent(
+        model=model,
+        system_prompt=SYSTEM_PROMPT,
+        tools=tools,
+        session_manager=session_manager
+    )
 
     response = agent(user_prompt)
     response_text = response.message["content"][0]["text"]
@@ -57,10 +62,6 @@ def run_locally():
         asyncio.run(invoke({"prompt": prompt}))
 
 if __name__ == "__main__":
-    # print("===" * 20)
-    # for k, v in sorted(os.environ.items()):
-    #     print(f"  {k}={v}")
-    # print("===" * 20)
     if os.environ.get("AGENTCORE_RUNTIME_URL"):
         print("Running on AgentCore, starting server...")
         app.run()

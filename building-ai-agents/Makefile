@@ -1,11 +1,3 @@
-define get-vars
-	@echo "> get-vars"
-	$(eval AWS_ACCOUNT_ID := $(shell cat ./tmp/aws_account_id.txt))
-	$(eval AWS_REGION := $(shell cat ./tmp/aws_region.txt))
-	$(info > AWS_ACCOUNT_ID=$(AWS_ACCOUNT_ID))
-	$(info > AWS_REGION=$(AWS_REGION))
-endef
-
 deploy-infra:
 	@echo "Running terraform apply"
 	cd terraform && \
@@ -16,21 +8,6 @@ destroy:
 	@echo "Destroying everything..."
 	cd terraform && terraform destroy
 	rm -rf tmp
-
-test-vars:
-	$(call get-vars)
-
-install-qemu:
-	@echo "> Installing QEMU"
-	docker run --privileged --rm tonistiigi/binfmt --install arm64
-	ls /proc/sys/fs/binfmt_misc/qemu-aarch64
-	mount | grep binfmt_misc
-
-login-to-ecr:
-	$(call get-vars)
-	@echo "> Logging in into ECR..."
-	docker logout "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-	aws ecr get-login-password | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
 run-agent-locally:
 	@echo "Run agent locally..."
@@ -91,20 +68,19 @@ test-gateway:
 		-d '{"jsonrpc":"2.0","id":"1","method":"tools/list","params":{}}' \
 		| jq .
 
-build-and-push-agent:
-	@echo "> Building agent container image..."
-	$(call get-vars)
-	$(eval ECR_REPO_URL := $(shell cat ./tmp/ecr_repo_url.txt))
+build-agent-package:
+# 	rm -rf ./tmp/agent_package
+# 	rm -rf ./tmp/agent_package/agent.zip
+	mkdir -p ./tmp
 	cd src/agent && \
-		docker buildx build \
-			--platform linux/arm64 \
-			--no-cache \
-			--load \
-			-t "$(ECR_REPO_URL):latest" \
-			.
-
-	@echo "> Pushing agent image to ECR..."
-	docker push "$(ECR_REPO_URL):latest"
+		uv pip install \
+			--python-platform aarch64-manylinux2014 \
+			--python-version 3.13 \
+			--target=./../../tmp/agent_package/dependencies \
+			--only-binary=:all: \
+			-r pyproject.toml
+	cd tmp/agent_package/dependencies && zip -r ../agent.zip .
+	cd src/agent && zip ./../../tmp/agent_package/agent.zip *.py tools/*.py
 
 invoke-agent:
 	@echo "Invoking agent...."

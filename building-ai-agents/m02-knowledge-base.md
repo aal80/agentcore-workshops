@@ -1,6 +1,6 @@
 # Module 2: Adding a Knowledge Base
 
-In the previous module you built an agent with tools that return hardcoded mock data. In this module you'll replace such a tool with a real **Bedrock Knowledge Base** backed by S3 vector storage, so the `get_technical_support` tool can answer questions from actual documentation.
+In the previous module you built an agent with in-process tools that return hardcoded mock data. In this module you'll add a new tool, this time integrated with a real **Bedrock Knowledge Base** backed by S3 vector storage. This new `get_technical_support` tool will answer questions from the actual enterprise documentation.
 
 ![](./images/m02-arch.png)
 
@@ -8,24 +8,24 @@ By the end of this module your agent will implement a RAG workflow by querying a
 
 ## Knowledge Bases and RAG architecture
 
-When a user asks a technical support question, the agent needs to find the right answer from a large set of documents. Rather than injecting all this knowledge into every prompt (expensive and limited by context size), you're going to use a technique called **Retrieval-Augmented Generation (RAG)**:
+When user asks a technical support question, the agent needs to find the right answer from a large set of documents. Rather than injecting all this knowledge into every prompt (expensive and limited by context size), you're going to use a technique called **Retrieval-Augmented Generation (RAG)**:
 
 ![](./images/m02-rag-arch.png)
 
 * **Ingestion** — you upload source documents (text files in this module) to an S3 bucket. Then you configure a **Data Source** to point at that bucket and trigger an **ingestion job**. In this module this will be fully automated with Terraform. 
-* **At index time** — Knowledge Base Data Source will read the documents, split them into chunks and converted each chunk into a vector embedding (a list of numbers that captures the semantic meaning of the text) using **Amazon Titan Embed v2**. These embeddings are then stored in the S3 vector index. This is fully automatic. 
-* **At query time** — the user's prompt is embedded the same way, then a similarity search finds the chunks whose embeddings are closest to the question embedding. Closeness in vector space means similarity in meaning. Corresponding chunks are returned back to your agent. 
-* **Generation** — The agent passes retrieved chunks to the LLM as context, and the LLM composes an answer grounded in knowledge.
+* **At index time** — Knowledge Base Data Source will read the documents, split them into chunks and convert each chunk into a vector embedding (a list of numbers that captures the semantic meaning of the text) using **Amazon Titan Embed v2** model. These embeddings are then stored in the S3 vector index. This is fully automatic. 
+* **At query time** — the user's prompt is embedded the same way, then a similarity search finds the chunks in the vector storage whose embeddings are closest to the prompt embedding. Closeness in vector space means similarity in meaning. Corresponding chunks are returned back to your agent. 
+* **Generation** — The agent passes retrieved chunks to the LLM as context, and the LLM composes an answer grounded in real knowledge.
 
 ## Before you start implementing
 
-Start the agent and ask a technical support question:
+Let's see "before" and "after". Start the agent and ask a technical support question:
 
 ```bash
 make run-agent-locally
 ```
 
-Type: `My wireless headphones are not turning on, I need technical support`
+Ask your agent: `My wireless headphones are not turning on, I need technical support`
 
 The agent responds with some information but cannot provide real technical support since `get_technical_support` tool is not implemented yet:
 
@@ -56,9 +56,9 @@ Then deploy:
 make deploy-infra
 ```
 
-Terraform will perform the following actions:
+This runs `terraform plan && terraform apply` command. Terraform will perform the following actions:
 
-1. Create an S3 bucket to store original knowledge documents and upload the 6 documentation files from `./knowledge-base`. Explore these files in VS Code to see what information is going into the Knowledge Base.
+1. Create an S3 bucket to store original knowledge documents and upload the 6 documentation files from `./knowledge-base`. **Explore these files in VS Code to see what information is going into the Knowledge Base.**
 1. Create an S3 vector bucket and index (1024 dimensions, cosine similarity, float32)
 1. Create the **Bedrock Knowledge Base** and configure it to use **Amazon Titan Embed v2 model**.
 1. Start an ingestion job to embed and index all documents
@@ -78,9 +78,12 @@ Once deployment completes, monitor the ingestion progress using AWS Console:
 
 ## Step 2: Verify the Knowledge Base is working
 
-Once ingestion is complete, test it directly from the AWS Console:
+Once you confirmed that ingestion is complete, let's test it directly from the AWS Console:
 
-1. Return to the Tech Support knowledge base page, click the **Test knowledge base** button on top right. 
+1. Return to the Tech Support knowledge base page (one page back), click the **Test knowledge base** button on top right. 
+
+    ![](./images/m02-test-kb-button.png)
+
 1. Select `Retrieval only: data sources`, this restricts Knowledge Base to return information retrieved from the vector database only, without any additional information added by the model. 
 1. In the test panel, type `How do I fix Wi-Fi connection problems` and hit **Enter**.
 
@@ -162,7 +165,7 @@ The agent is now grounding it's answers using real documentation rather than har
 ## How it works under the hood
 
 1. The agent receives the user's prompt, passes it to LLM along with the list of all available tools. 
-1. LLM decides that `get_technical_support` is the right tool to use 
+1. LLM reasons that `get_technical_support` is the right tool to use 
 1. The agent calls `get_technical_support` tool
 1. The tool calls `strands_tools.retrieve`, a built-in Strands tool that wraps the Bedrock Knowledge Base API, passing the issue description as the query text
 1. Knowledge Base embeds the query using Titan Embed v2 and performs a vector similarity search against the S3 index

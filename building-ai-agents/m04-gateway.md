@@ -1,10 +1,10 @@
 # Module 4: Scaling with AgentCore Gateway & Identity
 
-In Module 3 your agent gained persistent memory. But every tool it uses — `get_return_policy`, `get_product_info`, `get_technical_support` — lives directly in its own codebase.
+In Module 3, your agent gained persistent memory. But every tool it uses — `get_return_policy`, `get_product_info`, `get_technical_support` — still lives directly in its own codebase.
 
 Imagine you now have to build several new agents - a Sales Agent that needs `get_product_info`, a Returns Agent that needs `get_return_policy`, and an Inventory Agent that needs both. You'd copy the same tool code into every agent. Any fix or change has to be replicated everywhere. There's no central place to control which agent is allowed to call which tool.
 
-In this module you'll solve this with **Amazon Bedrock AgentCore Gateway**. Gateway converts a wide variety of targets, such as Lambda functions or HTTP endpoints, into [Model Context Protocol (MCP)](https://modelcontextprotocol.io/docs/getting-started/intro) endpoints — a standard that any agent framework understands. Your agents connect to a single Gateway URL and discover all available tools through the MCP protocol, regardless of where the underlying tool implementations are deployed.
+In this module you'll solve this with **Amazon Bedrock AgentCore Gateway**. Gateway converts a wide variety of targets, such as Lambda functions or HTTP services, into [Model Context Protocol (MCP)](https://modelcontextprotocol.io/docs/getting-started/intro) endpoints — a standard that any agent framework understands. Your agents connect to a single Gateway URL and discover all available tools through the MCP protocol, regardless of where the underlying tool implementations are deployed.
 
 ![](./images/m04-arch.png)
 
@@ -29,9 +29,9 @@ In this module you'll see how AgentCore Gateway integrates with AgentCore Identi
 
 **Outbound authentication** — When the Gateway invokes a downstream target (such as a Lambda function), it can use either OAuth2 access tokens, API Keys, or AWS IAM role associated with the Gateway to authorize that call. This means the agent NEVER persists long-lived credentials for downstream resources.
 
-## Step 1: Before using Gateway
+## Step 1: Before adding the Gateway
 
-Before adding Gateway, let's confirm what the current agent is doing. Start the agent and ask a warranty question:
+Before adding the Gateway, let's confirm what the current agent is doing. Start the agent and ask a warranty question:
 
 ```bash
 make run-agent-locally
@@ -63,10 +63,10 @@ make deploy-infra
 This will:
 
 1. Deploy a Lambda function containing `check_warranty_status`
-2. Create a Cognito User Pool and App Client for inbound JWT authentication
+2. Create a Cognito User Pool and App Client for inbound JWT authentication (client secret is stored in Secrets Manager)
 3. Create the AgentCore Gateway with the Cognito JWT authorizer
 4. Register the Lambda as a Gateway target, exposing the tool via MCP 
-5. Write `tmp/gateway_url.txt`, `tmp/cognito_token_endpoint.txt`, `tmp/cognito_client_id.txt`, and `tmp/cognito_client_secret_arn.txt` so you can test the gateway.
+5. Write `tmp/gateway_url.txt`, `tmp/cognito_token_endpoint.txt`, `tmp/cognito_client_id.txt`, and `tmp/cognito_client_secret_arn.txt` so you can test the gateway locally.
 
 While deployment is running, explore resources under `./terraform/module/gateway`.
 
@@ -118,7 +118,6 @@ resource "aws_bedrockagentcore_gateway_target" "check_warranty_status" {
               }
 
 ...REDACTED...
-
 ```
 
 Once Terraform completes, verify the Gateway is active in the AWS Console:
@@ -126,9 +125,10 @@ Once Terraform completes, verify the Gateway is active in the AWS Console:
 1. Open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/)
 2. In the left navigation, go to **Build → Gateway**
 3. You should see `<prefix>-customersupport-gw` with status **Ready**
-4. Click into it and confirm the **Targets** tab shows the Lambda target with the `check_warranty_status` tool and `Ready` status.
+4. Click into it and confirm the **Targets** section shows the Lambda target with the `check_warranty_status` tool and `Ready` status.
+5. Confirm **Inbound Auth** section displays Cognito configuration. 
 
-## Step 3: Understand the centralized tool
+## Step 3: Understand the remote check_warranty_status tool
 
 Examine the Lambda function code at `./src/lambdas/tool-check-warranty-status/handler.py`. It implements a mock warranty database, checking warranty coverage given a product serial number and optionally a customer email: 
 
@@ -139,13 +139,15 @@ def lambda_handler(event, context):
     # looks up warranty coverage from customer database
 ```
 
-The tool schema that describes this to the Gateway is defined inline in `./terraform/gateway/gateway.tf` as an `inline_payload` block (illustrated above). It tells Gateway the tool name, description, and input parameters — the same information the `@tool` docstring would provide locally.
+The tool schema that describes this to the Gateway is defined in `./terraform/gateway/gateway.tf` as an `inline_payload` block (shown above). It tells Gateway the tool name, description, and input parameters — the same information the `@tool` docstring would provide locally.
+
+When configuring AgentCore Gateway with HTTP or MCP target types, you can use auto-discovery capability to discover schemas automatically. 
 
 ## Step 4: Test AgentCore Gateway is working 
 
-The Gateway requires a valid JWT token for every request. Let's test that one can be fetched using Cognito credentials. 
+> This step is for testing and illustration purposes only! When running on AgentCore, the agent will fetch required access tokens on its own.
 
-> This step is for testing purposes only! When running on AgentCore, the agent will fetch required access tokens on its own.
+The Gateway requires a valid JWT token for every request. Let's test that one can be fetched using Cognito credentials. 
 
 Run below command:
 
@@ -195,7 +197,7 @@ Response:
 }
 ```
 
-Now that you've confirmed Gateway is working, it's time to integrate it with the agent.
+Now that you've confirmed the Gateway is working, it's time to integrate it with the agent.
 
 ## Step 5: Connect the agent to Gateway
 
@@ -252,7 +254,6 @@ mcp_tools_list = mcp_client.list_tools_sync()
 The agent code automatically picks up the new list of MCP tools (see `agent.py`)
 
 ```python
-# agent.py
 from mcp_client import mcp_tools_list
 
 tools = [
@@ -268,10 +269,7 @@ agent = Agent(
     tools=tools,
     session_manager=session_manager,
 )
-
 ```
-
-The agent sees remote tools exactly like a local `@tool`-decorated function.
 
 ## Step 6: Test the agent locally with Gateway tools
 
@@ -309,7 +307,7 @@ Your warranty is active and valid, so you're well protected! You have coverage f
 6. Lambda executes and returns the result
 7. Gateway returns the result back to the MCP client, which surfaces it to the agent
 
-Authentication is enforced at Step 2 — no valid JWT means no tool access!
+Authentication is enforced at Step 2 — valid JWT is mandatory for tool access!
 
 ## Congratulations!
 

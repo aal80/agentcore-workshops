@@ -1,11 +1,5 @@
-data "aws_ecr_image" "agent" {
-  repository_name = var.ecr_repo_name
-  image_tag       = "latest"
-}
-
 locals {
   project_name_underscore = replace(var.project_name, "-", "_")
-  agent_ecr_uri           = "${var.ecr_repo_url}@${data.aws_ecr_image.agent.image_digest}"
 }
 
 resource "aws_iam_role" "agent" {
@@ -41,11 +35,6 @@ resource "aws_iam_role_policy" "agent" {
           # To use Bederock Knowledge Base and AgentCore Memory
           "bedrock:*",
           "bedrock-agentcore:*",
-          
-          # To pull images from ECR
-          "ecr:GetAuthorizationToken",
-          "ecr:BatchGetImage",
-          "ecr:GetDownloadUrlForLayer",
 
           # To send telemetry to CloudWatch
           "logs:CreateLogGroup",
@@ -72,19 +61,27 @@ resource "aws_bedrockagentcore_agent_runtime" "agent" {
   role_arn           = aws_iam_role.agent.arn
 
   agent_runtime_artifact {
-    container_configuration {
-      container_uri = local.agent_ecr_uri
+    code_configuration {
+      entry_point = ["agent.py"]
+      runtime     = "PYTHON_3_13"
+      code {
+        s3 {
+          bucket = aws_s3_object.agent_zip.bucket
+          prefix = aws_s3_object.agent_zip.key
+        }
+      }
     }
   }
 
   environment_variables = {
-    MEMORY_ID = var.agentcore_memory_id
-    TECH_SUPPORT_KB_ID=var.tech_support_knowledgebase_id
-    GATEWAY_URL=var.gateway_url
-    COGNITO_CLIENT_ID=var.cognito_client_id
-    COGNITO_CLIENT_SECRET_ARN=var.cognito_client_secret_arn
-    COGNITO_TOKEN_ENDPOINT=var.cognito_token_endpoint
-    COGNITO_SCOPE=var.cognito_scope
+    AGENT_ZIP_ETAG            = filemd5("${path.root}/../tmp/agent_package/agent.zip")
+    MEMORY_ID                 = var.agentcore_memory_id
+    TECH_SUPPORT_KB_ID        = var.tech_support_knowledgebase_id
+    GATEWAY_URL               = var.gateway_url
+    COGNITO_CLIENT_ID         = var.cognito_client_id
+    COGNITO_CLIENT_SECRET_ARN = var.cognito_client_secret_arn
+    COGNITO_TOKEN_ENDPOINT    = var.cognito_token_endpoint
+    COGNITO_SCOPE             = var.cognito_scope
   }
 
   network_configuration {
@@ -98,21 +95,22 @@ locals {
   agent_runtime_url         = "https://bedrock-agentcore.${var.region}.amazonaws.com/runtimes/${local.agent_runtime_arn_encoded}/invocations/"
 }
 
-output "runtime_url" {
-  value = local.agent_runtime_url
-}
-
 output "runtime_arn" {
   value = aws_bedrockagentcore_agent_runtime.agent
-}
-
-resource "local_file" "agent_runtime_url" {
-  content  = local.agent_runtime_url
-  filename = "${path.root}/../tmp/agent_runtime_url.txt"
 }
 
 resource "local_file" "agent_runtime_arn" {
   content  = local.agent_runtime_arn
   filename = "${path.root}/../tmp/agent_runtime_arn.txt"
 }
+
+# output "runtime_url" {
+#   value = local.agent_runtime_url
+# }
+
+# resource "local_file" "agent_runtime_url" {
+#   content  = local.agent_runtime_url
+#   filename = "${path.root}/../tmp/agent_runtime_url.txt"
+# }
+
 

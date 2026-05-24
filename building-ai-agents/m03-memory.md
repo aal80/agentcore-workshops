@@ -1,16 +1,14 @@
 # Module 3: Personalizing the Agent with Memory
 
-In the previous module, your agent gained the ability to answer technical questions using grounded facts stored in the Bedrock Knowledge Base. But it still has no recollection of the past — every conversation starts from scratch. Ask it "What did I ask you about last time?" and it has no idea.
+In the previous module, your agent gained the ability to answer technical questions using grounded facts stored in the Bedrock Knowledge Base. But it still has no recollection of the past — every conversation turn starts from scratch. Ask it "What did we just talk about?" - and it has no idea.
 
-In this module you'll add **Amazon Bedrock AgentCore Memory** so the agent can remember customer preferences, facts, and past interaction episodes across sessions.
+In this module you'll add **Amazon Bedrock AgentCore Memory** to your agent, so it can remember customer preferences, facts, and past interaction episodes across sessions.
 
 ![](./images/m03-arch.png)
 
 ## How AgentCore Memory works
 
-AgentCore Memory is a managed service that sits between your agent and the conversation history. 
-
-It organizes memory into two tiers:
+AgentCore Memory is a managed service provides your agent with conversation history. It organizes memory into two tiers:
 
 - **Short-term memory (STM)** — the current session's conversation, stored after user, agent, and model exchange messages. 
 - **Long-term memory (LTM)** — persistent patterns and facts, extracted asynchronously from STM and organized by namespace using vector embeddings for semantic retrieval.
@@ -21,21 +19,21 @@ You can configure various **strategies** that define what kind of information to
 
 | Strategy | What it captures | Example |
 |---|---|---|
-| `USER_PREFERENCE` | Behavioral patterns, preferences, habits | "prefers ThinkPad, budget under $1200" |
+| `USER_PREFERENCE` | Behavioral patterns, preferences, habits | "the user prefers ThinkPad, budget under $1200" |
 | `SEMANTIC` | Factual information from conversations | "MacBook Pro order #MB-78432 under warranty" |
-| `SUMMARY` | Condensed real-time summaries of a single session — key topics, tasks, decisions | "User reported overheating issue, agent recommended cleaning vents and updating drivers" |
+| `SUMMARY` | Condensed real-time summaries of a single session - key topics, tasks, decisions | "User reported overheating issue, agent recommended cleaning vents and updating drivers" |
 | `EPISODIC` | Structured sequences of past interactions across sessions, including situation, intent, and outcome; also generates cross-episode reflections | "Agent resolved a deployment error by switching tools after first attempt failed" |
-| `CUSTOM` | Your custom extraction rules — you define the schema, namespaces, and consolidation logic | A restaurant agent that deduplicates and merges dining preferences using its own business logic before storing |
+| `CUSTOM` | Your custom extraction rules - you define the schema, namespaces, and consolidation logic | A restaurant agent that deduplicates and merges dining preferences using its own business logic before storing |
 
-Each user's memories are isolated using **namespaces** with `{actorId}` as a placeholder — so `support/customer/{actorId}/preferences/` becomes a unique memory space per user at runtime.
+Each user's memories are isolated using **namespaces** with `{actorId}` as a placeholder — so `support/customer/{actorId}/preferences/` becomes a unique memory space per user at runtime. 
 
-When the agent starts a conversation, `AgentCoreMemorySessionManager` class provided by Strands SDK automatically:
+When an agent starts a conversation, `AgentCoreMemorySessionManager` class, provided by the Strands SDK, automatically:
 1. Retrieves relevant memories and injects them into the context
-2. Stores the new conversation memory for async LTM processing
+1. Stores the new conversation memory for async LTM processing
 
 ## Step 1: Before enabling memory
 
-Before you add memory capabilities to your agent, let's illustrate the problem.
+Before you add memory capabilities to your agent, let's illustrate the problem:
 
 Start the agent and ask about an overheating issue:
 
@@ -45,9 +43,9 @@ make run-agent-locally
 
 Type: `My MacBook Pro overheating during video editing, what's the return policy?`
 
-Wait for the agent to answer. 
+Wait for the agent to reply. 
 
-Type: `What was my previous problem?`
+Now ask it: `What was my previous problem?`
 
 The agent has no idea what you've asked it just a moment ago:
 
@@ -81,7 +79,7 @@ Then deploy changes:
 make deploy-infra
 ```
 
-This creates the AgentCore Memory resources with two strategies configured and writes the Memory ID to `tmp/memory_id.txt` so you can test it locally. 
+This creates AgentCore Memory resources with two strategies configured and writes the Memory ID to `tmp/memory_id.txt` so you can test it locally. 
 
 Memory deployment can take several minutes. In the meanwhile, explore `./terraform/module/memory` resources. For example, this is how you define the memory and strategy:
 
@@ -117,7 +115,9 @@ ACTOR_ID = "customer-123"   # In production this comes from the authenticated us
 
 memory_config = AgentCoreMemoryConfig(
     memory_id=MEMORY_ID,
-    session_id=str(uuid.uuid4()),
+    batch_size=1, 
+    flush_interval_seconds=1, 
+    session_id=session_id, # passed by the client
     actor_id=ACTOR_ID,
     retrieval_config={
         "support/customer/{actorId}/semantic/":    RetrievalConfig(top_k=3, relevance_score=0.2),
@@ -128,7 +128,7 @@ memory_config = AgentCoreMemoryConfig(
 session_manager = AgentCoreMemorySessionManager(memory_config)
 ```
 
-Now open [src/agent/agent.py](src/agent/agent.py). The memory integration is already wired in:
+Now open [src/agent/agent.py](src/agent/agent.py), see around line 38. The memory integration is already wired in:
 
 ```python
 from memory_config import session_manager

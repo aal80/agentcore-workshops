@@ -22,9 +22,9 @@ In this module you'll deploy the agent to **Amazon Bedrock AgentCore Runtime** �
 
 AgentCore Runtime runs your agent in managed microVMs. You provide the agent code either as a .zip file or container image hosted in Amazon Elastic Container Registry (ECR). The runtime handles the rest - routing requests to your container, enforcing authorization, managing session context, auto-scaling, emitting telemetry to CloudWatch, and more. 
 
-## Step 1: How agent.py runs in the cloud
+## Step 1: Understand how agent.py runs in the cloud
 
-No code changes are needed. Open `./src/agent/agent.py` and look at the bottom:
+No code changes are needed. Open `./src/agent/agent.py`, around line 64:
 
 ```python
 if __name__ == "__main__":
@@ -36,12 +36,14 @@ if __name__ == "__main__":
         run_locally()
 ```
 
-When deployed, AgentCore Runtime sets `AGENTCORE_RUNTIME_URL` environment variable. The agent detects this and calls `app.run()`, which starts the HTTP server that the runtime calls on every invocation. Locally, the same file runs the interactive REPL loop you've been using throughout the workshop.
+When deployed to AgentCore, the AgentCore Runtime sets `AGENTCORE_RUNTIME_URL` environment variable. The agent detects this and calls `app.run()`, which starts the HTTP server that the runtime calls on every invocation. 
 
-The four key pieces that make the cloud path work:
+![](./images/m05-agent-listening-on-8080.png)
+
+The AgentCore SDK provides a rapid way of implementing required web interfaces via the `BedrockAgentCoreApp` class. The four key pieces are:
 
 ```python
-# 1. Import the runtime application class
+# 1. Import the BedrockAgentCoreApp class
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 
 # 2. Create the application instance
@@ -61,25 +63,15 @@ if os.environ.get("AGENTCORE_RUNTIME_URL"):
 
 The `context` object passed to `invoke` contains `session_id` and `request_headers` — the runtime populates `session_id` automatically, which `memory_config.py` uses for per-session AgentCore Memory isolation.
 
-## Step 2: Build and push the agent image
+## Step 2: Package your agent image
 
-### Login to ECR
-
-```bash
-make login-to-ecr
-```
-
-This authenticates Docker against your ECR registry using the account ID and region cached in `./tmp/`.
-
-Build and push in one step:
+To package your agent as a .zip file, run the following command:
 
 ```bash
-make build-and-push-agent
+make build-agent-package
 ```
 
-This builds the image tagged with the ECR URI and pushes it to ECR.
-
-> **Note:** The first build takes a few minutes. Subsequent builds are faster because most layers are cached.
+This installs all the dependencies and packages your agent code under `./tmp/agent_package/agent.zip`.
 
 ## Step 3: Deploy agent to AgentCore Runtime
 
@@ -91,8 +83,6 @@ module "runtime" {
   source                        = "./runtime"
   project_name                  = local.project_name
   region                        = data.aws_region.current.region
-  ecr_repo_name                 = aws_ecr_repository.agent.name
-  ecr_repo_url                  = aws_ecr_repository.agent.repository_url
   agentcore_memory_id           = module.memory.memory_id
   tech_support_knowledgebase_id = module.knowledge_base.kb_id
   gateway_url                   = module.gateway.gateway_url
@@ -109,7 +99,7 @@ Deploy the changes to cloud:
 make deploy-infra
 ```
 
-Deployment takes a few minutes. While waiting, explore the resources under the `./terraform/runtime/` module.
+Deployment takes a few minutes. While waiting, explore the resources under the `./terraform/runtime/` module. See how `agent.zip` is uploaded to S3 and the agent resources are created. 
 
 ## Step 4: Test the newly deployed agent
 
@@ -148,7 +138,7 @@ AgentCore Runtime automatically emits simple text-based logs to CloudWatch Logs.
 
 Your agent now runs as a fully managed cloud service:
 
-- **Containerized** — reproducible, portable, version-controlled via ECR image tags
+- **Packaged** — reproducible, portable, version-controlled via S3 versioned objects
 - **Scalable** — AgentCore Runtime handles traffic spikes automatically
 - **Observable** — every invocation is logged in CloudWatch GenAI Observability
 - **Secure** — the runtime IAM role follows least-privilege; Cognito token propagation keeps the Gateway auth chain intact

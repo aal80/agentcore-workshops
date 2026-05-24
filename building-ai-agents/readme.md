@@ -4,7 +4,7 @@
 
 [Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/) helps you deploying and operating AI agents securely at scale - using any framework and model. It provides you with the capability to move from prototype to production faster.
 
-In this workshop, you will go through an end-to-end journey from prototype to production building a Customer Support Agent. You will use the [Strands Agents SDK](https://strandsagents.com/), a simple-to-use, code-first framework for building agents and the Claude Haiku 4.5 model from [Amazon Bedrock](https://aws.amazon.com/bedrock). 
+In this workshop, you will go through an end-to-end journey from prototype to production building a Customer Support Agent. You will use the [Strands Agents SDK](https://strandsagents.com/), a simple-to-use, code-first framework for building agents and the Claude Sonnet 4.6 model via [Amazon Bedrock](https://aws.amazon.com/bedrock). 
 
 ![](./images/intro.png)
 
@@ -20,8 +20,6 @@ In this workshop, you will go through an end-to-end journey from prototype to pr
 * [Module 5: Running in cloud - Deploying, scaling, and monitoring your agent on AgentCore Runtime ](./m05-runtime.md)
 * [Module 6: Monitoring your agent with AgentCore Observability ](./m06-observability.md)
 * [Module 7: Conclusion ](./m07-conclusion.md)
-
-
 
 ## Let's get started!
 

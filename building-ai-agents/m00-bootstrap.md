@@ -22,20 +22,6 @@ Make sure you have the following installed and configured:
 | Terraform | 1.5+ | `terraform --version` |
 | make | any | `make --version` |
 
-### Install QEMU (on non-ARM64 machines only)
-
-> You can skip this step if you're running on arm64, e.g. macOS with Apple Silicon or AWS Graviton instances.
-
-AgentCore requires container images built for ARM64. If you're running on an x86_64, install QEMU to enable cross-platform builds:
-
-```bash
-docker run --privileged --rm tonistiigi/binfmt --install arm64
-ls /proc/sys/fs/binfmt_misc/qemu-aarch64
-mount | grep binfmt_misc
-```
-
-This registers the ARM64 QEMU emulator with the Linux kernel via `binfmt_misc`, allowing Docker to execute ARM64 binaries during the build. You only need to do this once per machine.
-
 ### Install make, jq, uv, boto3
 
 Install `make`, `jq`, `uv`. Below commands are using `yum`, depending on your OS you might need to use `brew`, `apt-get`, or similar package managers.
@@ -73,36 +59,9 @@ Below are the assets you can find in Visual Studio Code that you'll be using thr
 1. Main editing window. This is where you'll be making changes to project files. 
 1. Terminal window. This is where you'll be running commands. 
 
-## Bootstrap the infrastructure
+## Explore the infrastructure configuration
 
-The Terraform configuration in [terraform/](terraform/) sets up shared resources used across all modules. Deploy it now:
-
-```bash
-make deploy-infra
-```
-
-This runs `terraform init && terraform apply --auto-approve` and creates:
-
-- A random project name prefix to avoid naming conflicts
-- An ECR registry you'll be using later in the workshop
-- `tmp/aws_region.txt` and `tmp/aws_account_id.txt`
-
-> During the workshop you will gradually enable modules in [terraform/workshop.tf](terraform/workshop.tf). Currently all of these modules are commented.
-
-Once Terraform completes, run the following command to confirm required files under `tmp/` were created:
-
-```bash
-make test-vars
-```
-
-You should see the below output (account ID and region might have different values):
-
-```
-> AWS_ACCOUNT_ID=123123123123
-> AWS_REGION=us-west-2
-```
-
-Congratulations! You're ready to start building! 
+The Terraform configuration in [./terraform](terraform/) sets up shared resources used across all modules. Explore [terraform/workshop.tf](terraform/workshop.tf). During the workshop you will gradually enable modules in this file.
 
 ## Next Step
 

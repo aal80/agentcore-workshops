@@ -1,8 +1,8 @@
 # Module 1: Creating a simple Customer Support agent Prototype
 
-In this first module, you'll build a locally running prototype of a Customer Support Agent. Throughout this workshop, you'll evolve this prototype into a production-ready system running on Bedrock AgentCore, serving multiple customers with persistent memory, knowledge base, shared tools, and full OTEL-based observability.
+In this first module, you'll build a locally running prototype of a Customer Support Agent. Throughout this workshop, you'll evolve this prototype into a production-ready system running on Amazon Bedrock AgentCore, serving multiple customers with persistent memory, knowledge base, shared tools, and full OTEL-based observability.
 
-But to start with, your agent will run locally, use Bedrock-provided model for reasoning, and have the following tools available:
+But let's start simple. At first your agent will run locally, use Bedrock-provided Claude model for reasoning, and have the following tools available:
 
 - `get_return_policy()` - Get return policy for specific products
 - `get_product_info()` - Get product information
@@ -11,13 +11,13 @@ But to start with, your agent will run locally, use Bedrock-provided model for r
 
 ## Creating agent tools with Strands Agents SDK
 
-Let's start with creating two **local** tools - the tools that run within the same process as the agent itself. 
+Let's start with creating two in-process tools. "In-process" mean that the tools are running within the same process as the agent itself. Later in the workshop you'll also define retote tools the agent will access via the MCP protocol. 
 
-Defining local tools in Strands SDK is simple — add a `@tool` decorator to a Python method and provide a description in the docstring. Strands SDK uses the function documentation, types, and arguments to provide context on the tool to your agent. Let's see this in action. 
+Defining in-process tools in agentic frameworks like Strands SDK or LangGraph is simple — add a `@tool` decorator to a Python method and provide a description in the docstring. Strands SDK uses the function documentation, types, and arguments to provide context on the tool to your agent. Let's see this in action. 
 
 ### Tool 1: Get Return Policy
 
-**Tool Purpose:** Helps customers understand return policies for different product categories. Provides information about return windows, conditions, processes, and refund timelines. 
+Tool Purpose: Helps customers understand return policies for different product categories. Provides information about return windows, conditions, processes, and refund timelines. 
 
 ```python
 from strands.tools import tool
@@ -51,7 +51,7 @@ Explore the full file at `src/agent/tools/return_policy.py`.
 
 ### Tool 2: Get Product Information
 
-**Tool purpose:** Provides customers with product specs, warranties, features, and compatibility information to help them make informed decisions.
+Tool purpose: Provides customers with product specs, warranties, features, and compatibility information to help them make informed decisions.
 
 ```python
 from strands.tools import tool
@@ -81,19 +81,16 @@ Explore the full file: `src/agent/tools/product_info.py`
 
 ## Create and Configure the Customer Support Agent
 
-Now that you understand how to create local tools, let's see how to create the agent, attach to these tools, and run it locally.
+Now that you understand how to create in-process tools, let's see how to create an agent, attach it to these tools, and run it locally.
 
-Explore `src/agent/agent.py`. You can see that it uses Anthropic Claude Haiku 4.5 model via Bedrock, initialized with a system prompt, and the above two tools attached:
+Explore `src/agent/agent.py`. You can see that it uses Anthropic Claude Sonnet 4.6 model via Bedrock. The agent is initialized with a system prompt and has the two tools you explored earlier attached:
 
 ```python
 # See system_prompt.py for System Prompt
 from system_prompt import SYSTEM_PROMPT
 
-# Picking the model
-model = BedrockModel(
-    model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
-    temperature=0.3
-)
+# Define the model
+model = BedrockModel(model_id="us.anthropic.claude-sonnet-4-6")
 
 # The list of tools
 tools = [
@@ -103,7 +100,7 @@ tools = [
     mcp_tools_list         # Not implemented yet
 ]
 
-# Defining the agent
+# Defining the agent (inside of the invoke() method)
 agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
@@ -114,7 +111,7 @@ agent = Agent(
 
 ## Running locally vs in cloud
 
-The same `agent.py` file runs both locally and on AgentCore Runtime (you'll deploy to the cloud in Module 5). The bottom of the file detects the environment using the `AGENTCORE_RUNTIME_URL` environment variable, which AgentCore sets automatically when running in the cloud:
+The same `agent.py` file will run both on your local machine and in AWS on AgentCore Runtime (you'll deploy it in Module 5). At the bottom of `agent.py` you can see code that detects the environment using the `AGENTCORE_RUNTIME_URL` environment variable, which is always available when running on AgentCore:
 
 ```python
 if __name__ == "__main__":
@@ -126,7 +123,7 @@ if __name__ == "__main__":
         run_locally()      # starts an interactive REPL loop
 ```
 
-When running locally, `run_locally()` starts an interactive prompt loop so you can type questions and see responses without editing any code.
+When running locally, `run_locally()` starts an interactive prompt loop right in the Terminal, so you can type questions and see responses without editing any code.
 
 ## Testing the agent locally
 
@@ -136,7 +133,7 @@ Start the agent:
 make run-agent-locally
 ```
 
-> Ignore warnings about MEMORY_ID and mcp_client. You'll add these components in upcoming modules.
+> You can ignore warnings about MEMORY_ID and mcp_client. You'll add these components in upcoming modules.
 
 You'll see an interactive prompt:
 
@@ -150,26 +147,27 @@ User prompt (type 'exit' to quit):
 
 ### Test general capabilities
 
-Type: `How can you help me?`
+Ask the agent: `How can you help me?`
 
 The agent describes its capabilities as defined in the system prompt:
 
 ```
-Hello! I can assist you with a variety of things related to electronics products, including:
+Hi there! Welcome to our customer support! I'm here to help you with a range of questions and concerns related to our electronics products. Here's what I can assist you with:
 
-- **Product information and specifications** - I can provide detailed info about our electronics products
-- **Technical support and troubleshooting** - I can help diagnose and solve technical issues with your devices
-- **Return policies and warranties** - I can explain our return and warranty processes
-- **Setup guides and maintenance tips** - I can offer step-by-step instructions for using your devices
+1. Product Information - Get detailed specs, features, ...REDACTED...
+2. Return & Warranty Policies - Find out about return timeframes, ...REDACTED...
+3. Technical Support - Help with troubleshooting issues, setup guides, ...REDACTED...
 
-...REDACTED...
+Just let me know what you need help with, and I'll do my best to assist you! What can I do for you today?
 ```
 
 > Keep in mind, LLMs are non-deterministic. The response you receive is expected to differ from examples shown in this workshop.
 
+Want to know where this context is coming from? One of the sources is agent's system prompt, which you can see in `./src/agent/system_prompt.py`. Other sources include tools, knowledge base, and memory that you will be gradually adding in following modules. 
+
 ### Test the `get_product_info` tool
 
-Type: `Tell me what you know about headphones?`
+Ask the agent: `What do you know about headphones?`
 
 The agent automatically invokes `get_product_info` based on the prompt:
 
@@ -181,10 +179,10 @@ Tool #1: get_product_info
 
 Here's what I know about our headphones:
 
-**Warranty:**  
+Warranty:
 • 1-year manufacturer warranty
 
-**Specifications:**  
+Specifications:
 • Available in wired and wireless options  
 • Frequency range: 20Hz-20kHz  
 • Noise cancellation technology
@@ -193,7 +191,7 @@ Here's what I know about our headphones:
 
 ### Test the `get_return_policy` tool
 
-Type: `My headphones are broken, what's the return policy?`
+Ask the agent: `My headphones are broken, can I return them?`
 
 The agent automatically invokes `get_return_policy` based on the prompt:
 
@@ -203,17 +201,17 @@ I'll get the return policy information for headphones for you.
 Tool #1: get_return_policy
 According to our return policy for headphones:
 
-**Headphones Return Policy:**
-- **Return window:** 30 days from delivery
-- **Condition:** Must be in original condition with all included components
-- **Process:** Contact technical support to initiate the return process
-- **Refund timeline:** 5-7 business days after inspection
-- **Shipping:** Return shipping policies vary depending on your location
-- **Warranty:** Standard manufacturer warranty still applies during this period
+Headphones Return Policy:
+- Return window: 30 days from delivery
+- Condition: Must be in original condition with all included components
+- Process: Contact technical support to initiate the return process
+- Refund timeline: 5-7 business days after inspection
+- Shipping: Return shipping policies vary depending on your location
+- Warranty: Standard manufacturer warranty still applies during this period
 ...REDACTED...
 ```
 
-Type `exit` to quit. The agentic loop is working — the agent is picking the right tools automatically!
+Type `exit` to quit. The agentic loop is working! The agent is picking the right tools automatically!
 
 ## Congratulations!
 
