@@ -1,41 +1,38 @@
 # Module 0: Bootstrap
 
-This module explains how to set up your local environment and bootstrap the base AWS infrastructure required for the workshop. This takes about 5 minutes.
+This module explains how to set up your workshop environment and install required dependencies. This takes about 5 minutes.
 
-> If you're using AWS-Provided Workshop accounts the below dependencies come pre-installed. You can skip directly to the [Clone the Workshop from Github](#clone-the-workshop-from-github-section) section.
+## Enable Transaction Search 
 
-## Prerequisites (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
+This must be done in the AWS Console before deploying:
 
-- AWS Account with appropriate permissions
-- Python 3.13+ installed locally
-- AWS CLI configured with credentials
+1. Open AWS Console. When using AWS-provided workshop accounts, click the following link:
 
-## Install dependencies (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
+    ![](/images/m00-console-link.png)
+
+1. Go to **CloudWatch** -> **Settings (at the very bottom of left side menu)** -> **X-Ray traces tab**
+
+    ![](./images/m00-cw-settings-main.png)
+
+1. Click "View settings" for Transactional Search. If **Ingest OpenTelemetry spans** shows disabled, click the **Edit** button and enable it. Set **Trace indexing** to 100% to capture all traces. 
+
+    ![](./images/m00-enable-transactional-search.png)
+
+1. Enabling **Transactional Search** takes approximately 10 minutes. You do not need to wait - proceed with the next workshop steps. 
+
+## Installing prerequisites (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
+
+> If you're using AWS-provided Workshop accounts all below dependencies come pre-installed. You can skip directly to the [Clone the Workshop from Github](#clone-the-workshop-from-github-section) section.
 
 Make sure you have the following installed and configured:
 
 | Requirement | Version | Check |
 |---|---|---|
-| Python | 3.13+ | `python3 --version` |
+| Python | 3.13 | `python3 --version` |
 | uv | latest | `uv --version` |
 | AWS CLI | v2 | `aws --version` |
 | Terraform | 1.5+ | `terraform --version` |
 | make | any | `make --version` |
-
-### Install make, jq, uv, boto3
-
-Install `make`, `jq`, `uv`. Below commands are using `yum`, depending on your OS you might need to use `brew`, `apt-get`, or similar package managers.
-
-```
-# Install jq
-sudo yum install -y make jq
-
-# Install uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install boto3
-pip install boto3
-```
 
 ## Clone the Workshop from Github section
 

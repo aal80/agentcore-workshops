@@ -51,7 +51,7 @@ In addition to raw telemetry that AgentCore emits to CloudWatch, S3, or Kinesis,
 
 ### Agents
 
-Default AgentCore Runtime configuration allows for logging agent's traces in CloudWatch by means of AgentCore Observability. These traces can be seen on the AWS CloudWatch GenAI Observability dashboard. Navigate to CloudWatch -> GenAI Observability -> Bedrock AgentCore.
+Default AgentCore Runtime configuration allows for logging agent's traces in CloudWatch by means of AgentCore Observability. These traces can be seen on the Amazon CloudWatch GenAI Observability dashboard. Navigate to CloudWatch -> GenAI Observability -> Bedrock AgentCore.
 
 ![](./images/m06-img1.png)
 
