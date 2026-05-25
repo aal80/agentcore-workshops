@@ -182,7 +182,7 @@ Just let me know what you need help with, and I'll do my best to assist you! Wha
 
 > Keep in mind, LLMs are non-deterministic. The response you receive is expected to differ from examples shown in this workshop.
 
-Want to know where this context is coming from? One of the sources is agent's system prompt, which you can see in `./src/agent/system_prompt.py`. Other sources include tools, knowledge base, and memory that you will be gradually adding in following modules. 
+As expected, the agent is behaving according to what defined in system prompt. In the following modules you'll also be adding tools, knowledge base, and memory to make your agent more helpful. 
 
 ### Test the `get_product_info` tool
 
