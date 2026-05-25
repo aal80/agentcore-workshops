@@ -15,6 +15,25 @@ Let's start with creating two in-process tools. "In-process" mean that the tools
 
 Defining in-process tools in agentic frameworks like Strands SDK or LangGraph is simple — add a `@tool` decorator to a Python method and provide a description in the docstring. Strands SDK uses the function documentation, types, and arguments to provide context on the tool to your agent. Let's see this in action. 
 
+### System Prompt
+
+Explore `./src/agent/system_prompt.py`. The system prompt defines the mission of your agent - it's personality, behavior, guardrails:
+
+```python
+SYSTEM_PROMPT = """
+You are a helpful and professional customer support assistant for an electronics e-commerce company.
+
+Your role is to:
+- Provide accurate information using the tools available to you
+- Support the customer with technical information and product specifications, and maintenance questions
+- Be friendly, patient, and understanding with customers
+- Always offer additional help after answering questions
+- If you can't help with something, direct customers to the appropriate contact
+
+...REDACTED...
+"""
+```
+
 ### Tool 1: Get Return Policy
 
 Tool Purpose: Helps customers understand return policies for different product categories. Provides information about return windows, conditions, processes, and refund timelines. 
