@@ -8,7 +8,7 @@ This must be done in the AWS Console before deploying:
 
 1. Open AWS Console. When using AWS-provided workshop accounts, click the following link:
 
-    ![](/images/m00-console-link.png)
+    ![](./images/m00-console-link.png)
 
 1. Go to **CloudWatch** -> **Settings (at the very bottom of left side menu)** -> **X-Ray traces tab**
 
