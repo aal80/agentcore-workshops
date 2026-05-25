@@ -97,7 +97,7 @@ You can click `Details` to see result scores.
 
 ## Step 3: Using the `get_technical_support` tool
 
-Examine the `./src/agent/tools/tech_support.py` file. The tool reads the Knowledge Base ID from the `TECH_SUPPORT_KB_ID` environment variable at loading. Then it uses the `retrieve` tool available from Strands SDK to retrieve information from the Knowledge Base. 
+Back in the VS Code, examine the `./src/agent/tools/tech_support.py` file. The tool reads the Knowledge Base ID from the `TECH_SUPPORT_KB_ID` environment variable at loading. Then it uses the `retrieve` tool provided by the Strands SDK to retrieve information from the Knowledge Base. 
 
 ```python
 TECH_SUPPORT_KB_ID = os.environ.get("TECH_SUPPORT_KB_ID")

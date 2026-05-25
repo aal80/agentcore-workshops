@@ -182,7 +182,7 @@ Just let me know what you need help with, and I'll do my best to assist you! Wha
 
 > Keep in mind, LLMs are non-deterministic. The response you receive is expected to differ from examples shown in this workshop.
 
-As expected, the agent is behaving according to what defined in system prompt. In the following modules you'll also be adding tools, knowledge base, and memory to make your agent more helpful. 
+As expected, the agent is behaving according to what is defined in the system prompt. In the following modules you'll also add tools, knowledge base, and memory to make your agent more helpful. 
 
 ### Test the `get_product_info` tool
 
