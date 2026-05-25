@@ -130,7 +130,7 @@ Once Terraform completes, verify the Gateway is active in the AWS Console:
 
 ## Step 3: Understand the remote check_warranty_status tool
 
-Examine the Lambda function code at `./src/lambdas/tool-check-warranty-status/handler.py`. It implements a mock warranty database, checking warranty coverage given a product serial number and optionally a customer email: 
+Back in the VS Code, examine the Lambda function code at `./src/lambdas/tool-check-warranty-status/handler.py`. It implements a mock warranty database, checking warranty coverage given a product serial number and optionally a customer email: 
 
 ```python
 def lambda_handler(event, context):
