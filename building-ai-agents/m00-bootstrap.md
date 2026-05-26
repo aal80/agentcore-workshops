@@ -43,7 +43,7 @@ git checkout
 cd building-ai-agents
 ```
 
-## Explore the project structure in Visual Studio Code
+## Step 4: Explore the project structure in Visual Studio Code
 
 ![](./images/m00-vscode.png)
 
@@ -55,7 +55,7 @@ Below are the assets you can find in Visual Studio Code that you'll be using thr
 1. Main editing window. This is where you'll be making changes to project files. 
 1. Terminal window. This is where you'll be running commands. 
 
-## Explore the infrastructure configuration
+## Step 5: Explore the infrastructure configuration
 
 The Terraform configuration in [./terraform](terraform/) sets up shared resources used across all modules. Explore [terraform/workshop.tf](terraform/workshop.tf). During the workshop you will gradually enable modules in this file.
 
