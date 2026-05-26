@@ -1,6 +1,6 @@
 enable-cloudwatch-transactional-search:
-	aws xray update-trace-segment-destination --destination CloudWatchLogs
-	aws xray update-indexing-rule --name Default --rule '{"Probabilistic":{"DesiredSamplingPercentage":100}}'
+	-aws xray update-indexing-rule --name Default --rule '{"Probabilistic":{"DesiredSamplingPercentage":100}}'
+	-aws xray update-trace-segment-destination --destination CloudWatchLogs
 
 deploy-infra:
 	@echo "Running terraform apply"
