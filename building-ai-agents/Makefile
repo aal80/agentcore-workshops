@@ -1,5 +1,10 @@
 enable-cloudwatch-transactional-search:
 	-aws xray update-indexing-rule --name Default --rule '{"Probabilistic":{"DesiredSamplingPercentage":100}}'
+	
+	-aws logs put-resource-policy \
+  		--policy-name xray-cloudwatch-logs-policy \
+  		--policy-document file://xray-cloudwatch-logs-policy.json
+
 	-aws xray update-trace-segment-destination --destination CloudWatchLogs
 
 deploy-infra:
