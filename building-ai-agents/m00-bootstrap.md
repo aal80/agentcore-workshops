@@ -2,27 +2,19 @@
 
 This module explains how to set up your workshop environment and install required dependencies. This takes about 5 minutes.
 
-## Enable Transaction Search 
+## Step 1: Enable Transaction Search 
 
-This must be done in the AWS Console before deploying:
+This step enables Transaction Search, which will allow you to get enhanced observability for your agents running on AgentCore. 
 
-1. Open AWS Console. When using AWS-provided workshop accounts, click the following link:
+To enable Trasactional Search, run the following command in VS Code Terminal:
 
-    ![](./images/m00-console-link.png)
+```bash
+make enable-cloudwatch-transactional-search
+```
 
-1. Go to **CloudWatch** -> **Settings (at the very bottom of left side menu)** -> **X-Ray traces tab**
+## Step 2: Installing prerequisites (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
 
-    ![](./images/m00-cw-settings-main.png)
-
-1. Click "View settings" for Transactional Search. If **Ingest OpenTelemetry spans** shows disabled, click the **Edit** button and enable it. Set **Trace indexing** to 100% to capture all traces. 
-
-    ![](./images/m00-enable-transactional-search.png)
-
-1. Enabling **Transactional Search** takes approximately 10 minutes. You do not need to wait - proceed with the next workshop steps. 
-
-## Installing prerequisites (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
-
-> If you're using AWS-provided Workshop accounts all below dependencies come pre-installed. You can skip directly to the [Clone the Workshop from Github](#clone-the-workshop-from-github-section) section.
+#### IMPORTANT: If you're using AWS-provided Workshop accounts, all the below dependencies come pre-installed. Skip directly to [Step 3: Clone the Workshop from Github](#step-3-clone-the-workshop-from-github-section) section.
 
 Make sure you have the following installed and configured:
 
@@ -34,7 +26,7 @@ Make sure you have the following installed and configured:
 | Terraform | 1.5+ | `terraform --version` |
 | make | any | `make --version` |
 
-## Clone the Workshop from Github section
+## Step 3: Clone the Workshop from Github section
 
 ```
 git clone --no-checkout --depth 1 https://github.com/aal80/agentcore-workshops
