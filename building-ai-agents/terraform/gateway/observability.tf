@@ -25,3 +25,19 @@ resource "aws_cloudwatch_log_delivery" "gateway_logs" {
   delivery_destination_arn = aws_cloudwatch_log_delivery_destination.gateway_logs.arn
 }
 
+# --- GATEWAY TRACES ----
+resource "aws_cloudwatch_log_delivery_source" "gateway_traces" {
+  name         = "${var.project_name}-gateway-traces"
+  log_type     = "TRACES"
+  resource_arn = aws_bedrockagentcore_gateway.customer_support.gateway_arn
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "gateway_traces" {
+  name = "${var.project_name}-gateway-traces"
+  delivery_destination_type = "XRAY"
+}
+
+resource "aws_cloudwatch_log_delivery" "gateway_traces" {
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.gateway_traces.name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.gateway_traces.arn
+}

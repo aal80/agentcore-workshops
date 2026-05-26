@@ -25,3 +25,19 @@ resource "aws_cloudwatch_log_delivery" "runtime_logs" {
   delivery_destination_arn = aws_cloudwatch_log_delivery_destination.runtime_logs.arn
 }
 
+# --- RUNTIME TRACES ----
+resource "aws_cloudwatch_log_delivery_source" "runtime_traces" {
+  name         = "${var.project_name}-runtime-traces"
+  log_type     = "TRACES"
+  resource_arn = aws_bedrockagentcore_agent_runtime.agent.agent_runtime_arn
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "runtime_traces" {
+  name = "${var.project_name}-runtime-traces"
+  delivery_destination_type = "XRAY"
+}
+
+resource "aws_cloudwatch_log_delivery" "runtime_traces" {
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.runtime_traces.name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.runtime_traces.arn
+}
