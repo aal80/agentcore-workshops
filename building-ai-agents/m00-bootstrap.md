@@ -2,9 +2,33 @@
 
 This module explains how to set up your workshop environment and install required dependencies. This takes about 5 minutes.
 
-## Step 1: Enable Transaction Search 
 
-This step enables Transaction Search, which will allow you to get enhanced observability for your agents running on AgentCore. 
+## Step 1: Installing prerequisites (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
+#### IMPORTANT: If you're using AWS-provided Workshop accounts, all the below dependencies come pre-installed. Skip directly to [Step 2: Clone the Workshop from Github](#step-2-clone-the-workshop-from-github-section) section.
+
+Make sure you have the following installed and configured:
+
+| Requirement | Version | Check |
+|---|---|---|
+| Python | 3.13 | `python3 --version` |
+| uv | latest | `uv --version` |
+| AWS CLI | v2 | `aws --version` |
+| Terraform | 1.5+ | `terraform --version` |
+| make | any | `make --version` |
+
+## Step 2: Clone the Workshop from Github section
+
+```
+git clone --no-checkout --depth 1 https://github.com/aal80/agentcore-workshops
+cd agentcore-workshops
+git sparse-checkout set building-ai-agents
+git checkout
+cd building-ai-agents
+```
+
+## Step 3: Enable Transaction Search 
+
+This step enables Transaction Search, a capability which will allow you to get enhanced observability for your agents running on AgentCore. 
 
 To enable Trasactional Search, run the following command in VS Code Terminal:
 
@@ -17,30 +41,6 @@ In case Transactional Search is already enabled in your account, you might recei
 ```bash
 aws: [ERROR]: An error occurred (InvalidRequestException) when calling the UpdateTraceSegmentDestination operation: The destination is already set to CloudWatchLogs
 make: [Makefile:3: enable-cloudwatch-transactional-search] Error 254 (ignored)
-```
-
-## Step 2: Installing prerequisites (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
-
-#### IMPORTANT: If you're using AWS-provided Workshop accounts, all the below dependencies come pre-installed. Skip directly to [Step 3: Clone the Workshop from Github](#step-3-clone-the-workshop-from-github-section) section.
-
-Make sure you have the following installed and configured:
-
-| Requirement | Version | Check |
-|---|---|---|
-| Python | 3.13 | `python3 --version` |
-| uv | latest | `uv --version` |
-| AWS CLI | v2 | `aws --version` |
-| Terraform | 1.5+ | `terraform --version` |
-| make | any | `make --version` |
-
-## Step 3: Clone the Workshop from Github section
-
-```
-git clone --no-checkout --depth 1 https://github.com/aal80/agentcore-workshops
-cd agentcore-workshops
-git sparse-checkout set building-ai-agents
-git checkout
-cd building-ai-agents
 ```
 
 ## Step 4: Explore the project structure in Visual Studio Code
