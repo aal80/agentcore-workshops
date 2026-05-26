@@ -39,17 +39,16 @@ async def invoke(payload, _context=None):
         model=model,
         system_prompt=SYSTEM_PROMPT,
         tools=tools,
-        session_manager=session_manager
+        session_manager=session_manager,
+        callback_handler=None,
     )
 
-    response = agent(user_prompt)
-    response_text = response.message["content"][0]["text"]
+    async for event in agent.stream_async(user_prompt):
+        text_chunk = event.get("data")
+        if text_chunk:
+            yield text_chunk
 
-    # l.info(f"response_text={response_text}")
-
-    return response_text
-
-def run_locally():
+async def run_locally_async():
     print("-" * 20)
     print("Welcome to the AwesomeCorp Customer Support Agent")
     while True:
@@ -59,7 +58,9 @@ def run_locally():
             break
         if not prompt:
             continue
-        asyncio.run(invoke({"prompt": prompt}))
+        async for text_chunk in invoke({"prompt": prompt}):
+            print(text_chunk , end="", flush=True)
+        print()
 
 if __name__ == "__main__":
     if os.environ.get("AGENTCORE_RUNTIME_URL"):
@@ -67,5 +68,5 @@ if __name__ == "__main__":
         app.run()
     else:
         print("Running locally...")
-        run_locally()
+        asyncio.run(run_locally_async())
 

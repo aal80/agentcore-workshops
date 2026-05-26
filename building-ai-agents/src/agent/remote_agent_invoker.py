@@ -1,20 +1,30 @@
 import boto3
 import base64
 import json
+import uuid
 
 AGENT_RUNTIME_ARN_FILE = "../../tmp/agent_runtime_arn.txt"
 AGENT_RUNTIME_ARN = open(AGENT_RUNTIME_ARN_FILE).read().strip()
+session_id = str(uuid.uuid4())
 
-def invoke_remote_agent(prompt: str) -> str:
+
+def invoke_remote_agent(prompt: str):
     client = boto3.client("bedrock-agentcore")
     payload = json.dumps({"prompt": prompt})
+
     response = client.invoke_agent_runtime(
         agentRuntimeArn=AGENT_RUNTIME_ARN,
+        runtimeSessionId=session_id,
         payload=payload,
         contentType="application/json",
     )
-    raw = response["response"].read()
-    return raw.decode() if isinstance(raw, bytes) else raw
+    buffer = ""
+    for chunk in response["response"].iter_chunks(chunk_size=16):
+        buffer += chunk.decode() if isinstance(chunk, bytes) else chunk
+        while "\n" in buffer:
+            line, buffer = buffer.split("\n", 1)
+            if line.startswith("data: "):
+                yield json.loads(line[len("data: "):])
 
 def run():
     print("-" * 20)
@@ -30,8 +40,10 @@ def run():
             continue
 
         print("Sending prompt to the agent running on AgentCore...")
-        response = invoke_remote_agent(prompt)
-        print(f"\n{response}")
+        print()
+        for chunk in invoke_remote_agent(prompt):
+            print(chunk, end="", flush=True)
+        print()
 
 if __name__ == "__main__":
     run()
