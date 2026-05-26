@@ -1,3 +1,4 @@
+import opentelemetry.instrumentation.auto_instrumentation
 
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from strands import Agent
@@ -64,6 +65,9 @@ async def run_locally_async():
 
 if __name__ == "__main__":
     if os.environ.get("AGENTCORE_RUNTIME_URL"):
+        print("Initializing OTEL...")
+        opentelemetry.instrumentation.auto_instrumentation.initialize()
+
         print("Running on AgentCore, starting server...")
         app.run()
     else:
