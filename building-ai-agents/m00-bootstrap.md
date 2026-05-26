@@ -26,7 +26,19 @@ git checkout
 cd building-ai-agents
 ```
 
-## Step 3: Enable Transaction Search 
+## Step 3: Explore the project structure in Visual Studio Code
+
+![](./images/m00-vscode.png)
+
+Below are the assets you can find in Visual Studio Code that you'll be using throughout the workshop:
+
+1. Source code of the agent and MCP tools implemented as Lambda functions.
+1. Terraform configuration for deploying AgentCore resources. You'll be updating the `workshop.tf` as you progress to introduce new resource types. 
+1. Text files representing the technical support Knowledge Base.
+1. Main editing window. This is where you'll be making changes to project files. 
+1. Terminal window. This is where you'll be running commands. 
+
+## Step 4: Enable Transaction Search 
 
 This step enables Transaction Search, a capability which will allow you to get enhanced observability for your agents running on AgentCore. 
 
@@ -43,17 +55,6 @@ aws: [ERROR]: An error occurred (InvalidRequestException) when calling the Updat
 make: [Makefile:3: enable-cloudwatch-transactional-search] Error 254 (ignored)
 ```
 
-## Step 4: Explore the project structure in Visual Studio Code
-
-![](./images/m00-vscode.png)
-
-Below are the assets you can find in Visual Studio Code that you'll be using throughout the workshop:
-
-1. Source code of the agent and MCP tools implemented as Lambda functions.
-1. Terraform configuration for deploying AgentCore resources. You'll be updating the `workshop.tf` as you progress to introduce new resource types. 
-1. Text files representing the technical support Knowledge Base.
-1. Main editing window. This is where you'll be making changes to project files. 
-1. Terminal window. This is where you'll be running commands. 
 
 ## Step 5: Explore the infrastructure configuration
 
