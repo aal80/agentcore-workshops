@@ -48,6 +48,16 @@ To enable Transactional Search, run the following command in VS Code Terminal:
 make enable-cloudwatch-transactional-search
 ```
 
+Expected response:
+
+```text
+...REDACTED...
+{
+    "Destination": "CloudWatchLogs",
+    "Status": "PENDING"
+}
+```
+
 Enabling Transactional Search can take 5-10 minutes. You do not need to wait for that process to complete, please proceed with the workshop. 
 
 > [OPTIONAL TROUBLESHOOTING] In case Transactional Search is already enabled in your account, you might receive the following error. You can safely ignore it. 
