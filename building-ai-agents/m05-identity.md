@@ -1,13 +1,13 @@
 # Module 5: Securing Outbound Authentication with AgentCore Identity
 
-In Module 4, your agent gained access to the `check_warranty_status` tool via AgentCore Gateway. But to call that tool, the agent needs a valid JWT token. And to get that token, the agent is currently holding Cognito client credentials directly — reading them from environment variables at startup:
+In Module 4, your agent gained access to the `check_warranty_status` tool via AgentCore Gateway. But to call that tool, the agent needs a valid JWT token. And to get that token, the agent is currently reading Cognito client credentials directly from environment variables at startup:
 
 ```python
 COGNITO_CLIENT_ID = os.environ.get("COGNITO_CLIENT_ID")
 COGNITO_CLIENT_SECRET = os.environ.get("COGNITO_CLIENT_SECRET")
 ```
 
-This means the agent holds long-lived credentials directly. That creates real security risks:
+This means the agent has access to long-lived credentials. This creates some real security risks:
 
 - A compromised agent process leaks credentials that remain valid indefinitely
 - Credentials injected as environment variables can be read by any code running in the same process
