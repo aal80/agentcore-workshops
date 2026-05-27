@@ -11,7 +11,7 @@ But let's start simple. At first your agent will run locally, use Bedrock-provid
 
 ## Creating agent tools with Strands Agents SDK
 
-Let's start with creating two in-process tools. "In-process" mean that the tools are running within the same process as the agent itself. Later in the workshop you'll also define retote tools the agent will access via the MCP protocol. 
+Let's start with creating two in-process tools. "In-process" mean that the tools are running within the same process as the agent itself. Later in the workshop you'll also define remote tools the agent will access via the MCP protocol. 
 
 Defining in-process tools in agentic frameworks like Strands SDK or LangGraph is simple — add a `@tool` decorator to a Python method and provide a description in the docstring. Strands SDK uses the function documentation, types, and arguments to provide context on the tool to your agent. Let's see this in action. 
 
@@ -115,8 +115,8 @@ model = BedrockModel(model_id="us.anthropic.claude-sonnet-4-6")
 tools = [
     get_product_info,
     get_return_policy,
-    get_technical_support, # Not implemented yet
-    mcp_tools_list         # Not implemented yet
+    get_technical_support, # You will configure this tool in later module
+    mcp_tools_list         # You will configure this tool in later module
 ]
 
 # Defining the agent (inside of the invoke() method)
@@ -124,7 +124,7 @@ agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
     tools=tools,
-    session_manager=session_manager, # Not implemented yet
+    session_manager=session_manager, # You will configure this in later module
     callback_handler=None,
 )
 ```
@@ -143,10 +143,10 @@ if __name__ == "__main__":
         app.run()          # starts the AgentCore HTTP server
     else:
         print("Running locally...")
-        run_locally()      # starts an interactive prompt loop
+        asyncio.run(run_locally_async()) # starts an interactive prompt loop
 ```
 
-When running locally, `run_locally()` starts an interactive prompt loop right in the Terminal, so you can type questions and see responses without editing any code.
+When running locally, `run_locally_async()` starts an interactive prompt loop right in the Terminal, so you can type questions and see responses without editing any code.
 
 ## Testing the agent locally
 

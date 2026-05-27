@@ -8,7 +8,7 @@ In this module you'll add **Amazon Bedrock AgentCore Memory** to your agent, so 
 
 ## How AgentCore Memory works
 
-AgentCore Memory is a managed service provides your agent with conversation history. It organizes memory into two tiers:
+AgentCore Memory is a managed service that provides your agent with conversation history. It organizes memory into two tiers:
 
 - **Short-term memory (STM)** — the current session's conversation, stored after user, agent, and model exchange messages. 
 - **Long-term memory (LTM)** — persistent patterns and facts, extracted asynchronously from STM and organized by namespace using vector embeddings for semantic retrieval.
@@ -68,6 +68,8 @@ To help you effectively, could you please share some details about:
 
 It starts each iteration completely fresh. This is exactly the limitation you're fixing.
 
+Stop your agent by telling it to `exit`.
+
 ## Step 2: Enable AgentCore Memory
 
 Open `./terraform/workshop.tf` and uncomment the `memory` module:
@@ -89,7 +91,7 @@ make deploy-infra
 
 This creates AgentCore Memory resources with two strategies configured and writes the Memory ID to `tmp/memory_id.txt` so you can test it locally. 
 
-Memory deployment can take several minutes. In the meanwhile, explore `./terraform/module/memory` resources. For example, this is how you define the memory and strategy:
+Memory deployment can take several minutes. In the meanwhile, explore `./terraform/memory` resources. For example, this is how you define the memory and strategy:
 
 ```hcl
 resource "aws_bedrockagentcore_memory" "customer_support" {
@@ -165,7 +167,7 @@ Ask the agent
 My MacBook Pro overheating during video editing, what's the return policy
 ```
 
-The agent answers as before, but this time the agent immediatelly persists conversation in the short-term memory. 
+The agent answers as before, but this time the agent immediately persists conversation in the short-term memory. 
 
 **Second run** — ask the follow-up without any additional context:
 
@@ -187,7 +189,7 @@ using demanding software.
 
 In addition, within a few minutes AgentCore Memory asynchronously extracts information from short-term memory and stores it in the long-term memory, so memory can persist across different sessions of the same user as well.
 
-That's memory persistance, consolidation, extraction, and retrieval in action!
+That's memory persistence, consolidation, extraction, and retrieval in action!
 
 ## How it works under the hood
 

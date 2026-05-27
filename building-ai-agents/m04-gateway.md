@@ -8,7 +8,7 @@ In this module you'll solve this with **Amazon Bedrock AgentCore Gateway**. Gate
 
 ![](./images/m04-arch.png)
 
-## Why this  matters
+## Why this matters
 
 | Before (Modules 1–3) | After (this module) |
 |---|---|
@@ -72,7 +72,7 @@ This will:
 4. Register the Lambda as a Gateway target, exposing the tool via MCP 
 5. Write `tmp/gateway_url.txt`, `tmp/cognito_token_endpoint.txt`, `tmp/cognito_client_id.txt`, and `tmp/cognito_client_secret_arn.txt` so you can test the gateway locally.
 
-While deployment is running, explore resources under `./terraform/module/gateway`.
+While deployment is running, explore resources under `./terraform/gateway`.
 
 The Gateway resource declares mandatory authorization using Cognito provider OAuth2 token and scope.
 
@@ -161,7 +161,8 @@ make get-cognito-access-token
 
 This reads `tmp/cognito_token_endpoint.txt`, `tmp/cognito_client_id.txt`, and retrieves the client secret from AWS Secrets Manager using the ARN in `tmp/cognito_client_secret_arn.txt`, then calls the Cognito token endpoint and outputs the retrieved token.
 
-Run below command:
+Let's test that the Gateway is up and running. Run the below command:
+
 ```bash
 make test-gateway 
 ```
@@ -205,7 +206,7 @@ Now that you've confirmed the Gateway is working, it's time to integrate it with
 
 ## Step 5: Connect the agent to Gateway
 
-Unlike local tools you've implemented in the agent previously, you do not need to declare tools available through MCP and AgentCore Gateway one by one. MCP supports automatic tool discovery, so you only need to point your agent at the Gateway endpoing. 
+Unlike local tools you've implemented in the agent previously, you do not need to declare tools available through MCP and AgentCore Gateway one by one. MCP supports automatic tool discovery, so you only need to point your agent at the Gateway endpoint. 
 
 Explore `./src/agent/mcp_client.py`. There are several important segments to understand. 
 
@@ -241,7 +242,7 @@ def _get_gateway_token() -> str:
 gateway_token = _get_gateway_token()
 ```
 
-> For brevity this sample code does not implement automated token renewal. 
+> For brevity, the token is fetched once at agent startup. If you run the agent for extended periods, you may need to restart to refresh the token
 
 Lastly, the MCP client retrieves the list of tools using `GATEWAY_URL` and previously obtained access token:
 

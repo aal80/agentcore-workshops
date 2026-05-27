@@ -42,7 +42,7 @@ Below are the assets you can find in Visual Studio Code that you'll be using thr
 
 This step enables Transaction Search, a capability which will allow you to get enhanced observability for your agents running on AgentCore. 
 
-To enable Trasactional Search, run the following command in VS Code Terminal:
+To enable Transactional Search, run the following command in VS Code Terminal:
 
 ```bash
 make enable-cloudwatch-transactional-search
@@ -57,7 +57,7 @@ Enabling Transactional Search can take 5-10 minutes. You do not need to wait for
 
 ## Step 5: Explore the infrastructure configuration
 
-The Terraform configuration in [./terraform](terraform/) sets up shared resources used across all modules. Explore [terraform/workshop.tf](terraform/workshop.tf). During the workshop you will gradually enable modules in this file.
+The Terraform configuration in [./terraform](terraform/) sets up shared resources used across all modules. Explore [terraform/workshop.tf](terraform/workshop.tf). During the workshop you will gradually use this file to make progress and enable new capabilities. 
 
 ## Next Step
 

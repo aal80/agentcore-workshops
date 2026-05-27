@@ -17,7 +17,7 @@ You started with a handful of hardcoded mock tools running locally and ended wit
 
 ![](./images/the-big-picture.png)
 
-The patterns you learned here aren't specific to customer support. Every piece — the tool abstraction, the RAG pipeline, the memory strategies, the Gateway authentication model, the Runtime deployment, the observability hooks — is applicable to any business domain you're working in. Take these building blocks and apply them to your own use case: an internal knowledge assistant, a code review agent, a data analysis copilot, or something nobody has built yet. You now have everything you need to go from prototype to production on AWS.x
+The patterns you learned here aren't specific to customer support. Every piece — the tool abstraction, the RAG pipeline, the memory strategies, the Gateway authentication model, the Runtime deployment, the observability hooks — is applicable to any business domain you're working in. Take these building blocks and apply them to your own use case: an internal knowledge assistant, a code review agent, a data analysis copilot, or something nobody has built yet. You now have everything you need to go from prototype to production on AWS.
 
 ## Cleanup
 

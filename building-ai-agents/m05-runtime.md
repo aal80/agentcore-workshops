@@ -30,6 +30,7 @@ No code changes are needed. Open `./src/agent/agent.py`, scroll to the very bott
 if __name__ == "__main__":
     if os.environ.get("AGENTCORE_RUNTIME_URL"):
         print("Initializing OTEL...")
+        # This initializes OpenTelemetry auto-instrumentation, which you'll explore in the next module
         opentelemetry.instrumentation.auto_instrumentation.initialize()
 
         print("Running on AgentCore, starting server...")
@@ -97,6 +98,8 @@ module "runtime" {
   cognito_scope                 = module.gateway.cognito_scope
 }
 ```
+
+> Ensure you have completed Modules 2, 3, and 4 and their modules are uncommented in `workshop.tf` before proceeding
 
 Deploy the changes to cloud:
 

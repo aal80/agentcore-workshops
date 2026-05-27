@@ -68,7 +68,7 @@ This runs `terraform plan && terraform apply` command. Terraform will perform th
 1. Start an ingestion job to embed and index all documents
 1. Write the Knowledge Base ID to `./tmp/tech_support_kb_id.txt` so you can do local testing.
 
-Typically, ingestion takes 1-2 minutes. In the meanwhile, you can explore Terraform configuration under `./terraform/module/knowledge_base`.
+Typically, ingestion takes 1-2 minutes. In the meanwhile, you can explore Terraform configuration under `./terraform/knowledge_base`.
 
 Once deployment completes, monitor the ingestion progress using AWS Console:
 
@@ -117,7 +117,7 @@ def get_technical_support(issue_description: str) -> str:
             "knowledgeBaseId": TECH_SUPPORT_KB_ID,
             "region": region,
             "numberOfResults": 3,
-            "score": 0.4,
+            "score": 0.4, # Only chunks with a similarity score above 0.4 are returned
         },
     }
     result = retrieve.retrieve(tool_use)
@@ -168,7 +168,7 @@ Great! I found some troubleshooting guidance. Here are the steps to help get you
 ... REDACTED ...   
 ```
 
-The agent is now grounding it's answers using real documentation rather than hardcoded strings.
+The agent is now grounding its answers using real documentation rather than hardcoded strings.
 
 ## How it works under the hood
 
