@@ -1,6 +1,6 @@
 # Module 5: Securing Outbound Authentication with AgentCore Identity
 
-In Module 4, your agent gained access to the `check_warranty_status` tool via AgentCore Gateway. But to call that tool, the agent needs a valid JWT token. And to get that token, the agent is currently reading Cognito client credentials directly from environment variables at startup:
+In Module 4, your agent gained access to the `check_warranty_status` tool via AgentCore Gateway. But to call that tool, the agent needs a valid JWT token. And to get that token, the agent is currently reading Cognito client credentials directly from environment variables at startup (`./src/agent/identity_helper.py, line 24`):
 
 ```python
 COGNITO_CLIENT_ID = os.environ.get("COGNITO_CLIENT_ID")
