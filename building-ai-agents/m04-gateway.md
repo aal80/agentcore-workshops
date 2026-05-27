@@ -43,7 +43,17 @@ Ask the agent:
 I have a Gaming Console Pro. My warranty serial number is MNO33333333. Am I covered?
 ```
 
-The agent has no `check_warranty_status` tool yet — it will fall back to the knowledge base or admit it can't answer. Type `exit` to quit.
+Response:
+```text
+I appreciate you sharing those details, but I'm afraid I'm not able to look up individual warranty coverage or verify serial numbers in our system. That's outside of what I'm able to access.
+
+To get your warranty status checked for your Gaming Console Pro with serial number MNO33333333, I'd recommend reaching out through one of these options:
+
+- Contact our warranty support team directly with your serial number and proof of purchase
+- Reach out to the manufacturer of the Gaming Console Pro, as they can verify coverage using your serial number
+```
+
+The agent has no `check_warranty_status` tool yet — it might try to fall back to the knowledge base or admit it can't answer. Type `exit` to quit and let's fix that.
 
 ## Step 2: Deploy the Gateway infrastructure
 

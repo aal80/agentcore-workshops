@@ -109,6 +109,8 @@ resource "aws_bedrockagentcore_memory_strategy" "preferences" {
 }
 ```
 
+Note the `namespace` parameter in the strategy configuration. It defines that extraced preferences will be scoped to each user (actorId). 
+
 Once Terraform completes, verify the memory resources were created using the AWS Console:
 
 1. Open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/)

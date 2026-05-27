@@ -6,12 +6,12 @@ In this short module you will learn about core components of AgentCore Observabi
 
 ## Instrumentation
 
-By default, some of AgentCore components, such as Runtime, emit basic telemetry to CloudWatch Logs. You saw an example of that in the previous module:
+By default, some of AgentCore components, such as Runtime, emit basic telemetry to [CloudWatch Logs](https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups). You saw an example of that in the previous module:
 
 ![](./images/m05-logs.png)
 
 
-In addition to basic logs, you can enable AgentCore components to emit OpenTelemetry (OTEL) formatted logs, metrics, and traces to CloudWatch, S3, or Kinesis. The resources you deployed in previous modules were already instrumented for OTEL, so there's no extra deployments you need to do. Explore Terraform modules for gateway, runtime, memory, and knowledge base - all of them have `observability.tf` configuration. For example, this is how you enable OTEL-based application logs for AgentCore Runtime:
+In addition to basic logs, you can enable AgentCore components to emit detailed OpenTelemetry (OTEL) formatted logs, metrics, and traces to CloudWatch, S3, or Kinesis. The resources you deployed in previous modules were already instrumented for OTEL, so there's no extra deployments you need to do. Explore Terraform modules for gateway, runtime, memory, and knowledge base - all of them have `observability.tf` configuration. For example, this is how you enable OTEL-based application logs for AgentCore Runtime:
 
 ```hcl
 # Create a log group
@@ -47,11 +47,11 @@ resource "aws_cloudwatch_log_delivery" "runtime_logs" {
 
 ## Built-in Observability Dashboard
 
-You can leverage CloudWatch GenAI Observability dashboard to see all the information in one place, such as:
+Use [CloudWatch GenAI Observability](https://console.aws.amazon.com/cloudwatch/home#/gen-ai-observability/agent-core/agents) dashboard to see all the information in one place, such as:
 
 ### Agents
 
-Default AgentCore Runtime configuration allows for logging agent's traces in CloudWatch by means of AgentCore Observability. These traces can be seen on the Amazon CloudWatch GenAI Observability dashboard. Navigate to CloudWatch -> GenAI Observability -> Bedrock AgentCore.
+AgentCore Runtime configuration allows for logging agent's traces in CloudWatch by means of AgentCore Observability. These traces can be seen on the Amazon CloudWatch GenAI Observability dashboard. Navigate to CloudWatch -> GenAI Observability -> Bedrock AgentCore.
 
 ![](./images/m06-img1.png)
 
