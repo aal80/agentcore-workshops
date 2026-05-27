@@ -1,4 +1,4 @@
-# Module 6: Monitoring your agents with AgentCore Observability
+# Module 7: Monitoring your agents with AgentCore Observability
 
 [AgentCore Observability](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/observability.html) provides monitoring and tracing capabilities for AI agents using Amazon OpenTelemetry Python Instrumentation and Amazon CloudWatch GenAI Observability. 
 
@@ -8,7 +8,7 @@ In this short module you will learn about core components of AgentCore Observabi
 
 By default, some of AgentCore components, such as Runtime, emit basic telemetry to [CloudWatch Logs](https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups). You saw an example of that in the previous module:
 
-![](./images/m05-logs.png)
+![](./images/m06-logs.png)
 
 
 In addition to basic logs, you can enable AgentCore components to emit detailed OpenTelemetry (OTEL) formatted logs, metrics, and traces to CloudWatch, S3, or Kinesis. The resources you deployed in previous modules were already instrumented for OTEL, so there's no extra deployments you need to do. Explore Terraform modules for gateway, runtime, memory, and knowledge base - all of them have `observability.tf` configuration. For example, this is how you enable OTEL-based application logs for AgentCore Runtime:
@@ -53,13 +53,13 @@ Use [CloudWatch GenAI Observability](https://console.aws.amazon.com/cloudwatch/h
 
 AgentCore Runtime configuration allows for logging agent's traces in CloudWatch by means of AgentCore Observability. These traces can be seen on the Amazon CloudWatch GenAI Observability dashboard. Navigate to CloudWatch -> GenAI Observability -> Bedrock AgentCore.
 
-![](./images/m06-img1.png)
+![](./images/m07-img1.png)
 
 ### Sessions
 
 The Sessions view shows the list of all the sessions associated with all agents in your account.
 
-![](./images/m06-img2.png)
+![](./images/m07-img2.png)
 
 ### Traces
 
@@ -69,7 +69,7 @@ Trace view lists all traces from your agents in this account. To work with trace
 - Sort by column name to organize results.
 - Under Actions, select Logs Insights to refine your search by querying across your log and span data or select Export selected traces to export.
 
-![](./images/m06-img3.png)
+![](./images/m07-img3.png)
 
 ## Congratulations!
 
@@ -77,5 +77,5 @@ You've completed the workshop!
 
 ## Next Steps
 
-- Proceed to [Module 7](m07-conclusion.md) to summarize what you've learned and see a list of further learning materials. 
+- Proceed to [Module 8](m08-conclusion.md) to summarize what you've learned and see a list of further learning materials. 
 

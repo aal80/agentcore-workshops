@@ -1,8 +1,8 @@
-# Module 7: Conclusion and Cleanup
+# Module 8: Conclusion and Cleanup
 
 ## Congratulations!
 
-You've completed the full workshop! Here's what you built across all six modules:
+You've completed the full workshop! Here's what you built across all seven modules:
 
 | Module | What you added |
 |---|---|
@@ -10,10 +10,11 @@ You've completed the full workshop! Here's what you built across all six modules
 | 2 | RAG with Bedrock Knowledge Base — `get_technical_support` answers from real docs |
 | 3 | Persistent memory via AgentCore Memory — agent remembers customers across sessions |
 | 4 | Centralized, authenticated tools via AgentCore Gateway — `check_warranty_status` over MCP |
-| 5 | Production deployment on AgentCore Runtime — containerized, scalable, cloud-hosted |
-| 6 | End-to-end observability — OTEL traces, sessions, and logs in CloudWatch GenAI |
+| 5 | Secure outbound authentication via AgentCore Identity — credentials stored in Token Vault, never in agent |
+| 6 | Production deployment on AgentCore Runtime — containerized, scalable, cloud-hosted |
+| 7 | End-to-end observability — OTEL traces, sessions, and logs in CloudWatch GenAI |
 
-You started with a handful of hardcoded mock tools running locally and ended with a production-ready, multi-tenant customer support agent running on fully managed infrastructure — with memory, a knowledge base, centralized tools, authentication, and a complete observability pipeline.
+You started with a handful of hardcoded mock tools running locally and ended with a production-ready, multi-tenant customer support agent running on fully managed infrastructure — with memory, a knowledge base, centralized tools, secure credential management via AgentCore Identity, and a complete observability pipeline.
 
 ![](./images/the-big-picture.png)
 
@@ -36,6 +37,7 @@ Explore the resources below to go deeper on the topics covered in this workshop.
 - [AgentCore Runtime](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime.html) — container lifecycle, session management, invocation model
 - [AgentCore Memory](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/memory.html) — strategies, namespaces, STM/LTM architecture
 - [AgentCore Gateway](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html) — MCP endpoints, JWT authorization, Cedar policies
+- [AgentCore Identity](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/identity.html) — workload identity, credential providers, Token Vault, OAuth2 flows
 
 **Strands Agents SDK**
 - [Strands Agents documentation](https://strandsagents.com) — tool definitions, model providers, session managers, multi-agent patterns

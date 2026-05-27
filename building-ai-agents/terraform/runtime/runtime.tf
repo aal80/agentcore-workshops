@@ -15,6 +15,8 @@ resource "aws_iam_role" "agent" {
   })
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role_policy" "agent" {
   role = aws_iam_role.agent.id
   policy = jsonencode({
@@ -32,7 +34,7 @@ resource "aws_iam_role_policy" "agent" {
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
 
-          # To use Bederock Knowledge Base and AgentCore Memory
+          # To use Bedrock Knowledge Base and AgentCore Memory
           "bedrock:*",
           "bedrock-agentcore:*",
 
@@ -50,7 +52,7 @@ resource "aws_iam_role_policy" "agent" {
       {
         Effect   = "Allow"
         Action   = ["secretsmanager:GetSecretValue"]
-        Resource = var.cognito_client_secret_arn
+        Resource = "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:*${var.credential_provider_name}*"
       }
     ]
   })
@@ -74,14 +76,13 @@ resource "aws_bedrockagentcore_agent_runtime" "agent" {
   }
 
   environment_variables = {
-    AGENT_ZIP_ETAG            = filemd5("${path.root}/../tmp/agent_package/agent.zip")
-    MEMORY_ID                 = var.agentcore_memory_id
-    TECH_SUPPORT_KB_ID        = var.tech_support_knowledgebase_id
-    GATEWAY_URL               = var.gateway_url
-    COGNITO_CLIENT_ID         = var.cognito_client_id
-    COGNITO_CLIENT_SECRET_ARN = var.cognito_client_secret_arn
-    COGNITO_TOKEN_ENDPOINT    = var.cognito_token_endpoint
-    COGNITO_SCOPE             = var.cognito_scope
+    AGENT_ZIP_ETAG           = filemd5("${path.root}/../tmp/agent_package/agent.zip")
+    MEMORY_ID                = var.agentcore_memory_id
+    TECH_SUPPORT_KB_ID       = var.tech_support_knowledgebase_id
+    GATEWAY_URL              = var.gateway_url
+    COGNITO_SCOPE            = var.cognito_scope
+    WORKLOAD_ID_NAME         = var.workload_identity_name
+    CREDENTIAL_PROVIDER_NAME = var.credential_provider_name
   }
 
   network_configuration {
@@ -90,7 +91,7 @@ resource "aws_bedrockagentcore_agent_runtime" "agent" {
 }
 
 locals {
-  agent_runtime_arn = aws_bedrockagentcore_agent_runtime.agent.agent_runtime_arn
+  agent_runtime_arn         = aws_bedrockagentcore_agent_runtime.agent.agent_runtime_arn
   agent_runtime_arn_encoded = replace(local.agent_runtime_arn, "/", "%2F")
   agent_runtime_url         = "https://bedrock-agentcore.${var.region}.amazonaws.com/runtimes/${local.agent_runtime_arn_encoded}/invocations/"
 }

@@ -43,42 +43,42 @@ Type `exit` to quit. Let's fix that!
 
 ## Step 1: Deploy the Knowledge Base infrastructure
 
-Open `./terraform/workshop.tf` and uncomment the `knowledge_base` module:
+1. Open `./terraform/workshop.tf` and uncomment the `knowledge_base` module:
 
-```hcl
-# --- Module 2: Uncomment to deploy the Knowledge Base
-module "knowledge_base" {
-  source       = "./knowledge_base"
-  project_name = local.project_name
-  region       = data.aws_region.current.region
-}
-```
+    ```hcl
+    # --- Module 2: Uncomment to deploy the Knowledge Base
+    module "knowledge_base" {
+    source       = "./knowledge_base"
+    project_name = local.project_name
+    region       = data.aws_region.current.region
+    }
+    ```
 
-Then deploy:
+1. Deploy the updates by running:
 
-```bash
-make deploy-infra
-```
+    ```bash
+    make deploy-infra
+    ```
 
-This runs `terraform plan && terraform apply` command. Terraform will perform the following actions:
+    This runs `terraform init && terraform apply --auto-approve` command. Terraform will perform the following actions:
 
-1. Create an S3 bucket to store original knowledge documents and upload the 6 documentation files from `./knowledge-base`. **Explore these files in VS Code to see what information is going into the Knowledge Base.**
-1. Create an S3 vector bucket and index (1024 dimensions, cosine similarity, float32)
-1. Create the **Bedrock Knowledge Base** and configure it to use **Amazon Titan Embed v2 model**.
-1. Start an ingestion job to embed and index all documents
-1. Write the Knowledge Base ID to `./tmp/tech_support_kb_id.txt` so you can do local testing.
+    - Create an S3 bucket to store original knowledge documents and upload the 6 documentation files from `./knowledge-base`. **Explore these files in VS Code to see what information is going into the Knowledge Base.**
+    - Create an S3 vector bucket and index (1024 dimensions, cosine similarity, float32)
+    - Create the **Bedrock Knowledge Base** and configure it to use **Amazon Titan Embed v2 model**.
+    - Start an ingestion job to embed and index all documents
+    - Write the Knowledge Base ID to `./tmp/tech_support_kb_id.txt` so you can do local testing.
 
-Typically, ingestion takes 1-2 minutes. In the meanwhile, you can explore Terraform configuration under `./terraform/knowledge_base`.
+    Typically, ingestion takes 1-2 minutes. In the meanwhile, you can explore Terraform configuration under `./terraform/knowledge_base`.
 
-Once deployment completes, monitor the ingestion progress using AWS Console:
+1. Once deployment completes, monitor the ingestion progress using AWS Console:
 
-1. Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/)
-1. In the left navigation panel, go to **Build -> Knowledge bases**
-1. Click on your knowledge base (named `<prefix>-building-ai-agents-tech-support`)
-1. Under the **Data source** section, click the datasource named `<prefix>-building-ai-agents-from-s3`
-1. See the **Sync history** section. You should see an entry with a `Complete` status. 
+    - Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/)
+    - In the left navigation panel, go to **Build -> Knowledge bases**
+    - Click on your knowledge base (named `<prefix>-building-ai-agents-tech-support`)
+    - Under the **Data source** section, click the datasource named `<prefix>-building-ai-agents-from-s3`
+    - See the **Sync history** section. You should see an entry with a `Complete` status. 
 
-![](./images/m02-kb-sync-complete.png)
+    ![](./images/m02-kb-sync-complete.png)
 
 ## Step 2: Verify the Knowledge Base is working
 
@@ -89,85 +89,86 @@ Once you confirmed that ingestion is complete, let's test it directly from the A
     ![](./images/m02-test-kb-button.png)
 
 1. Select `Retrieval only: data sources`, this restricts Knowledge Base to return information retrieved from the vector database only, without any additional information added by the model. 
+
 1. In the test panel, type `How do I fix Wi-Fi connection problems` and hit **Enter**.
 
-You should see scored text chunks returned from the documentation. 
+    You should see scored text chunks returned from the documentation. 
 
-![](./images/m02-kb-test-results.png)
+    ![](./images/m02-kb-test-results.png)
 
-You can click `Details` to see result scores. 
+    You can click `Details` to see result scores. 
 
-> If the results are empty, ingestion may still be in progress — refresh the data source status and try again in a moment.
+    > If the results are empty, ingestion may still be in progress — refresh the data source status and try again in a moment.
 
 ## Step 3: Using the `get_technical_support` tool
 
-Back in the VS Code, examine the `./src/agent/tools/tech_support.py` file. The tool reads the Knowledge Base ID from the `TECH_SUPPORT_KB_ID` environment variable at loading. Then it uses the `retrieve` tool provided by the Strands SDK to retrieve information from the Knowledge Base. 
+1. Back in the VS Code, examine the `./src/agent/tools/tech_support.py` file. The tool reads the Knowledge Base ID from the `TECH_SUPPORT_KB_ID` environment variable at loading. Then it uses the `retrieve` tool provided by the Strands SDK to retrieve information from the Knowledge Base. 
 
-```python
-TECH_SUPPORT_KB_ID = os.environ.get("TECH_SUPPORT_KB_ID")
-l.info(f"ℹ️ TECH_SUPPORT_KB_ID={TECH_SUPPORT_KB_ID}")
+    ```python
+    TECH_SUPPORT_KB_ID = os.environ.get("TECH_SUPPORT_KB_ID")
+    l.info(f"ℹ️ TECH_SUPPORT_KB_ID={TECH_SUPPORT_KB_ID}")
 
-@tool
-def get_technical_support(issue_description: str) -> str:
-    region = boto3.Session().region_name
-    tool_use = {
-        "toolUseId": "tech_support_query",
-        "input": {
-            "text": issue_description,
-            "knowledgeBaseId": TECH_SUPPORT_KB_ID,
-            "region": region,
-            "numberOfResults": 3,
-            "score": 0.4, # Only chunks with a similarity score above 0.4 are returned
-        },
-    }
-    result = retrieve.retrieve(tool_use)
-    return result["content"][0]["text"]
-```
+    @tool
+    def get_technical_support(issue_description: str) -> str:
+        region = boto3.Session().region_name
+        tool_use = {
+            "toolUseId": "tech_support_query",
+            "input": {
+                "text": issue_description,
+                "knowledgeBaseId": TECH_SUPPORT_KB_ID,
+                "region": region,
+                "numberOfResults": 3,
+                "score": 0.4, # Only chunks with a similarity score above 0.4 are returned
+            },
+        }
+        result = retrieve.retrieve(tool_use)
+        return result["content"][0]["text"]
+    ```
 
-See `./src/agent/agent.py`, around line 21. The tools list already contains `get_technical_support` and now this tool is actually connected to a real Knowledge Base. 
+2. See `./src/agent/agent.py`, around line 24. The tools list already contains `get_technical_support` and now this tool is actually connected to a real Knowledge Base. 
 
-```python
-# agent.py
-tools = [
-    get_return_policy, 
-    get_product_info, 
-    get_technical_support, # <-- this is the tool
-    mcp_tools_list
-]
-```
+    ```python
+    # agent.py
+    tools = [
+        get_return_policy, 
+        get_product_info, 
+        get_technical_support, # <-- this is the tool
+        mcp_tools_list
+    ]
+    ```
 
 ## Step 4: Test the updated agent
 
-Start the agent again and ask the same question:
+1. Start the agent again and ask the same question:
 
-```bash
-make run-agent-locally
-```
+    ```bash
+    make run-agent-locally
+    ```
 
-Ask the agent: 
+2. Ask the agent: 
 
-```text
-My wireless headphones are not turning on, I need technical support
-```
+    ```text
+    My wireless headphones are not turning on, I need technical support
+    ```
 
-This time the agent will invoke `get_technical_support` and return content retrieved from the Knowledge Base:
+    This time the agent will invoke `get_technical_support` and return content retrieved from the Knowledge Base:
 
-```
-I'll help you troubleshoot your wireless headphones. Let me get our technical support documentation for this issue.
+    ```
+    I'll help you troubleshoot your wireless headphones. Let me get our technical support documentation for this issue.
 
-[Tool called: get_technical_support]
+    [Tool called: get_technical_support]
 
-Great! I found some troubleshooting guidance. Here are the steps to help get your wireless headphones turning on:
+    Great! I found some troubleshooting guidance. Here are the steps to help get your wireless headphones turning on:
 
-## **Troubleshooting Steps for Wireless Headphones Not Turning On:**
+    ## **Troubleshooting Steps for Wireless Headphones Not Turning On:**
 
-### **1. Check the Battery/Power**
-   - **Charge your headphones** - Connect them to a charger and let them charge for at least 15-30 minutes
-   - Check if the charging cable is properly connected
-   - Try a different USB cable or power adapter if available
-   - Look for LED indicators that show charging status
-... REDACTED ...   
-```
+    ### **1. Check the Battery/Power**
+    - **Charge your headphones** - Connect them to a charger and let them charge for at least 15-30 minutes
+    - Check if the charging cable is properly connected
+    - Try a different USB cable or power adapter if available
+    - Look for LED indicators that show charging status
+    ... REDACTED ...   
+    ```
 
 The agent is now grounding its answers using real documentation rather than hardcoded strings.
 

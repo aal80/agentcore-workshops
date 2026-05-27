@@ -13,13 +13,14 @@ In this workshop, you will go through an end-to-end journey from prototype to pr
 ## Workshop Journey
 
 * [Module 0: Installing pre-requisites](./m00-bootstrap.md)
-* [Module 1: Create local Agent prototype - Build a functional customer support agent](./m01-local-agent.md)
+* [Module 1: Creating a local Agent prototype - Build a functional customer support agent](./m01-local-agent.md)
 * [Module 2: Adding a Knowledge Base - Grounding agent responses in factual data](./m02-knowledge-base.md)
 * [Module 3: Enhancing your agent with Memory - Add conversation context and personalization](./m03-memory.md)
-* [Module 4: Scale with Gateway & Identity - Securely share tools across agents](./m04-gateway.md)
-* [Module 5: Running in cloud - Deploying and scaling your agent in cloud using AgentCore Runtime ](./m05-runtime.md)
-* [Module 6: Monitoring your agent with AgentCore Observability ](./m06-observability.md)
-* [Module 7: Conclusion ](./m07-conclusion.md)
+* [Module 4: Adding remote tools with AgentCore Gateway - Expose tools over MCP and secure inbound access with AgentCore Identity](./m04-gateway.md)
+* [Module 5: Securing outbound authentication with AgentCore Identity - Use Credential Providers to authenticate agent-to-tool calls](./m05-identity.md)
+* [Module 6: Running in cloud - Deploying and scaling your agent in cloud using AgentCore Runtime ](./m06-runtime.md)
+* [Module 7: Monitoring your agent with AgentCore Observability ](./m07-observability.md)
+* [Module 8: Conclusion ](./m08-conclusion.md)
 
 ## Let's get started!
 

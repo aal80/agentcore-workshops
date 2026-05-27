@@ -15,7 +15,7 @@ Let's start with creating two in-process tools. "In-process" mean that the tools
 
 Defining in-process tools in agentic frameworks like Strands SDK or LangGraph is simple — add a `@tool` decorator to a Python method and provide a description in the docstring. Strands SDK uses the function documentation, types, and arguments to provide context on the tool to your agent. Let's see this in action. 
 
-### System Prompt
+## Step 1: Understanding the System Prompt
 
 Explore `./src/agent/system_prompt.py`. The system prompt defines the mission of your agent - it's personality, behavior, guardrails:
 
@@ -34,7 +34,7 @@ Your role is to:
 """
 ```
 
-### Tool 1: Get Return Policy
+## Step 2: Understanding the `get_return_policy` tool
 
 Tool Purpose: Helps customers understand return policies for different product categories. Provides information about return windows, conditions, processes, and refund timelines. 
 
@@ -68,7 +68,7 @@ def get_return_policy(product_category: str) -> str:
 
 Explore the full file at `src/agent/tools/return_policy.py`. 
 
-### Tool 2: Get Product Information
+## Step 3: Understanding the `get_product_info` tool
 
 Tool purpose: Provides customers with product specs, warranties, features, and compatibility information to help them make informed decisions.
 
@@ -98,7 +98,7 @@ def get_product_info(product_type: str) -> str:
 ```
 Explore the full file: `src/agent/tools/product_info.py`
 
-## Create and Configure the Customer Support Agent
+## Step 4: Understanding the Customer Support Agent
 
 Now that you understand how to create in-process tools, let's see how to create an agent, attach it to these tools, and run it locally.
 
@@ -115,8 +115,8 @@ model = BedrockModel(model_id="us.anthropic.claude-sonnet-4-6")
 tools = [
     get_product_info,
     get_return_policy,
-    get_technical_support, # You will configure this tool in later module
-    mcp_tools_list         # You will configure this tool in later module
+    get_technical_support, # Doesn't do anything yet, you will configure this tool in later module
+    mcp_tools_list         # Doesn't do anything yet, you will configure this tool in later module
 ]
 
 # Defining the agent (inside of the invoke() method)
@@ -124,12 +124,12 @@ agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
     tools=tools,
-    session_manager=session_manager, # You will configure this in later module
+    session_manager=session_manager, # Doesn't do anything yet, you will configure this in later module
     callback_handler=None,
 )
 ```
 
-## Running locally vs in cloud
+## Step 5: Running locally vs in cloud
 
 The same `agent.py` file will run both on your local machine and in AWS on AgentCore Runtime (you'll deploy it in Module 5). At the bottom of `agent.py` you can see a code snippet that identifies the environment using the `AGENTCORE_RUNTIME_URL` variable, which is always available when running on AgentCore:
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
 When running locally, `run_locally_async()` starts an interactive prompt loop right in the Terminal, so you can type questions and see responses without editing any code.
 
-## Testing the agent locally
+## Step 6: Testing the agent locally
 
 Start the agent:
 
@@ -168,7 +168,7 @@ Welcome to the AwesomeCorp Customer Support Agent
 User prompt (type 'exit' to quit):
 ```
 
-### Test general capabilities
+#### Test general capabilities
 
 Ask the agent:
 
@@ -192,7 +192,7 @@ Just let me know what you need help with, and I'll do my best to assist you! Wha
 
 As expected, the agent is behaving according to what is defined in the system prompt. In the following modules you'll also add tools, knowledge base, and memory to make your agent more helpful. 
 
-### Test the `get_product_info` tool
+#### Test the `get_product_info` tool
 
 Ask the agent:
 
@@ -221,7 +221,7 @@ Specifications:
 ...REDACTED...
 ```
 
-### Test the `get_return_policy` tool
+#### Test the `get_return_policy` tool
 
 Ask the agent: 
 

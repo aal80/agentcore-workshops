@@ -14,7 +14,7 @@ from logger import get_logger
 from mcp_client import mcp_tools_list
 import os
 
-l = get_logger("agent")
+l = get_logger(__name__)
 
 model = BedrockModel(model_id="us.anthropic.claude-sonnet-4-6")
 
