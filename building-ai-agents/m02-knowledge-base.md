@@ -25,7 +25,11 @@ Let's see "before" and "after". Start the agent and ask a technical support ques
 make run-agent-locally
 ```
 
-Ask your agent: `My wireless headphones are not turning on, I need technical support`
+Ask the agent: 
+
+```text
+My wireless headphones are not turning on, I need technical support
+```
 
 The agent responds with some information but cannot provide real technical support since `get_technical_support` tool is not implemented yet:
 
@@ -120,7 +124,7 @@ def get_technical_support(issue_description: str) -> str:
     return result["content"][0]["text"]
 ```
 
-See `./src/agent/agent.py`, around line 20. The tools list already contains `get_technical_support` and now it is actually connected to the real Knowledge Base. 
+See `./src/agent/agent.py`, around line 21. The tools list already contains `get_technical_support` and now this tool is actually connected to a real Knowledge Base. 
 
 ```python
 # agent.py
@@ -132,7 +136,7 @@ tools = [
 ]
 ```
 
-## Step 4: Run the agent
+## Step 4: Test the updated agent
 
 Start the agent again and ask the same question:
 
@@ -140,7 +144,11 @@ Start the agent again and ask the same question:
 make run-agent-locally
 ```
 
-Type: `My wireless headphones are not turning on, I need technical support`
+Ask the agent: 
+
+```text
+My wireless headphones are not turning on, I need technical support
+```
 
 This time the agent will invoke `get_technical_support` and return content retrieved from the Knowledge Base:
 

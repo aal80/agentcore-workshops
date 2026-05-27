@@ -48,13 +48,12 @@ To enable Trasactional Search, run the following command in VS Code Terminal:
 make enable-cloudwatch-transactional-search
 ```
 
-In case Transactional Search is already enabled in your account, you might receive the following error. You can safely ignore it. 
+Enabling Transactional Search can take 5-10 minutes. You do not need to wait for that process to complete, please proceed with the workshop. 
 
-```bash
-aws: [ERROR]: An error occurred (InvalidRequestException) when calling the UpdateTraceSegmentDestination operation: The destination is already set to CloudWatchLogs
-make: [Makefile:3: enable-cloudwatch-transactional-search] Error 254 (ignored)
-```
-
+> [OPTIONAL TROUBLESHOOTING] In case Transactional Search is already enabled in your account, you might receive the following error. You can safely ignore it. 
+> ```text
+> aws: [ERROR]: An error occurred (InvalidRequestException) when calling the UpdateTraceSegmentDestination operation: The destination is already set to CloudWatchLogs
+> ```
 
 ## Step 5: Explore the infrastructure configuration
 

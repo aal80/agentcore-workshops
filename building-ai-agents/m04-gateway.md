@@ -37,7 +37,11 @@ Before adding the Gateway, let's confirm what the current agent is doing. Start 
 make run-agent-locally
 ```
 
-Type: `I have a Gaming Console Pro. My warranty serial number is MNO33333333. Am I covered?`
+Ask the agent: 
+
+```text
+I have a Gaming Console Pro. My warranty serial number is MNO33333333. Am I covered?
+```
 
 The agent has no `check_warranty_status` tool yet — it will fall back to the knowledge base or admit it can't answer. Type `exit` to quit.
 
@@ -279,7 +283,13 @@ Start the agent and ask the same warranty question:
 make run-agent-locally
 ```
 
-Type: `I have a Gaming Console Pro. My warranty serial number is MNO33333333. Am I covered?`
+Ask the agent: 
+
+```text
+I have a Gaming Console Pro. My warranty serial number is MNO33333333. Am I covered?
+```
+
+See agent response, reflecting the newly integrated MCP tool:
 
 ```
 I'll check the warranty status for your Gaming Console Pro right away.

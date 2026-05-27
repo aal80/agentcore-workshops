@@ -41,11 +41,19 @@ Start the agent and ask about an overheating issue:
 make run-agent-locally
 ```
 
-Type: `My MacBook Pro overheating during video editing, what's the return policy?`
+Ask the agent
+
+```text
+My MacBook Pro overheating during video editing, what's the return policy?
+```
 
 Wait for the agent to reply. 
 
-Now ask it: `What was my previous problem?`
+Now ask it: 
+
+```text
+What was my previous problem?
+```
 
 The agent has no idea what you've asked it just a moment ago:
 
@@ -128,7 +136,7 @@ memory_config = AgentCoreMemoryConfig(
 session_manager = AgentCoreMemorySessionManager(memory_config)
 ```
 
-Now open [src/agent/agent.py](src/agent/agent.py), see around line 38. The memory integration is already wired in:
+Now open [src/agent/agent.py](src/agent/agent.py), see around line 40. The memory integration is already wired in:
 
 ```python
 from memory_config import session_manager
@@ -151,13 +159,23 @@ make run-agent-locally
 
 **First run** — same prompt, now with memory enabled:
 
-Type: `My MacBook Pro overheating during video editing, what's the return policy?`
+Ask the agent
+
+```text
+My MacBook Pro overheating during video editing, what's the return policy
+```
 
 The agent answers as before, but this time the agent immediatelly persists conversation in the short-term memory. 
 
 **Second run** — ask the follow-up without any additional context:
 
-Type: `What was my previous problem?`
+Ask the agent
+
+```text
+What was my previous problem?
+```
+
+The response reflects the newly enabled memory functionality:
 
 ```
 Your previous problem was **overheating issues with your MacBook Pro specifically during video editing**. 

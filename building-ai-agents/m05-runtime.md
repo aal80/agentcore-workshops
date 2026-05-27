@@ -24,19 +24,22 @@ AgentCore Runtime runs your agent in managed microVMs. You provide the agent cod
 
 ## Step 1: Understand how agent.py runs in the cloud
 
-No code changes are needed. Open `./src/agent/agent.py`, around line 64:
+No code changes are needed. Open `./src/agent/agent.py`, scroll to the very bottom:
 
 ```python
 if __name__ == "__main__":
     if os.environ.get("AGENTCORE_RUNTIME_URL"):
+        print("Initializing OTEL...")
+        opentelemetry.instrumentation.auto_instrumentation.initialize()
+
         print("Running on AgentCore, starting server...")
         app.run()
     else:
         print("Running locally...")
-        run_locally()
+        asyncio.run(run_locally_async())
 ```
 
-When deployed to AgentCore, the AgentCore Runtime sets `AGENTCORE_RUNTIME_URL` environment variable. The agent detects this and calls `app.run()`, which starts the HTTP server that the runtime calls on every invocation. 
+When deployed to AgentCore, the AgentCore Runtime sets `AGENTCORE_RUNTIME_URL` environment variable. The agent detects this, initializes OpenTelemetry, and calls `app.run()`, which starts the HTTP server that the runtime calls on every invocation. 
 
 ![](./images/m05-agent-listening-on-8080.png)
 
@@ -53,8 +56,10 @@ app = BedrockAgentCoreApp()
 @app.entrypoint
 async def invoke(payload, context=None):
     user_prompt = payload.get("prompt", "Hey there!")
-    ...
-    return response_text
+    # ...REDACTED...
+    # run agentic loop
+    # stream back agent response
+    
 
 # 4. Start the HTTP server when AGENTCORE_RUNTIME_URL is set
 if os.environ.get("AGENTCORE_RUNTIME_URL"):

@@ -125,21 +125,25 @@ agent = Agent(
     system_prompt=SYSTEM_PROMPT,
     tools=tools,
     session_manager=session_manager, # Not implemented yet
+    callback_handler=None,
 )
 ```
 
 ## Running locally vs in cloud
 
-The same `agent.py` file will run both on your local machine and in AWS on AgentCore Runtime (you'll deploy it in Module 5). At the bottom of `agent.py` you can see code that detects the environment using the `AGENTCORE_RUNTIME_URL` environment variable, which is always available when running on AgentCore:
+The same `agent.py` file will run both on your local machine and in AWS on AgentCore Runtime (you'll deploy it in Module 5). At the bottom of `agent.py` you can see a code snippet that identifies the environment using the `AGENTCORE_RUNTIME_URL` variable, which is always available when running on AgentCore:
 
 ```python
 if __name__ == "__main__":
     if os.environ.get("AGENTCORE_RUNTIME_URL"):
+        print("Initializing OTEL...") # Initializes OpenTelemetry 
+        opentelemetry.instrumentation.auto_instrumentation.initialize()
+
         print("Running on AgentCore, starting server...")
         app.run()          # starts the AgentCore HTTP server
     else:
         print("Running locally...")
-        run_locally()      # starts an interactive REPL loop
+        run_locally()      # starts an interactive prompt loop
 ```
 
 When running locally, `run_locally()` starts an interactive prompt loop right in the Terminal, so you can type questions and see responses without editing any code.
@@ -166,7 +170,11 @@ User prompt (type 'exit' to quit):
 
 ### Test general capabilities
 
-Ask the agent: `How can you help me?`
+Ask the agent:
+
+```text
+How can you help me?
+```
 
 The agent describes its capabilities as defined in the system prompt:
 
@@ -186,7 +194,11 @@ As expected, the agent is behaving according to what is defined in the system pr
 
 ### Test the `get_product_info` tool
 
-Ask the agent: `What do you know about headphones?`
+Ask the agent:
+
+```text
+What do you know about headphones?
+```
 
 The agent automatically invokes `get_product_info` based on the prompt:
 
@@ -210,7 +222,11 @@ Specifications:
 
 ### Test the `get_return_policy` tool
 
-Ask the agent: `My headphones are broken, can I return them?`
+Ask the agent: 
+
+```text
+My headphones are broken, can I return them?
+```
 
 The agent automatically invokes `get_return_policy` based on the prompt:
 

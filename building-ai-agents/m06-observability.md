@@ -11,7 +11,7 @@ By default, some of AgentCore components, such as Runtime, emit basic telemetry 
 ![](./images/m05-logs.png)
 
 
-In addition to basic logs, you can enable AgentCore components to emit Open Telemetry (OTEL) formatted telemetry to CloudWatch, S3, or Kinesis. The resources you deployed in previous modules were already instrumented for OTEL, so there's no extra deployments you need to do. Explore Terraform modules for gateway, runtime, memory, and knowledge base - all of them have `observability.tf` configuration. For example, this is how you enable OTEL-based application logs for AgentCore Runtime:
+In addition to basic logs, you can enable AgentCore components to emit OpenTelemetry (OTEL) formatted logs, metrics, and traces to CloudWatch, S3, or Kinesis. The resources you deployed in previous modules were already instrumented for OTEL, so there's no extra deployments you need to do. Explore Terraform modules for gateway, runtime, memory, and knowledge base - all of them have `observability.tf` configuration. For example, this is how you enable OTEL-based application logs for AgentCore Runtime:
 
 ```hcl
 # Create a log group
@@ -47,7 +47,7 @@ resource "aws_cloudwatch_log_delivery" "runtime_logs" {
 
 ## Built-in Observability Dashboard
 
-In addition to raw telemetry that AgentCore emits to CloudWatch, S3, or Kinesis, you can leverage CloudWatch GenAI Observability dashboard to see all the information in one place, such as:
+You can leverage CloudWatch GenAI Observability dashboard to see all the information in one place, such as:
 
 ### Agents
 
