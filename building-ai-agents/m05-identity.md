@@ -36,7 +36,7 @@ When the agent needs a token, the two-step flow is:
 
 ## Step 1: Before enabling AgentCore Identity
 
-With Module 4 deployed, you can see the current (insecure) flow. Look at `./src/agent/identity_helper.py` — when `CREDENTIAL_PROVIDER_NAME` is not set, the agent falls back to direct Cognito calls using plaintext credentials:
+With previous module deployed, you can see the current (insecure) flow. Look at `./src/agent/identity_helper.py` — when `CREDENTIAL_PROVIDER_NAME` is not set, the agent falls back to direct Cognito calls using plaintext credentials:
 
 ```python
 def get_token():
@@ -59,7 +59,7 @@ def _get_token_from_cognito_endpoint():
 
 ```
 
-The `_get_token_from_cognito_endpoint()` path reads `COGNITO_CLIENT_SECRET` directly from the environment — sourced from `./tmp/cognito_client_secret.txt` written by Terraform. Let's fix that. 
+The `_get_token_from_cognito_endpoint()` path reads `COGNITO_CLIENT_SECRET` directly from the environment — sourced from `./tmp/cognito_client_secret.txt` written by Terraform. Let's fix that and make it significantly more secure. 
 
 ## Step 2: Deploy AgentCore Identity infrastructure
 
@@ -76,9 +76,9 @@ The `_get_token_from_cognito_endpoint()` path reads `COGNITO_CLIENT_SECRET` dire
     }
     ```
 
-    Notice that `oauth2_provider_client_secret` is passed directly from the gateway module output. The variable is marked `ephemeral=true` and `sensitive=true` so it flows through Terraform's memory without being persisted to state.
+    Notice that `oauth2_provider_client_secret` is passed directly from the gateway module output. The variable is marked `ephemeral=true` and `sensitive=true` in module's `variable.tf`, so it flows through Terraform without being persisted to state.
 
-1. Also set `store_raw_cognito_credentials = false` on the gateway module. This removes the plaintext `cognito_client_id.txt` and `cognito_client_secret.txt` files from `./tmp` — the agent will no longer need them:
+1. Set `store_raw_cognito_credentials = false` on the gateway module. This removes the plaintext `cognito_client_id.txt` and `cognito_client_secret.txt` files from `./tmp` — the agent no longer needs them:
 
     ```hcl
     module "gateway" {
@@ -143,7 +143,7 @@ def get_token():
         return _get_token_from_agentcore_identity_credential_provider()  # Module 5 secure path
 ```
 
-The direct Cognito path was intentionally introduced first in Module 4 to illustrate what an insecure implementation looks like. In production, you should always use AgentCore Identity — secrets stay locked in the Token Vault, your agent never touches them, and token lifecycle is managed for you automatically.
+The direct Cognito path was intentionally introduced first in Module 4 to illustrate what an insecure implementation looks like. For secure implementation, use AgentCore Identity to store long-lived credentials — secrets stay locked in the token vault, your agent never touches them, and token lifecycle is managed for you automatically.
 
 ## Step 4: Test the agent with AgentCore Identity
 
