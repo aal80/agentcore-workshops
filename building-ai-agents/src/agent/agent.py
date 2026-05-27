@@ -45,6 +45,10 @@ async def invoke(payload, _context=None):
     )
 
     async for event in agent.stream_async(user_prompt):
+        tool_use = event.get("event", {}).get("contentBlockStart", {}).get("start", {}).get("toolUse")
+        if tool_use:
+            print(f"\n[Tool called: {tool_use['name']}]\n")
+
         text_chunk = event.get("data")
         if text_chunk:
             yield text_chunk
