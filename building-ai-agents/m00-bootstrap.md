@@ -38,9 +38,9 @@ Below are the assets you can find in Visual Studio Code that you'll be using thr
 1. Main editing window. This is where you'll be making changes to project files. 
 1. Terminal window. This is where you'll be running commands. 
 
-## Step 4: Enable Transaction Search 
+## Step 4: Enable Transactional Search 
 
-This step enables Transaction Search, a capability which will allow you to get enhanced observability for your agents running on AgentCore. 
+This step enables Transactional Search, a capability which will allow you to get enhanced observability for your agents running on AgentCore. 
 
 To enable Transactional Search, run the following command in VS Code Terminal:
 
