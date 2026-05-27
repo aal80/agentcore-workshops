@@ -205,7 +205,8 @@ The agent automatically invokes `get_product_info` based on the prompt:
 ```text
 I'd be happy to help you learn about headphones! Let me pull up our detailed product information for you.
 
-Tool #1: get_product_info
+[Tool called: get_product_info]
+
 ### Headphones Information
 
 Here's what I know about our headphones:
@@ -233,7 +234,8 @@ The agent automatically invokes `get_return_policy` based on the prompt:
 ```text
 I'll get the return policy information for headphones for you.
 
-Tool #1: get_return_policy
+[Tool called: get_return_policy]
+
 According to our return policy for headphones:
 
 Headphones Return Policy:

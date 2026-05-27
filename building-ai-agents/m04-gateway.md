@@ -295,7 +295,7 @@ See agent response, reflecting the newly integrated MCP tool:
 ```
 I'll check the warranty status for your Gaming Console Pro right away.
 
-Tool #1: check-warranty-status___check_warranty_status
+[Tool called: check-warranty-status___check_warranty_status]
 
 Great news! **Your Gaming Console Pro is covered under warranty!**
 

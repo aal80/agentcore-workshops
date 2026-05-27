@@ -155,7 +155,8 @@ This time the agent will invoke `get_technical_support` and return content retri
 ```
 I'll help you troubleshoot your wireless headphones. Let me get our technical support documentation for this issue.
 
-Tool #1: get_technical_support
+[Tool called: get_technical_support]
+
 Great! I found some troubleshooting guidance. Here are the steps to help get your wireless headphones turning on:
 
 ## **Troubleshooting Steps for Wireless Headphones Not Turning On:**
