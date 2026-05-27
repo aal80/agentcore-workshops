@@ -55,7 +55,7 @@ app = BedrockAgentCoreApp()
 
 # 3. Declare the entrypoint — called by the runtime on every invocation
 @app.entrypoint
-async def invoke(payload, context=None):
+async def invoke(payload, _context=None):
     user_prompt = payload.get("prompt", "Hey there!")
     # ...REDACTED...
     # run agentic loop

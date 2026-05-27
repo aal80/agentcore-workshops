@@ -159,7 +159,7 @@ Repeat the same two runs from Step 1. Restart your agent by running
 make run-agent-locally
 ```
 
-**First run** — same prompt, now with memory enabled:
+**First question** — same prompt, now with memory enabled:
 
 Ask the agent
 
@@ -167,9 +167,9 @@ Ask the agent
 My MacBook Pro overheating during video editing, what's the return policy
 ```
 
-The agent answers as before, but this time the agent immediately persists conversation in the short-term memory. 
+The agent answers as before, but this time the agent immediately persists the conversation in short-term memory. 
 
-**Second run** — ask the follow-up without any additional context:
+**Second question** — ask the follow-up in the same session, without any additional context:
 
 Ask the agent
 

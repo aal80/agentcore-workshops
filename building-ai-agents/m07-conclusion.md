@@ -24,7 +24,7 @@ The patterns you learned here aren't specific to customer support. Every piece â
 > You can skip this step if you're running the workshop in an AWS-provided account
 
 ```bash
-terraform destroy
+make destroy
 ```
 
 ## Next steps
