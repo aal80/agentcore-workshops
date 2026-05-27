@@ -7,7 +7,6 @@ AGENT_RUNTIME_ARN_FILE = "../../tmp/agent_runtime_arn.txt"
 AGENT_RUNTIME_ARN = open(AGENT_RUNTIME_ARN_FILE).read().strip()
 session_id = str(uuid.uuid4())
 
-
 def invoke_remote_agent(prompt: str):
     client = boto3.client("bedrock-agentcore")
     payload = json.dumps({"prompt": prompt})

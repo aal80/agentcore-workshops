@@ -4,7 +4,7 @@ This module explains how to set up your workshop environment and install require
 
 
 ## Step 1: Installing prerequisites (ONLY WHEN NOT USING AWS-PROVIDED WORKSHOP ACCOUNTS)
-#### IMPORTANT: If you're using AWS-provided Workshop accounts, all the below dependencies come pre-installed. Skip directly to [Step 2: Clone the Workshop from Github](#step-2-clone-the-workshop-from-github-section) section.
+#### IMPORTANT: If you're using AWS-provided Workshop accounts, all the below dependencies come pre-installed. Skip directly to [Step 2: Clone the Workshop from Github](#step-2-clone-the-workshop-from-github) section.
 
 Make sure you have the following installed and configured:
 
@@ -16,7 +16,7 @@ Make sure you have the following installed and configured:
 | Terraform | 1.5+ | `terraform --version` |
 | make | any | `make --version` |
 
-## Step 2: Clone the Workshop from Github section
+## Step 2: Clone the Workshop from Github
 
 ```
 git clone --no-checkout --depth 1 https://github.com/aal80/agentcore-workshops

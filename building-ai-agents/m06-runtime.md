@@ -1,4 +1,4 @@
-# Module 5: Deploying the Agent to AgentCore Runtime
+# Module 6: Deploying the Agent to AgentCore Runtime
 
 In the previous module your agent became a secure, gateway-connected service with centralized tools. But it still runs locally on your laptop. Every time your machine sleeps or restarts, the agent disappears. There's no scalable endpoint, tenant session isolation, and no observability pipeline to tell you what the agent is actually doing in production.
 
@@ -6,7 +6,7 @@ In this module you'll deploy the agent to **Amazon Bedrock AgentCore Runtime** �
 
 ## Why this matters
 
-| Before (Modules 1–4) | After (this module) |
+| Before (Modules 1–5) | After (this module) |
 |---|---|
 | Agent runs locally | Agent runs on managed cloud compute |
 | No HTTP endpoint to call | Can be invoked by anyone (with the right access permissions) |
@@ -16,7 +16,7 @@ In this module you'll deploy the agent to **Amazon Bedrock AgentCore Runtime** �
 
 ## Architecture
 
-![](./images/m05-arch.png)
+![](./images/m06-arch.png)
 
 ## How the AgentCore Runtime works
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
 When deployed to AgentCore, the AgentCore Runtime sets `AGENTCORE_RUNTIME_URL` environment variable. The agent detects this, initializes OpenTelemetry, and calls `app.run()`, which starts the HTTP server that the runtime calls on every invocation. 
 
-![](./images/m05-agent-listening-on-8080.png)
+![](./images/m06-agent-listening-on-8080.png)
 
 The AgentCore SDK provides a rapid way of implementing required web interfaces via the `BedrockAgentCoreApp` class. The four key pieces are:
 
@@ -67,8 +67,6 @@ if os.environ.get("AGENTCORE_RUNTIME_URL"):
     app.run()
 ```
 
-The `context` object passed to `invoke` contains `session_id` and `request_headers` — the runtime populates `session_id` automatically, which `memory_config.py` uses for per-session AgentCore Memory isolation.
-
 ## Step 2: Package your agent image
 
 To package your agent as a .zip file, run the following command:
@@ -81,10 +79,10 @@ This installs all the dependencies and packages your agent code under `./tmp/age
 
 ## Step 3: Deploy agent to AgentCore Runtime
 
-Open `./terraform/workshop.tf` and uncomment the `runtime` module. See the configuration passed to the runtime module from previously deployed components, such as memory, knowledge base, cognito, and gateway.
+Open `./terraform/workshop.tf` and uncomment the `runtime` module. See the configuration passed to the runtime module from previously deployed components, such as memory, knowledge base, gateway, and identity.
 
 ```hcl
-# --- Module 5: Uncomment to deploy AgentCore Runtime infrastructure
+# --- Module 6: Uncomment to deploy AgentCore Runtime infrastructure
 module "runtime" {
   source                        = "./runtime"
   project_name                  = local.project_name
@@ -92,14 +90,13 @@ module "runtime" {
   agentcore_memory_id           = module.memory.memory_id
   tech_support_knowledgebase_id = module.knowledge_base.kb_id
   gateway_url                   = module.gateway.gateway_url
-  cognito_client_id             = module.gateway.cognito_client_id
-  cognito_client_secret_arn     = module.gateway.cognito_client_secret_arn
-  cognito_token_endpoint        = module.gateway.cognito_token_endpoint
   cognito_scope                 = module.gateway.cognito_scope
+  credential_provider_name      = module.identity.credential_provider_name
+  workload_identity_name        = module.identity.workload_identity_name
 }
 ```
 
-> Ensure you have completed Modules 2, 3, and 4 and their modules are uncommented in `workshop.tf` before proceeding
+> Ensure you have completed Modules 2-5 and they're uncommented in `workshop.tf` before proceeding
 
 Deploy the changes to cloud:
 
@@ -140,7 +137,7 @@ AgentCore Runtime automatically emits simple text-based logs to CloudWatch Logs.
 1. Find the log group named `/aws/bedrock-agentcore/runtimes/XXXX_building_ai_agents_agent-XXXXXXXX-DEFAULT`
 1. Open any log stream, observe the logs
 
-![](./images/m05-logs.png)
+![](./images/m06-logs.png)
 
 ## Congratulations!
 
@@ -149,11 +146,11 @@ Your agent now runs as a fully managed cloud service:
 - **Packaged** — reproducible, portable, version-controlled via S3 versioned objects
 - **Scalable** — AgentCore Runtime handles traffic spikes automatically
 - **Observable** — every invocation is logged in CloudWatch GenAI Observability
-- **Secure** — the runtime IAM role follows least-privilege; Cognito token propagation keeps the Gateway auth chain intact
+- **Secure** — the runtime IAM role follows least-privilege; AgentCore Gateway handles inbound authorization and AgentCore Identity handles token acquisition for outbound requests so no long-lived secrets are injected into the runtime environment
 - **Memory-aware** — session IDs come from the runtime context, giving AgentCore Memory proper session boundaries across invocations
 
 ## Next steps
 
-- Proceed to [Module 6](m06-observability.md) to learn about monitoring your agents with built-in AgentCore Observability
+- Proceed to [Module 7](m07-observability.md) to learn about monitoring your agents with built-in AgentCore Observability
 
 

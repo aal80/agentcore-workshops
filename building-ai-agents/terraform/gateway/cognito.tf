@@ -40,30 +40,28 @@ locals {
   cognito_scope = "gateway/read"
 }
 
-resource "aws_secretsmanager_secret" "cognito_client_secret" {
-  name                    = "${var.project_name}/gateway/cognito-client-secret"
-  recovery_window_in_days = 0
-}
-
-resource "aws_secretsmanager_secret_version" "cognito_client_secret" {
-  secret_id     = aws_secretsmanager_secret.cognito_client_secret.id
-  secret_string = aws_cognito_user_pool_client.gateway.client_secret
-}
+# resource "aws_secretsmanager_secret_version" "cognito_client_secret" {
+#   secret_id     = aws_secretsmanager_secret.cognito_client_secret.id
+#   secret_string = aws_cognito_user_pool_client.gateway.client_secret
+# }
 
 
 resource "local_file" "cognito_token_endpoint" {
+  count    = var.store_raw_cognito_credentials ? 1 : 0
   content  = local.cognito_token_endpoint
   filename = "${path.root}/../tmp/cognito_token_endpoint.txt"
 }
 
 resource "local_file" "cognito_client_id" {
+  count    = var.store_raw_cognito_credentials ? 1 : 0
   content  = aws_cognito_user_pool_client.gateway.id
   filename = "${path.root}/../tmp/cognito_client_id.txt"
 }
 
-resource "local_file" "cognito_client_secret_arn" {
-  content  = aws_secretsmanager_secret.cognito_client_secret.arn
-  filename = "${path.root}/../tmp/cognito_client_secret_arn.txt"
+resource "local_file" "cognito_client_secret" {
+  count    = var.store_raw_cognito_credentials ? 1 : 0
+  content  = aws_cognito_user_pool_client.gateway.client_secret
+  filename = "${path.root}/../tmp/cognito_client_secret.txt"
 }
 
 resource "local_file" "cognito_scope" {
@@ -75,12 +73,18 @@ output "cognito_token_endpoint" {
   value = local.cognito_token_endpoint
 }
 
+output "cognito_discovery_url" {
+  value = local.cognito_discovery_url
+}
+
 output "cognito_client_id" {
   value = aws_cognito_user_pool_client.gateway.id
 }
 
-output "cognito_client_secret_arn" {
-  value = aws_secretsmanager_secret.cognito_client_secret.arn
+output "cognito_client_secret" {
+  value = aws_cognito_user_pool_client.gateway.client_secret
+  ephemeral = true
+  sensitive = true
 }
 
 output "cognito_scope" {

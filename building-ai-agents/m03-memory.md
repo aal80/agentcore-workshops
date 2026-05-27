@@ -35,89 +35,89 @@ When an agent starts a conversation, `AgentCoreMemorySessionManager` class, prov
 
 Before you add memory capabilities to your agent, let's illustrate the problem:
 
-Start the agent and ask about an overheating issue:
+1. Start the agent and ask about an overheating issue:
 
-```bash
-make run-agent-locally
-```
+    ```bash
+    make run-agent-locally
+    ```
 
-Ask the agent
+1. Ask the agent
 
-```text
-My MacBook Pro overheating during video editing, what's the return policy?
-```
+    ```text
+    My MacBook Pro overheating during video editing, what's the return policy?
+    ```
 
-Wait for the agent to reply. 
+    Wait for the agent to reply. 
 
-Now ask it: 
+1. Now ask it: 
 
-```text
-What was my previous problem?
-```
+    ```text
+    What was my previous problem?
+    ```
 
-The agent has no idea what you've asked it just a moment ago:
+1. The agent has no idea what you've asked it just a moment ago:
 
-```
-I don't have access to your previous conversation history, so I can't see what your previous problem was. 
+    ```
+    I don't have access to your previous conversation history, so I can't see what your previous problem was. 
 
-To help you effectively, could you please share some details about:
-- What product or issue you're currently facing
-- Any specific symptoms or errors you're experiencing
-- When the problem started
-```
+    To help you effectively, could you please share some details about:
+    - What product or issue you're currently facing
+    - Any specific symptoms or errors you're experiencing
+    - When the problem started
+    ```
 
-It starts each iteration completely fresh. This is exactly the limitation you're fixing.
+    It starts each iteration completely fresh. This is exactly the limitation you're fixing.
 
-Stop your agent by telling it to `exit`.
+1. Stop your agent by telling it to `exit`.
 
 ## Step 2: Enable AgentCore Memory
 
-Open `./terraform/workshop.tf` and uncomment the `memory` module:
+1. Open `./terraform/workshop.tf` and uncomment the `memory` module:
 
-```hcl
-# --- Module 3: Uncomment to deploy AgentCore Memory
-module "memory" {
-  source       = "./memory"
-  project_name = local.project_name
-  region       = data.aws_region.current.region
-}
-```
+    ```hcl
+    # --- Module 3: Uncomment to deploy AgentCore Memory
+    module "memory" {
+      source       = "./memory"
+      project_name = local.project_name
+      region       = data.aws_region.current.region
+    }
+    ```
 
-Then deploy changes:
+1. Deploy changes:
 
-```bash
-make deploy-infra
-```
+    ```bash
+    make deploy-infra
+    ```
 
-This creates AgentCore Memory resources with two strategies configured and writes the Memory ID to `tmp/memory_id.txt` so you can test it locally. 
+    This creates AgentCore Memory resources with two strategies configured and writes the Memory ID to `tmp/memory_id.txt` so you can test it locally. 
 
-Memory deployment can take several minutes. In the meanwhile, explore `./terraform/memory` resources. For example, this is how you define the memory and strategy:
+1. Memory deployment can take several minutes. In the meanwhile, explore `./terraform/memory` resources. For example, this is how you define the memory and strategy:
 
-```hcl
-resource "aws_bedrockagentcore_memory" "customer_support" {
-  name                  = "${local.project_name_underscored}_customer_support"
-  description           = "Customer support agent memory"
-  event_expiry_duration = 7
-}
+    ```hcl
+    resource "aws_bedrockagentcore_memory" "customer_support" {
+      name                  = "${local.project_name_underscored}_customer_support"
+      description           = "Customer support agent memory"
+      event_expiry_duration = 7
+    }
 
-resource "aws_bedrockagentcore_memory_strategy" "preferences" {
-  name        = "CustomerSupportPreferences"
-  description = "Captures customer preferences and behavior"
-  memory_id   = aws_bedrockagentcore_memory.customer_support.id
-  type        = "USER_PREFERENCE"
-  namespaces  = ["support/customer/{actorId}/preferences/"]
-}
-```
+    resource "aws_bedrockagentcore_memory_strategy" "preferences" {
+      name        = "CustomerSupportPreferences"
+      description = "Captures customer preferences and behavior"
+      memory_id   = aws_bedrockagentcore_memory.customer_support.id
+      type        = "USER_PREFERENCE"
+      namespaces  = ["support/customer/{actorId}/preferences/"]
+    }
+    ```
+    
+    Note the `namespaces` parameter in the strategy configuration. It defines that extracted preferences will be scoped to each user (actorId). 
 
-Note the `namespace` parameter in the strategy configuration. It defines that extraced preferences will be scoped to each user (actorId). 
+1. Once Terraform completes, verify the memory resources were created using the AWS Console:
 
-Once Terraform completes, verify the memory resources were created using the AWS Console:
+    - Open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/)
+    - In the left navigation, go to **Build → Memory**
+    - You should see `<prefix>_building_ai_agents_customer_support` with status **Active**
 
-1. Open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/)
-2. In the left navigation, go to **Build → Memory**
-3. You should see `<prefix>-building-ai-agents-customer-support` with status **Active**
-
-## Step 3: Understand AgentCoreMemorySessionManager usage
+## Step 3: Understand how AgentCoreMemorySessionManager works
 
 The memory configuration for Agent is implemented in `./src/agent/memory_config.py`. Explore this file to understand what's being configured. Memory ID is retrieved from an environment variable, `AgentCoreMemoryConfig` defines memory configuration, and an instance of `AgentCoreMemorySessionManager` is created:
 
@@ -143,7 +143,10 @@ session_manager = AgentCoreMemorySessionManager(memory_config)
 Now open [src/agent/agent.py](src/agent/agent.py), see around line 40. The memory integration is already wired in:
 
 ```python
-from memory_config import session_manager
+from memory_config import get_session_manager
+
+session_id = str(uuid.uuid4())
+session_manager=get_session_manager(session_id)
 
 agent = Agent(
     model=model,
@@ -155,39 +158,35 @@ agent = Agent(
 
 ## Step 4: Repeat the test with memory enabled
 
-Repeat the same two runs from Step 1. Restart your agent by running
+1. Repeat the same two runs from Step 1. Restart your agent by running
 
-```bash
-make run-agent-locally
-```
+    ```bash
+    make run-agent-locally
+    ```
 
-**First question** — same prompt, now with memory enabled:
+1. **First question** — same prompt, now with memory enabled. Ask the agent:
 
-Ask the agent
+    ```text
+    My MacBook Pro overheating during video editing, what's the return policy
+    ```
 
-```text
-My MacBook Pro overheating during video editing, what's the return policy
-```
+    The agent answers as before, but this time the agent immediately persists the conversation in short-term memory. 
 
-The agent answers as before, but this time the agent immediately persists the conversation in short-term memory. 
+1. **Second question** — ask the follow-up in the same session, without any additional context. Ask the agent:
 
-**Second question** — ask the follow-up in the same session, without any additional context:
+    ```text
+    What was my previous problem?
+    ```
 
-Ask the agent
+    The response reflects the newly enabled memory functionality:
 
-```text
-What was my previous problem?
-```
+    ```
+    Your previous problem was **overheating issues with your MacBook Pro specifically during video editing**. 
 
-The response reflects the newly enabled memory functionality:
-
-```
-Your previous problem was **overheating issues with your MacBook Pro specifically during video editing**. 
-
-Since you mentioned this is a new MacBook Pro that you use for video editing work, overheating during 
-intensive tasks like video editing is a common concern, especially when rendering large files or 
-using demanding software.
-```
+    Since you mentioned this is a new MacBook Pro that you use for video editing work, overheating during 
+    intensive tasks like video editing is a common concern, especially when rendering large files or 
+    using demanding software.
+    ```
 
 In addition, within a few minutes AgentCore Memory asynchronously extracts information from short-term memory and stores it in the long-term memory, so memory can persist across different sessions of the same user as well.
 

@@ -24,18 +24,22 @@ run-agent-locally:
 	$(eval MEMORY_ID := $(shell cat ./tmp/memory_id.txt))
 	$(eval GATEWAY_URL := $(shell cat ./tmp/gateway_url.txt))
 	$(eval COGNITO_CLIENT_ID := $(shell cat ./tmp/cognito_client_id.txt))
-	$(eval COGNITO_CLIENT_SECRET_ARN := $(shell cat ./tmp/cognito_client_secret_arn.txt))
+	$(eval COGNITO_CLIENT_SECRET := $(shell cat ./tmp/cognito_client_secret.txt))
 	$(eval COGNITO_TOKEN_ENDPOINT := $(shell cat ./tmp/cognito_token_endpoint.txt))
 	$(eval COGNITO_SCOPE := $(shell cat ./tmp/cognito_scope.txt))
+	$(eval WORKLOAD_ID_NAME := $(shell cat ./tmp/workload_identity_name.txt))
+	$(eval CREDENTIAL_PROVIDER_NAME := $(shell cat ./tmp/credential_provider_name.txt))
 	
 	cd src/agent && \
 		TECH_SUPPORT_KB_ID=$(TECH_SUPPORT_KB_ID) \
 		MEMORY_ID=$(MEMORY_ID) \
 		GATEWAY_URL=$(GATEWAY_URL) \
 		COGNITO_CLIENT_ID=$(COGNITO_CLIENT_ID) \
-		COGNITO_CLIENT_SECRET_ARN=$(COGNITO_CLIENT_SECRET_ARN) \
+		COGNITO_CLIENT_SECRET=$(COGNITO_CLIENT_SECRET) \
 		COGNITO_TOKEN_ENDPOINT=$(COGNITO_TOKEN_ENDPOINT) \
 		COGNITO_SCOPE=$(COGNITO_SCOPE) \
+		WORKLOAD_ID_NAME=$(WORKLOAD_ID_NAME) \
+		CREDENTIAL_PROVIDER_NAME=$(CREDENTIAL_PROVIDER_NAME) \
 		uv run agent.py
 
 get-cognito-access-token:
@@ -43,14 +47,11 @@ get-cognito-access-token:
 	$(eval COGNITO_TOKEN_ENDPOINT := $(shell cat ./tmp/cognito_token_endpoint.txt))
 	$(eval COGNITO_SCOPE := $(shell cat ./tmp/cognito_scope.txt))
 	$(eval COGNITO_CLIENT_ID := $(shell cat ./tmp/cognito_client_id.txt))
-	$(eval COGNITO_CLIENT_SECRET_ARN := $(shell cat ./tmp/cognito_client_secret_arn.txt))
-	$(eval COGNITO_CLIENT_SECRET := $(shell aws secretsmanager get-secret-value \
-		--secret-id $(COGNITO_CLIENT_SECRET_ARN) \
-		--query SecretString --output text))
+	$(eval COGNITO_CLIENT_SECRET := $(shell cat ./tmp/cognito_client_secret.txt))
 
 	$(info > COGNITO_TOKEN_ENDPOINT=$(COGNITO_TOKEN_ENDPOINT))
 	$(info > COGNITO_CLIENT_ID=$(COGNITO_CLIENT_ID))
-	$(info > COGNITO_CLIENT_SECRET=$(shell echo $(COGNITO_CLIENT_SECRET) | cut -c1-3).....)
+	$(info > COGNITO_CLIENT_SECRET=$(shell echo $(COGNITO_CLIENT_SECRET) | cut -c1-2)...REDACTED...)
 	$(info > COGNITO_SCOPE=$(COGNITO_SCOPE))
 
 	$(eval ACCESS_TOKEN := $(shell curl -s -X POST $(COGNITO_TOKEN_ENDPOINT) \
