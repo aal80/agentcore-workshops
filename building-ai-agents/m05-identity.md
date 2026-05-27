@@ -15,7 +15,7 @@ This means the agent has access to long-lived credentials. This creates some rea
 - Rotating credentials requires redeploying the agent
 - The same static secret is used across all environments and invocations — there is no per-session or per-user isolation
 
-In this module you'll replace this pattern with **Amazon Bedrock AgentCore Identity** — a managed service that stores credentials in an encrypted **Token Vault** and vends short-lived access tokens on demand. Your agent no longer holds any long-lived secrets.
+In this module you'll replace this pattern with **Amazon Bedrock AgentCore Identity** — a managed service that stores credentials in an encrypted **Token Vault** and vends short-lived access tokens on demand. Your agent no longer holds any long-lived secrets. The following diagram illustrates "before" and "after" architecture you'll implement:
 
 ![](./images/m05-arch.png)
 
@@ -25,14 +25,14 @@ AgentCore Identity has two core concepts:
 
 **Workload Identity** — a stable digital identity assigned to your agent. Think of it as the agent's IAM identity.
 
-**Credential Provider** — an AgentCore Identity resource that defines how to obtain an access token for a specific service (Cognito in this case). It stores the OAuth2 credentials and retrieved tokens in a secure token vault — encrypted at rest, never exposed to the agent.
+**Credential Provider** — an AgentCore Identity resource that defines how to obtain an access token from a specific OAuth2 provider (Cognito in this case). It stores the OAuth2 credentials and retrieved tokens in a secure token vault — encrypted at rest, never exposed to the agent.
 
 When the agent needs a token, the two-step flow is:
 
 ![](./images/m05-sequence-diagram.png)
 
 1. **Get workload identity token** — the agent identifies itself to AgentCore using its workload name, and receives a short-lived AWS-signed token that proves its identity.
-2. **Get resource access token** — the agent exchanges that workload token for an actual Cognito access token. AgentCore retrieves the stored credentials from the Token Vault, calls Cognito on the agent's behalf, and returns the access token. The agent NEVER sees the client secret.
+2. **Get resource access token** — the agent exchanges the workload identity token for an actual Cognito access token. AgentCore retrieves the stored `client_id` and `client_secret` from the vault, calls Cognito on agent's behalf, stores retrieved tokens (access and refresh) in token vault, and returns the access token back to the agent. The agent NEVER sees the client secret.
 
 ## Step 1: Before enabling AgentCore Identity
 
