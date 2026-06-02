@@ -1,8 +1,16 @@
 # Module 4: Adding policies
 
-JWT authentication tells you **who** is calling. Policies answer the next question: **what are they allowed to do?**
+JWT authentication tells you **who** is calling. OAuth2 scopes let you go one step further — you can restrict a token to a set of allowed operations (e.g. `gateway/get_menu` but not `gateway/create_order`). For many use cases, that is enough.
 
-In this module you attach a **Policy Engine** to the gateway and write [Cedar](https://www.cedarpolicy.com/) authorization policies that control exactly which tools each caller can invoke — and under what conditions.
+But scopes are coarse-grained. They carry high-level intent — "this client can place orders" — but they know nothing about the request payload. There is no OAuth2 scope for "this user may only order pizzas that are not pineapple." For that kind of fine-grained authorization validation you need a policy engine that can inspect the actual tool names and arguments at request time.
+
+In this module you attach a **Policy Engine** to the gateway and write [Cedar](https://www.cedarpolicy.com/) authorization policies that control exactly which tools each caller can invoke — and under what conditions, including rules based on the arguments passed to a tool in request body.
+
+## Architecture
+
+In this module you will implement the following architecture:
+
+![](./images/m04-arch.png)
 
 ## Policy Engine overview
 
@@ -40,10 +48,10 @@ Key rule: **`forbid` always overrides `permit`**. A single `forbid` policy can b
 
 Up to now, a single Cognito client (`agent`) had the `gateway/invoke` scope. In this module you replace it with **two clients** with different scopes:
 
-- **client1** — has only `gateway/get_menu` → can view the menu but cannot order
-- **client2** — has both `gateway/get_menu` and `gateway/create_order` → full access
+- **client1** — has only `gateway/get_menu` — can view the menu but cannot order
+- **client2** — has both `gateway/get_menu` and `gateway/create_order` — full access
 
-Open `terraform/cognito-module4.tf` and **uncomment the entire file**. This adds `client1` and `client2` alongside the existing `agent` client from Module 3 — no changes to `cognito-module3.tf` are needed.
+Open `terraform/cognito-module4.tf` and **uncomment the entire file**. This adds `client1` and `client2` alongside the existing `mcp_client` from Module 3 — no changes to `cognito-module3.tf` are needed.
 
 Also update `terraform/gateway.tf` — inside the `custom_jwt_authorizer` block, update `allowed_scopes` and add `allowed_clients`:
 
@@ -87,7 +95,9 @@ Open `terraform/gateway.tf` and make two changes:
 make deploy-infra
 ```
 
-The deployment writes `tmp/gateway_url.txt` from the new AWSCC gateway URL. All subsequent `make` commands will use this URL.
+This deploys the new Cognito clients, creates the Policy Engine, and updates the gateway configuration.
+
+Let's start testing!
 
 ## Step 4: Confirm default deny
 

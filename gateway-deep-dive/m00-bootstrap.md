@@ -36,9 +36,8 @@ Open the `gateway-deep-dive` folder in Visual Studio Code. You will find:
 
 1. **Markdown modules** (`m01-*.md` through `m07-*.md`) — step-by-step instructions
 2. **Terraform configuration** (`terraform/`) — infrastructure as code for each module
-3. **Lambda source code** (`src/lambdas/`) — Node.js 22 handlers for the pizza tools
+3. **Lambda source code** (`src/lambdas/`) — Lambda functions implementing pizza tools
 4. **Python agent** (`src/agent/`) — a Strands-based agent you will use in Module 6
-5. **`terraform/workshop.tf`** — the file you will progressively uncomment as you advance
 
 ## Step 4: Enable Transactional Search
 

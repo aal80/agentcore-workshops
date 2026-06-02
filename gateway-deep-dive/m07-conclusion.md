@@ -12,9 +12,9 @@ Over seven modules you progressively built the backend for a pizza shop AI order
 | 1 | Learned Gateway concepts: targets, tool schemas, authorizers, policies, interceptors |
 | 2 | Deployed a Gateway with two Lambda-backed tools (`get-menu`, `create-order`) and called them via MCP |
 | 3 | Secured inbound access with Cognito JWT authentication (`CUSTOM_JWT` authorizer) |
-| 4 | Added a Lambda interceptor to inspect and transform requests and responses |
-| 5 | Enforced fine-grained authorization with Cedar policies (permit by tool, scope-based permit, input-based forbid) |
-| 6 | Replaced plaintext credentials with AgentCore Token Vault, and reviewed Gateway → Lambda IAM auth |
+| 4 | Enforced fine-grained authorization with Cedar policies (permit by tool, scope-based permit, input-based forbid) |
+| 5 | Added a Lambda interceptor to inspect and transform requests and responses |
+| 6 | Replaced plaintext credentials with AgentCore Token Vault, and reviewed Gateway — Lambda IAM auth |
 
 ## Key takeaways
 

@@ -2,9 +2,9 @@
 
 This module addresses two credential management concerns that have been present since Module 3:
 
-1. **Agent → Gateway**: The agent stores `COGNITO_CLIENT_ID` and `COGNITO_CLIENT_SECRET` in plaintext environment variables to fetch tokens. Any process that can read those env vars can call your gateway.
+1. **Agent — Gateway**: The agent stores `COGNITO_CLIENT_ID` and `COGNITO_CLIENT_SECRET` in plaintext environment variables to fetch tokens. Any process that can read those env vars can call your gateway.
 
-2. **Gateway → Lambda**: The gateway invokes Lambda using an IAM role (`gateway_iam_role`). This is already secure — but understanding the mechanism helps you extend it.
+2. **Gateway — Lambda**: The gateway invokes Lambda using an IAM role (`gateway_iam_role`). This is already secure — but understanding the mechanism helps you extend it.
 
 You will fix concern #1 by storing the Cognito credentials in **AgentCore's Token Vault** via a **Credential Provider**, and introduce the **Workload Identity** concept that ties a logical agent identity to a set of stored credentials.
 
@@ -57,21 +57,15 @@ The variables (`cognito_client_id`, `cognito_client_secret`, `cognito_discovery_
 ## Step 2: Deploy with credentials
 
 ```bash
-make deploy-infra \
-  -var cognito_client_id=$(cat ./tmp/cognito_client_id.txt) \
-  -var cognito_client_secret=$(cat ./tmp/cognito_client_secret.txt) \
-  -var cognito_discovery_url=$(cat ./tmp/cognito_token_endpoint.txt | sed 's|/oauth2/token||')/.well-known/openid-configuration
-```
-
-Or add a `deploy-identity` target to the Makefile that reads the tmp files:
-
-```bash
 make deploy-identity
 ```
 
+This reads credentials from `tmp/` and passes them to Terraform as ephemeral variables.
+
 This creates:
-- `aws_bedrockagentcore_workload_identity.pizza_agent` → writes `tmp/workload_identity_name.txt`
-- `aws_bedrockagentcore_oauth2_credential_provider.cognito` → stores `client_id` + `client_secret` in Token Vault, writes `tmp/credential_provider_name.txt`
+This creates:
+- `aws_bedrockagentcore_workload_identity.pizza_agent` — writes `tmp/workload_identity_name.txt`
+- `aws_bedrockagentcore_oauth2_credential_provider.cognito` — stores `client_id` + `client_secret` in Token Vault, writes `tmp/credential_provider_name.txt`
 
 ## Step 3: Start the Python agent
 
@@ -141,11 +135,11 @@ User prompt: I'll have the Four Cheese please.
 ```text
 [Tool called: create-order___create-order]
 
-Your order is confirmed! 🍕
+Your order is confirmed!
 
-- **Item:** Four Cheese
-- **Total:** $15.99
-- **Order ID:** ORD-...
+- Item: Four Cheese
+- Total: $15.99
+- Order ID: ORDER-...
 ```
 
 The agent fetched a Cognito token using the Token Vault, called the Gateway with it, and the Gateway invoked the Lambda using its IAM role. No secrets were passed through the agent process.
@@ -174,9 +168,9 @@ Both authentication hops are now secure:
 | Gateway → Lambda | IAM role | No — IAM is credential-free |
 
 You have completed the security layers:
-- ✅ Inbound JWT auth (Module 3)
-- ✅ Cedar policies (Module 4)
-- ✅ Secure outbound credentials via Token Vault (this module)
+- Inbound JWT auth (Module 3)
+- Cedar policies (Module 4)
+- Secure outbound credentials via Token Vault (this module)
 
 ## Next step
 

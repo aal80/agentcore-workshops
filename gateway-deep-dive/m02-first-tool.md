@@ -62,7 +62,7 @@ resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
   role_arn      = aws_iam_role.gateway.arn
   protocol_type = "MCP"
 
-  # Any called can reach the tools, no auth required
+  # Any caller can reach the tools, no auth required
   authorizer_type = "NONE"
   ...REDACTED...
 }
@@ -131,7 +131,7 @@ resource "aws_bedrockagentcore_gateway_target" "get_menu" {
 
     ![](./images/m02-verify-targets.png)
 
-    - **Log deliveries and tracing** section shows one log delivery destination and Tracing as **Enabled**
+    - **Log deliveries and tracing** section shows a log delivery destination and Tracing as **Enabled**
 
     ![](./images/m02-verify-observability.png)
 

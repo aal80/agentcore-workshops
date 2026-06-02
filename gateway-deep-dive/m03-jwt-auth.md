@@ -164,7 +164,7 @@ You can immediately see that, as expected, the gateway returns authorization fai
 }
 ```
 
-The gateway rejected the request before forwarding your requests Lambda function targets. 
+The gateway rejected the request before forwarding it to Lambda targets. 
 
 ## Step 4: Fetch a Cognito token
 

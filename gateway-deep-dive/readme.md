@@ -8,7 +8,7 @@ In this workshop, you will progressively build the backend for a **Pizza Shop AI
 
 ![](./images/intro.png)
 
-The workshop follows a deliberate learning arc: early modules use `curl` so you can see exactly what the MCP protocol looks like on the wire. By Module 6 you graduate to a full AI agent built with Strands SDK that discovers and calls those same tools automatically.
+The workshop follows a deliberate learning arc: early modules expose raw MCP calls so you can see exactly what the protocol looks like on the wire. By Module 6 you graduate to a full AI agent built with Strands SDK that discovers and calls those same tools automatically.
 
 ## Workshop Journey
 

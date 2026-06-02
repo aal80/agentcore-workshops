@@ -2,6 +2,12 @@
 
 AgentCore Gateway can invoke a **Lambda interceptor** on every request and/or response, giving you a programmable hook to inspect, transform, enrich, or block traffic — without changing your tool Lambdas.
 
+## Architecture
+
+In this module you will implement the following architecture:
+
+![](./images/m05-arch.png)
+
 ## What interceptors can do
 
 | Use case | Request or Response? |
@@ -129,6 +135,8 @@ make deploy-infra
 
 This packages and deploys the interceptor Lambda, then updates the gateway. The gateway will use `index.handler` (pass-through) by default.
 
+Let's start testing!
+
 ## Step 4: Observe the pass-through interceptor
 
 Place an order and watch the interceptor log in CloudWatch:
@@ -166,7 +174,7 @@ The response from the MCP call should be unchanged — you ordered Pepperoni and
 
     ```json
     {
-      "orderId": "ORD-...",
+      "orderId": "ORDER-...",
       "date": "2026-...",
       "item": "Margherita",
       "total": 12.99,
