@@ -10,23 +10,23 @@ l = get_logger(__name__)
 
 model = BedrockModel(model_id="us.anthropic.claude-sonnet-4-6")
 
-tools = [mcp_tools_list]
-
 agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
-    tools=tools,
+    tools=[mcp_tools_list],
 )
-
 
 async def run_locally_async():
     print("-" * 40)
-    print("Welcome to AgentCore Pizzeria!")
-    print(f"Available gateway tools: {len(mcp_tools_list)}")
+    print("Welcome to AgentCore AI Pizzeria!")
+    print("-" * 40)
+    print("Available MCP tools:")
+    for tool in mcp_tools_list:
+        print(f"| - {tool.tool_name}")
     print("-" * 40)
     while True:
         print()
-        prompt = input("You: ").strip()
+        prompt = input("You (type 'exit' to quit): ").strip()
         if prompt.lower() in ("exit", "quit"):
             break
         if not prompt:
@@ -41,9 +41,9 @@ async def run_locally_async():
             if tool_use:
                 print(f"\n[Tool called: {tool_use['name']}]\n")
 
-            text_chunk = event.get("data")
-            if text_chunk:
-                print(text_chunk, end="", flush=True)
+            # text_chunk = event.get("data")
+            # if text_chunk:
+            #     print(text_chunk, end="", flush=True)
         print()
 
 

@@ -1,84 +1,96 @@
 # Module 4: Adding policies
 
-JWT authentication tells you **who** is calling. OAuth2 scopes let you go one step further — you can restrict a token to a set of allowed operations (e.g. `gateway/get_menu` but not `gateway/create_order`). For many use cases, that is enough.
+JWT authentication you implemented in the previous module tells you **who** is calling. OAuth2 scopes let you go one step further — you can restrict a token to a set of allowed operations (e.g. `gateway/get_menu` but not `gateway/create_order`). For many use cases, that is enough.
 
-But scopes are coarse-grained. They carry high-level intent — "this client can place orders" — but they know nothing about the request payload. There is no OAuth2 scope for "this user may only order pizzas that are not pineapple." For that kind of fine-grained authorization validation you need a policy engine that can inspect the actual tool names and arguments at request time.
+But scopes are coarse-grained. They carry high-level intent — "this client can place orders" — but they know nothing about the request payload. There is no OAuth2 scope for "this client may only order up to 2 pizzas at a time, and they cannot be pineapple." For that kind of fine-grained authorization validation you need a policy engine that can inspect not just OAuth2 scopes, but the actual tool names and arguments at request time.
 
-In this module you attach a **Policy Engine** to the gateway and write [Cedar](https://www.cedarpolicy.com/) authorization policies that control exactly which tools each caller can invoke — and under what conditions, including rules based on the arguments passed to a tool in request body.
+In this module you will attach a **Policy Engine** to your gateway and write authorization policies that control exactly which tools each caller can invoke — and under what conditions, including rules based on the arguments passed to a tool in request body.
 
 ## Architecture
 
-In this module you will implement the following architecture:
+In this module you will extend your gateway implementation and add the new AgentCore Policy component:
 
 ![](./images/m04-arch.png)
 
 ## Policy Engine overview
 
-AgentCore's Policy Engine evaluates Cedar policies on every tool call. The default behaviour is **deny-all**: with no permit policies, nothing gets through.
+AgentCore's Policy engine evaluates [Cedar](https://www.cedarpolicy.com/) policies on every tool call. Cedar is an open-source policy language developed by AWS — it is expressive, fast to evaluate, and formally verifiable. Policies are written as `permit` and `forbid` statements that reference the caller's identity (`principal`), the operation being performed (`action`), and the resource being accessed (`resource`). 
 
-```
-JWT validated ✓
-        │
-        ▼
-Policy Engine
-  ├─ permit(principal, action=="get-menu___get-menu", resource==gateway) ?
-  ├─ permit(principal, action=="create-order___create-order", resource==gateway)
-  │         when { principal has scope "gateway/create_order" } ?
-  └─ forbid(principal, action=="create-order___create-order", resource==gateway)
-            when { context.input.pizzaId == 5 } ?    ← forbid wins
-        │
-        ▼
-   Tool Lambda (only if permitted AND not forbidden)
-```
+There are two important rules to keep in mind
+- The default behaviour is **deny-all**. Without explicit permit policies - nothing gets through.
+- **`forbid` always overrides `permit`**. A single `forbid` policy can block a request even if multiple `permit` policies would allow it.
 
-Key rule: **`forbid` always overrides `permit`**. A single `forbid` policy can block a request even if multiple `permit` policies would allow it.
+By the end of this module you will gradually implement the following fine-grained authorization approach: 
 
-## Cedar concepts used in this module
+1. JWT Validation by Gateway authorizer
+1. Policy engine chain
+    - **Permit** all principals to perform `get-menu` action
+    - **Permit** all principals to perform `create-order` action 
+        - ONLY IF they have `gateway/create_order` scope in JWT
+    - **Forbid** all principals to perform `create-order` action 
+        - ONLY WHEN `pizzaId==5` (forbid ordering pineapple pizza 🚫🍍🍕). 
 
-| Concept | Syntax | Meaning |
-|---|---|---|
-| Action name | `AgentCore::Action::"get-menu___get-menu"` | Matches a specific tool call |
-| Resource (gateway) | `AgentCore::Gateway::"<gateway_arn>"` | Scoped to a specific gateway |
-| JWT scope tag | `principal.getTag("scope")` | The scopes from the Bearer token |
-| Tool argument | `context.input.pizzaId` | The argument passed to the tool |
-| Permit | `permit(principal, action, resource)` | Allow if conditions met |
-| Forbid | `forbid(principal, action, resource)` | Deny even if permit would allow |
+Let's get started!
 
 ## Step 1: Upgrade to two Cognito clients
 
-Up to now, a single Cognito client (`agent`) had the `gateway/invoke` scope. In this module you replace it with **two clients** with different scopes:
+1. In the previous module, you used a single Cognito client that had the `gateway/invoke` scope. In this module you replace it with **two clients** with different scopes:
 
-- **client1** — has only `gateway/get_menu` — can view the menu but cannot order
-- **client2** — has both `gateway/get_menu` and `gateway/create_order` — full access
+    - **client1** — has only `gateway/get_menu` scope. It can view the menu but cannot place orders
+    - **client2** — has both `gateway/get_menu` and `gateway/create_order` scopes — full access
 
-Open `terraform/cognito-module4.tf` and **uncomment the entire file**. This adds `client1` and `client2` alongside the existing `mcp_client` from Module 3 — no changes to `cognito-module3.tf` are needed.
+1. Open `terraform/cognito-module4.tf` and **uncomment the entire file**. This adds `client1` and `client2` alongside the existing `mcp_client` from Module 3. Note that each client has its own scope configuration:
 
-Also update `terraform/gateway.tf` — inside the `custom_jwt_authorizer` block, update `allowed_scopes` and add `allowed_clients`:
+    ```hcl
+    resource "aws_cognito_user_pool_client" "client1" {
+      allowed_oauth_scopes = ["gateway/get_menu"]
+      ...REDACTED...
+    }
+
+    resource "aws_cognito_user_pool_client" "client2" {
+      allowed_oauth_scopes = ["gateway/get_menu", "gateway/create_order"]
+      ...REDACTED...
+    }
+    ```
+
+## Step 2: Add scope validation to the Gateway authorizer configuration
+
+Edit `terraform/gateway.tf`. Inside of the `awscc_bedrockagentcore_gateway` resource update `allowed_scopes` to `["gateway/get_menu"]`
+    
+This is what the `awscc_bedrockagentcore_gateway` resource should look like after update:
 
 ```hcl
-authorizer_configuration {
-  custom_jwt_authorizer {
-    discovery_url  = local.cognito_discovery_url
-    allowed_scopes = ["gateway/get_menu"]
-    allowed_clients = [
-      aws_cognito_user_pool_client.client1.id,
-      aws_cognito_user_pool_client.client2.id,
-    ]
-  }
-}
+resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
+    name          = "${local.project_name}"
+    description   = "MCP gateway for the pizza shop ordering tools"
+    role_arn      = aws_iam_role.gateway.arn
+    protocol_type = "MCP"
+
+    authorizer_type = "CUSTOM_JWT"
+
+    authorizer_configuration = {
+        custom_jwt_authorizer = {
+            discovery_url  = local.cognito_discovery_url
+            allowed_scopes = ["gateway/get_menu"] # <- Updated value
+        }
+    }
+
+...REDACTED...
 ```
 
-`allowed_scopes` here means "the token must contain AT LEAST this scope" to pass the JWT check. The `gateway/create_order` scope restriction is enforced later by Cedar policy.
+**allowed_scopes** here means "the token must contain AT LEAST `gateway/get_menu` scope" to pass the JWT check. The `gateway/create_order` scope restriction will be enforced later by a Cedar policy.
 
-## Step 2: Enable the Policy Engine
+## Step 3: Attach the Policy Engine to AgentCore Gateway
 
-Open `terraform/policies.tf` and **uncomment the `awscc_bedrockagentcore_policy_engine` resource** at the top of the file.
+1. The Policy Engine resource is already defined at the top of `terraform/gateway-policies.tf`. 
 
-Open `terraform/gateway.tf` and make two changes:
+    ```hcl
+    resource "awscc_bedrockagentcore_policy_engine" "pizza_shop" {
+        name = local.project_name_underscore
+    }
+    ```
 
-1. **Uncomment** the `gateway_policy_engine` IAM policy — the gateway role needs permission to call the policy engine.
-
-2. **Uncomment** the `policy_engine_configuration` block inside the gateway resource:
+1. Open `terraform/gateway.tf` and uncomment the `policy_engine_configuration` block inside the gateway resource:
 
     ```hcl
     policy_engine_configuration = {
@@ -87,154 +99,237 @@ Open `terraform/gateway.tf` and make two changes:
     }
     ```
 
-    > Start with `mode = "LOG_ONLY"` to observe policy decisions in CloudWatch without blocking requests. Switch to `"ENFORCE"` once you are confident in your policies.
+    > Note the `mode` configuration property. It supports two options: `"LOG_ONLY"`to observe policy decisions in CloudWatch without blocking requests and `"ENFORCE"` once you are confident in your policies.
 
-## Step 3: Deploy
+## Step 4: Deploy
 
 ```bash
-make deploy-infra
+make redeploy-gateway
 ```
 
-This deploys the new Cognito clients, creates the Policy Engine, and updates the gateway configuration.
+This deploys the changes you've implemented in previous steps - new Cognito clients, Policy Engine, and updates the gateway configuration.
 
 Let's start testing!
 
-## Step 4: Confirm default deny
+## Step 5: Confirm default deny
 
-Get a token for either client and try to list tools:
+By default, Policy Engine implements `deny_all` approach. Requests are denied unless explicitly permitted. Since you still haven't defined any `permit` policies, the expected result of this test is not being able to invoke the gateway. 
 
-```bash
-make get-client1-token
-make list-tools
-```
+1. Get a token for either client and try to list tools:
 
-Expected response:
+    ```bash
+    make get-client1-token
+    make list-tools
+    ```
 
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32003,
-    "message": "Access denied"
-  }
-}
-```
+    Expected response:
 
-The Policy Engine is active, there are no permit policies, so everything is denied.
-
-## Step 5: Add permit_all (illustration)
-
-Open `terraform/policies.tf` and uncomment the `permit_all` policy resource:
-
-```hcl
-resource "awscc_bedrockagentcore_policy" "permit_all" {
-  definition = {
-    cedar = {
-      statement = "permit(principal, action, resource is AgentCore::Gateway);"
+    ```json
+    {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "tools": []
     }
-  }
-}
-```
+    }
+    ```
 
-Deploy and test — both clients should now be able to call both tools. This is overly permissive; we will narrow it in the next step.
+    The Policy Engine is active, but no permit policies yet, so nothing is visible. 
 
-## Step 6: Permit by tool
+2. Try calling a tool directly by running the following command: 
 
-Comment out `permit_all`. Uncomment `allow_get_menu`:
+    ```bash
+    make get-menu
+    ```
 
-```hcl
-permit(
-  principal,
-  action == AgentCore::Action::"get-menu___get-menu",
-  resource == AgentCore::Gateway::"<gateway_arn>"
-);
-```
+    Expected response:
 
-Deploy and test:
+    ```json
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "error": {
+            "code": -32002,
+            "message": "Tool Execution Denied: Tool call not allowed due to policy enforcement [No policy applies to the request (denied by default).]"
+        }
+    }
+    ```
 
-```bash
-make get-client1-token && make get-menu       # ✅ allowed
-make get-client1-token && make create-order pizzaId=1   # ❌ denied
-make get-client2-token && make create-order pizzaId=1   # ❌ denied (no create_order permit yet)
-```
+## Step 6: Add permit_all (illustration)
 
-## Step 7: Scope-based permit for create-order
+Before writing targeted policies, start with a wide-open `permit_all` to confirm the Policy Engine is wired up correctly and traffic can flow at all. This policy allows every principal to call any action on any gateway resource.
 
-Uncomment `allow_create_order_with_scope`:
+1. Open `terraform/gateway-policies.tf` and uncomment the `permit_all` policy resource:
 
-```hcl
-permit(
-  principal,
-  action == AgentCore::Action::"create-order___create-order",
-  resource == AgentCore::Gateway::"<gateway_arn>"
-)
-when {
-  principal.hasTag("scope") &&
-  principal.getTag("scope") like "*gateway/create_order*"
-};
-```
+    ```hcl
+    # Step 4a: Permit all (illustration only — overly permissive)
+    resource "awscc_bedrockagentcore_policy" "permit_all" {
+    definition = {
+        cedar = {
+            statement = "permit(principal, action, resource is AgentCore::Gateway);"
+        }
+    }
+    }
+    ```
+
+2. Run the following command to deploy the updated policy configuration:
+
+    ```bash
+    make deploy-infra
+    ```
+
+3. Test the deployed configuration by running following commands one by one:
+
+    ```bash
+    make list-tools
+    make get-menu
+    ```
+
+    With `permit_all` policy these tests are working again! However this `permit_all` is definitely overly permissive. Let's start tightening the security. 
+
+
+## Step 7: Permit by tool
+
+Let's narrow the access. Instead of allowing everything, explicitly permit only the `get-menu` tool. This means `create-order` is still denied for everyone — regardless of their token scopes.
+
+1. Edit `terraform/gateway-policies.tf` and comment out (or delete) the `permit_all` resource
+
+1. Uncomment `allow_get_menu` resource. Note that this policy only permits access when action equals a very specific tool name:
+
+    ```hcl
+    permit(
+        principal,
+        action == AgentCore::Action::"get-menu___get-menu",
+        resource == AgentCore::Gateway::"<gateway_arn>"
+    );
+    ```
+
+1. Deploy your updates by running
+
+    ```bash
+    make deploy-infra
+    ```
+
+1. Test the new configuration by running
+
+    ```bash
+    make get-menu
+    ```
+
+    Expected result: ✅ request successfully completes. You've created a `permit` policy for `get-menu` tool, so now it can be accessed by clients. 
+
+1. Try to order pizza by running
+
+    ```bash
+    make create-order pizzaId=1
+    ```
+
+    Expected result: ❌ denied. You haven't created any `permit` policies for the `create-order` tool, so the default `deny_all` policy is still being applied. Let's fix that. 
+
+## Step 8: Scope-based permit for create-order
+
+This is where Cedar and OAuth2 scopes work together! Let's create a policy that permits calling the `create-order` tool only when the caller's token contains the `gateway/create_order` scope. 
+
+Reminder: `client1` has only `get_menu` scope and will be denied; `client2` has both scopes and will be allowed.
+
+1. Edit `terraform/gateway-policies.tf` and uncomment the `allow_create_order_with_scope` policy:
+
+    ```hcl
+    permit(
+        principal,
+        action == AgentCore::Action::"create-order___create-order",
+        resource == AgentCore::Gateway::"<gateway_arn>"
+    )
+    when {
+        principal.hasTag("scope") &&
+        principal.getTag("scope") like "*gateway/create_order*"
+    };
+    ```
 
 `principal.getTag("scope")` reads the `scope` claim from the validated JWT. The `like` operator with wildcards checks if the string contains `gateway/create_order`.
 
-Deploy and test:
+1. Deploy your updates by running:
 
-```bash
-make get-client1-token && make create-order pizzaId=1   # ❌ denied (no create_order scope)
-make get-client2-token && make create-order pizzaId=1   # ✅ allowed
-```
+    ```bash
+    make deploy-infra
+    ```
 
-client1 and client2 now have different capabilities based on their JWT scopes, enforced at the policy layer.
+1. Test with `client1` (has `get_menu` scope only):
 
-## Step 8: Forbid pineapple
+    ```bash
+    make get-client1-token
+    make create-order pizzaId=1
+    ```
 
-Uncomment `forbid_pineapple`:
+    Expected result: ❌ denied. `client1` does not have the `gateway/create_order` scope, so the `when` condition is not satisfied.
 
-```hcl
-forbid(
-  principal,
-  action == AgentCore::Action::"create-order___create-order",
-  resource == AgentCore::Gateway::"<gateway_arn>"
-)
-when {
-  context.input.pizzaId == 5
-};
-```
+1. Test with `client2` (has both scopes):
 
-`context.input` exposes the tool arguments that were passed to the Lambda. This allows policies to make decisions based on the actual data being sent, not just who is calling.
+    ```bash
+    make get-client2-token
+    make create-order pizzaId=1
+    ```
 
-Deploy and test:
+    Expected result: ✅ order succeeds. `client2` carries the `gateway/create_order` scope, so the policy permits the call.
 
-```bash
-make get-client2-token
-make create-order pizzaId=3    # ✅ Four Cheese — allowed
-make create-order pizzaId=5    # ❌ Pineapple Deluxe — forbidden
-```
+`client1` and `client2` now have different capabilities based on their JWT scopes, enforced at the policy layer.
 
-Expected response for pizzaId=5:
+But can you apply access policies not just based on scopes and tool names, but also based on tool invocation arguments? Let's see how you can do it!
 
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "error": {
-    "code": -32003,
-    "message": "Access denied"
-  }
-}
-```
+## Step 9: Forbid pineapple pizza 🚫🍍🍕
 
-The `forbid` policy blocks the request even though `allow_create_order_with_scope` would permit it. **Forbid always wins.**
+This step demonstrates what scopes alone can never do: make a decision based on the actual tool arguments. The `forbid_pineapple` policy inspects `context.input.pizzaId` and blocks any order for pizza #5 — regardless of who is calling or what scopes they have. Even `client2` with full access cannot order pineapple.
 
-## Summary: policy progression
+1. Edit `terraform/gateway-policies.tf` and uncomment the `forbid_pineapple` policy:
 
-| Step | Policies active | client1 (get_menu only) | client2 (get_menu + create_order) |
-|---|---|---|---|
-| 4 | None (engine on, no policies) | All denied | All denied |
-| 5 | permit_all | Full access | Full access |
-| 6 | allow_get_menu | Menu only | Menu only |
-| 7 | allow_get_menu + allow_create_order_with_scope | Menu only | Menu + Orders |
-| 8 | above + forbid_pineapple | Menu only | Menu + Orders (no pizza #5) |
+    ```hcl
+    forbid(
+        principal,
+        action == AgentCore::Action::"create-order___create-order",
+        resource == AgentCore::Gateway::"<gateway_arn>"
+    )
+    when {
+        context.input.pizzaId == 5
+    };
+    ```
+
+    `context.input` contains the tool arguments that were passed from the MCP client. This allows policies to make decisions based on the actual data being sent, not just who is calling.
+
+1. Deploy your updates:
+
+    ```bash
+    make deploy-infra
+    ```
+
+1. Get a `client2` token (the only client allowed to order) and try ordering a regular pizza:
+
+    ```bash
+    make get-client2-token
+    make create-order pizzaId=3
+    ```
+
+    Expected result: ✅ Four Cheese order succeeds. `client2` has the right scope and `pizzaId=3` is not pineapple.
+
+1. Now try ordering the pineapple pizza:
+
+    ```bash
+    make create-order pizzaId=5
+    ```
+
+    Expected response:
+
+    ```json
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "error": {
+            "code": -32002,
+            "message": "Tool Execution Denied: Tool call not allowed due to policy enforcement [Policy evaluation denied due to forbid_pineapple-XXXXXXXXXX]"
+        }
+    }
+    ```
+
+    Tool call was ❌ denied by the policy engine. The `forbid` policy matches `pizzaId=5` and blocks the request even though `allow_create_order_with_scope` would permit it. **Forbid always wins.**
 
 ## Congratulations!
 
@@ -244,6 +339,16 @@ Your gateway now enforces fine-grained authorization using Cedar policies.
 - **`permit` by action** controls which tools are accessible at all
 - **`permit` with scope conditions** ties permissions to JWT claims
 - **`forbid` with `context.input`** enforces business rules on tool arguments
+
+This is what you've gradually implemented in this module:
+
+| Step | Policies active | client1 (get_menu only) | client2 (get_menu + create_order) |
+|---|---|---|---|
+| 5 | None (engine on, no policies) | All denied | All denied |
+| 6 | permit_all | Full access | Full access |
+| 7 | allow_get_menu | Menu only | Menu only |
+| 8 | allow_get_menu + allow_create_order_with_scope | Menu only | Menu + Orders |
+| 9 | above + forbid_pineapple | Menu only | Menu + Orders (no pizza #5) |
 
 ## Next step
 

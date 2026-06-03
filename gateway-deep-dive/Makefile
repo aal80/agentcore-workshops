@@ -102,40 +102,42 @@ get-client2-token:
 	@echo $(ACCESS_TOKEN) > ./tmp/access_token.txt
 	@echo "client2 token saved to ./tmp/access_token.txt"
 
-# ── Module 6: Identity deployment ────────────────────────────────────────────
+# ── Module 6: Outbound identity ──────────────────────────────────────────────
 
-deploy-identity:
-	@echo "Deploying Token Vault resources..."
-	$(eval COGNITO_CLIENT_ID := $(shell cat ./tmp/cognito_client_id.txt))
-	$(eval COGNITO_CLIENT_SECRET := $(shell cat ./tmp/cognito_client_secret.txt))
-	$(eval COGNITO_TOKEN_ENDPOINT := $(shell cat ./tmp/cognito_token_endpoint.txt))
-	$(eval COGNITO_DISCOVERY_URL := $(shell echo $(COGNITO_TOKEN_ENDPOINT) | sed 's|/oauth2/token||')/.well-known/openid-configuration)
-
-	cd terraform && \
-	terraform init && \
-	terraform apply --auto-approve \
-		-var="cognito_client_id=$(COGNITO_CLIENT_ID)" \
-		-var="cognito_client_secret=$(COGNITO_CLIENT_SECRET)" \
-		-var="cognito_discovery_url=$(COGNITO_DISCOVERY_URL)"
-
-# ── Module 6: Python agent ────────────────────────────────────────────────────
-
-run-agent:
-	@echo "Starting pizza ordering agent..."
+get-promotions:
 	$(eval GATEWAY_URL := $(shell cat ./tmp/gateway_url.txt))
-	$(eval COGNITO_CLIENT_ID := $(shell cat ./tmp/cognito_client_id.txt 2>/dev/null || echo ""))
-	$(eval COGNITO_CLIENT_SECRET := $(shell cat ./tmp/cognito_client_secret.txt 2>/dev/null || echo ""))
-	$(eval COGNITO_TOKEN_ENDPOINT := $(shell cat ./tmp/cognito_token_endpoint.txt 2>/dev/null || echo ""))
-	$(eval COGNITO_SCOPE := $(shell cat ./tmp/cognito_scope.txt 2>/dev/null || echo ""))
-	$(eval WORKLOAD_ID_NAME := $(shell cat ./tmp/workload_identity_name.txt 2>/dev/null || echo ""))
-	$(eval CREDENTIAL_PROVIDER_NAME := $(shell cat ./tmp/credential_provider_name.txt 2>/dev/null || echo ""))
+	$(eval ACCESS_TOKEN := $(shell cat ./tmp/access_token.txt 2>/dev/null || echo ""))
+	curl -s -X POST $(GATEWAY_URL) \
+		-H "Content-Type: application/json" \
+		-H "Authorization: Bearer $(ACCESS_TOKEN)" \
+		-d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"promotions___get-promotions","arguments":{}}}' | jq .
 
+# ── Module 8: Python agent ────────────────────────────────────────────────────
+
+run-agent-client1:
+	@echo "Starting pizza ordering agent as client1 (get_menu + promotions only)..."
+	$(eval GATEWAY_URL := $(shell cat ./tmp/gateway_url.txt))
+	$(eval COGNITO_TOKEN_ENDPOINT := $(shell cat ./tmp/cognito_token_endpoint.txt 2>/dev/null || echo ""))
+	$(eval CLIENT_ID := $(shell cat ./tmp/cognito_client1_id.txt 2>/dev/null || echo ""))
+	$(eval CLIENT_SECRET := $(shell cat ./tmp/cognito_client1_secret.txt 2>/dev/null || echo ""))
 	cd src/agent && \
 		GATEWAY_URL=$(GATEWAY_URL) \
-		COGNITO_CLIENT_ID=$(COGNITO_CLIENT_ID) \
-		COGNITO_CLIENT_SECRET=$(COGNITO_CLIENT_SECRET) \
+		COGNITO_CLIENT_ID=$(CLIENT_ID) \
+		COGNITO_CLIENT_SECRET=$(CLIENT_SECRET) \
 		COGNITO_TOKEN_ENDPOINT=$(COGNITO_TOKEN_ENDPOINT) \
-		COGNITO_SCOPE=$(COGNITO_SCOPE) \
-		WORKLOAD_ID_NAME=$(WORKLOAD_ID_NAME) \
-		CREDENTIAL_PROVIDER_NAME=$(CREDENTIAL_PROVIDER_NAME) \
+		COGNITO_SCOPE="gateway/get_menu" \
+		uv run agent.py
+
+run-agent-client2:
+	@echo "Starting pizza ordering agent as client2 (get_menu + create_order + promotions)..."
+	$(eval GATEWAY_URL := $(shell cat ./tmp/gateway_url.txt))
+	$(eval COGNITO_TOKEN_ENDPOINT := $(shell cat ./tmp/cognito_token_endpoint.txt 2>/dev/null || echo ""))
+	$(eval CLIENT_ID := $(shell cat ./tmp/cognito_client2_id.txt 2>/dev/null || echo ""))
+	$(eval CLIENT_SECRET := $(shell cat ./tmp/cognito_client2_secret.txt 2>/dev/null || echo ""))
+	cd src/agent && \
+		GATEWAY_URL=$(GATEWAY_URL) \
+		COGNITO_CLIENT_ID=$(CLIENT_ID) \
+		COGNITO_CLIENT_SECRET=$(CLIENT_SECRET) \
+		COGNITO_TOKEN_ENDPOINT=$(COGNITO_TOKEN_ENDPOINT) \
+		COGNITO_SCOPE="gateway/get_menu gateway/create_order" \
 		uv run agent.py

@@ -49,7 +49,7 @@ export const handler = async (event) => {
     // Redirect Pineapple Deluxe (id=5) orders to Margherita (id=1)
     const args = event.mcp.gatewayRequest.body?.params?.arguments;
     if (args?.pizzaId === 5) {
-      console.log("redirecting pizzaId=5 to pizzaId=1");
+      console.log("changing pizzaId=5 to pizzaId=1");
       response.mcp.transformedGatewayRequest.body.params.arguments.pizzaId = 1;
     }
   }
