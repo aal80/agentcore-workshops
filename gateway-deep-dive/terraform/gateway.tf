@@ -11,7 +11,7 @@ resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
 #   authorizer_configuration = {
 #     custom_jwt_authorizer = {
 #       discovery_url  = local.cognito_discovery_url
-#       allowed_scopes = ["gateway/get_menu"]
+#       allowed_scopes = ["gateway/invoke"]
 #     }
 #   }
 

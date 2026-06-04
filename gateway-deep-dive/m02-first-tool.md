@@ -14,16 +14,16 @@ In this module you will deploy an AgentCore Gateway with two pizza tools - `get-
 
     ```js
     const menu = [
-    { id: 1, name: "Margherita",      price: 12.99 },
-    { id: 2, name: "Pepperoni",       price: 14.99 },
-    { id: 3, name: "Four Cheese",     price: 15.99 },
-    { id: 4, name: "BBQ Chicken",     price: 16.99 },
-    { id: 5, name: "Pineapple Deluxe", price: 15.49 },
-    { id: 6, name: "Veggie Supreme",  price: 14.99 },
+        { id: 1, name: "Margherita",      price: 12.99 },
+        { id: 2, name: "Pepperoni",       price: 14.99 },
+        { id: 3, name: "Four Cheese",     price: 15.99 },
+        { id: 4, name: "BBQ Chicken",     price: 16.99 },
+        { id: 5, name: "Pineapple Deluxe", price: 15.49 },
+        { id: 6, name: "Veggie Supreme",  price: 14.99 },
     ];
 
     export const handler = async () => {
-    return { menu };
+        return { menu };
     };
     ```
 
@@ -31,16 +31,16 @@ In this module you will deploy an AgentCore Gateway with two pizza tools - `get-
 
     ```js
     export const handler = async (event) => {
-    const pizzaId = event.pizzaId;
-    const pizza = menu.find((p) => p.id === pizzaId);
-    if (!pizza) return { error: `Pizza with id ${pizzaId} not found` };
+        const pizzaId = event.pizzaId;
+        const pizza = menu.find((p) => p.id === pizzaId);
+        if (!pizza) return { error: `Pizza with id ${pizzaId} not found` };
 
-    return {
-        orderId: `ORDER-${crypto.randomUUID()}`,
-        date: new Date().toISOString(),
-        item: pizza.name,
-        total: pizza.price,
-    };
+        return {
+            orderId: `ORDER-${crypto.randomUUID()}`,
+            date: new Date().toISOString(),
+            item: pizza.name,
+            total: pizza.price,
+        };
     };
     ```
 
@@ -65,7 +65,7 @@ Open `terraform/gateway.tf`. There are two key things to notice:
     }
     ```
 
-2. **Target + tool schema** - the `inline_payload` block is what MCP clients see in `tools/list`. It defines the tool name, description, and input parameters:
+2. **Target + tool schema** - the `inline_payload` block at line 55 is what MCP clients see when they call `tools/list`. It defines the tool name, description, and input parameters:
 
     ```hcl
     resource "aws_bedrockagentcore_gateway_target" "get_menu" {
@@ -110,6 +110,8 @@ Open `terraform/gateway.tf`. There are two key things to notice:
     - Write `tmp/gateway_url.txt` so subsequent `make` targets can find the endpoint
 
     Terraform apply takes about 2–3 minutes.
+
+    > If you're seeing an error failing to create a `CloudWatch Logs Delivery`, wait for a minute and retry running `make deploy-infra`. This error indicates that Transactional Search is still being enabled in the account. 
 
 1. Verify the deployment using AWS console - open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm you see your gateway with status **Ready**. 
 

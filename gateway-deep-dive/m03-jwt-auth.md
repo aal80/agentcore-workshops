@@ -1,6 +1,6 @@
 # Module 3: Adding JWT authentication
 
-In Module 2, your gateway was wide open - anyone with the URL could call your pizza tools. But nobody likes paying for a stranger's pizza, right? In this module you secure inbound access with **JWT authentication** using Amazon Cognito as the identity provider.
+In Module 2, your gateway was wide open - anyone with the URL could call your pizza tools. But nobody likes paying for a stranger's pizza, right? In this module you will secure inbound access with **JWT authentication** using Amazon Cognito as the identity provider.
 
 ## Architecture
 
@@ -10,21 +10,21 @@ In this module you will implement the following architecture:
 
 ## Why JWT authentication matters
 
-Without authentication, any process that discovers your gateway URL can read your menu and place orders. You have no way of controlling who calls your tools or auditing who placed orders. With `JWT` authorization, the Gateway validates an inbound OAuth2 Bearer token on every request. Callers without a valid token are rejected before any Lambda is ever invoked.
+Without authentication, any process that discovers your gateway URL can read your menu and place orders. You have no way of controlling who calls your tools or auditing who placed orders. With `JWT` authorization, the Gateway validates an inbound OAuth2 Bearer token on every request. Callers without a valid token are rejected before any tool is ever invoked.
 
-> **Choosing an authorizer** - AgentCore supports four inbound authentication modes:
+> **Choosing an authorizer** - AgentCore supports four inbound authorizer types:
 
-- `JWT` (used here) works with any OIDC-compliant identity provider such as Cognito, Okta, Auth0, and others. 
+- `None` (which you used in the previous module) is not recommended, unless you explicitly want your MCP endpoint not to require authorization.
+- `CUSTOM_JWT` (which you will use in this module) works with any OIDC-compliant identity provider such as Cognito, Okta, Auth0, and others. 
 - `AWS IAM` is the right choice when your callers are other AWS services or IAM roles authenticating with SigV4. 
 - `Authenticate only` validates the JWT identity but delegates scope enforcement to the downstream target - useful for HTTP targets that implement their own authorization. 
-- `None`, which you used in the previous module, is only appropriate for development or when a custom interceptor handles auth.
 
 The changes you're about to implement result in the following enhancements to your agent:
 
 | Before this module | After (this module) |
 |---|---|
 | `authorizer_type = "NONE"` | `authorizer_type = "CUSTOM_JWT"` |
-| Any caller can list and call tools | Only callers with a valid Cognito token can proceed |
+| Any caller can list and call tools | Only callers with a valid JWT can proceed |
 | No identity context | Gateway validates issuer, audience, and scopes |
 
 The Gateway uses the Cognito User Pool's **OIDC discovery endpoint** (`/.well-known/openid-configuration`) to fetch the public keys needed to validate tokens. You never need to configure the keys manually.
