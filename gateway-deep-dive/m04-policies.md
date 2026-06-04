@@ -16,17 +16,18 @@ In this module you will extend your gateway implementation and add the new Agent
 
 AgentCore's Policy engine evaluates [Cedar](https://www.cedarpolicy.com/) policies on every tool call. Cedar is an open-source policy language developed by AWS - it is expressive, fast to evaluate, and formally verifiable. Policies are written as `permit` and `forbid` statements that reference the caller's identity (`principal`), the operation being performed (`action`), and the resource being accessed (`resource`). 
 
-There are two important rules to keep in mind
-- The default behaviour is **deny-all**. Without explicit permit policies - nothing gets through.
+There are two important things to keep in mind:
+
+- The default behaviour is **deny-all**. Without explicit **permit** policies - nothing gets through.
 - **`forbid` always overrides `permit`**. A single `forbid` policy can block a request even if multiple `permit` policies would allow it.
 
 By the end of this module you will gradually implement the following fine-grained authorization approach: 
 
-1. JWT Validation by Gateway authorizer
+1. JWT Validation by Gateway authorizer (from Module 3)
 1. Policy engine chain
     - **Permit** all principals to perform `get-menu` action
     - **Permit** all principals to perform `create-order` action 
-        - ONLY IF they have `gateway/create_order` scope in JWT
+        - ONLY WHEN they have `gateway/create_order` scope in JWT
     - **Forbid** all principals to perform `create-order` action 
         - ONLY WHEN `pizzaId==5` (forbid ordering pineapple pizza 🚫🍍🍕). 
 
@@ -39,7 +40,7 @@ Let's get started!
     - **client1** - has only `gateway/get_menu` scope. It can view the menu but cannot place orders
     - **client2** - has both `gateway/get_menu` and `gateway/create_order` scopes - full access
 
-1. Open `terraform/cognito-module4.tf` and **uncomment the entire file**. This adds `client1` and `client2` alongside the existing `mcp_client` from Module 3. Note that each client has its own scope configuration:
+1. Open `terraform/cognito-module4.tf` and **uncomment the entire file**. This file defines two new clients - `client1` and `client2`. Note that each client has its own scope configuration:
 
     ```hcl
     resource "aws_cognito_user_pool_client" "client1" {
@@ -103,13 +104,15 @@ resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
 
 ## Step 4: Deploy
 
+Run he follwoing command in VS Code Terminal:
+
 ```bash
 make redeploy-gateway
 ```
 
 This deploys the changes you've implemented in previous steps - new Cognito clients, Policy Engine, and updates the gateway configuration.
 
-Let's start testing!
+Once deployment completes - let's start testing!
 
 ## Step 5: Confirm default deny
 
@@ -134,7 +137,7 @@ By default, Policy Engine implements `deny_all` approach. Requests are denied un
     }
     ```
 
-    The Policy Engine is active, but no permit policies yet, so nothing is visible. 
+    The Policy Engine is active, but you did not create any permit policies yet - as a result, nothing is visible. 
 
 2. Try calling a tool directly by running the following command: 
 
@@ -155,9 +158,9 @@ By default, Policy Engine implements `deny_all` approach. Requests are denied un
     }
     ```
 
-## Step 6: Add permit_all (illustration)
+## Step 6: Add permit_all (for illustration purposes only)
 
-Before writing targeted policies, start with a wide-open `permit_all` to confirm the Policy Engine is wired up correctly and traffic can flow at all. This policy allows every principal to call any action on any gateway resource.
+Before writing targeted policies, start with a wide-open `permit_all` just to confirm the Policy Engine is wired up correctly and traffic can flow. This policy allows every principal to call any action on any gateway resource.
 
 1. Open `terraform/gateway-policies.tf` and uncomment the `permit_all` policy resource:
 
@@ -178,6 +181,8 @@ Before writing targeted policies, start with a wide-open `permit_all` to confirm
     make deploy-infra
     ```
 
+    Wait for deployment to complete. 
+
 3. Test the deployed configuration by running following commands one by one:
 
     ```bash
@@ -185,12 +190,13 @@ Before writing targeted policies, start with a wide-open `permit_all` to confirm
     make get-menu
     ```
 
-    With `permit_all` policy these tests are working again! However this `permit_all` is definitely overly permissive. Let's start tightening the security. 
-
+    With `permit_all` policy these tests are working again! 
+    
+However this `permit_all` is definitely overly permissive. Let's start tightening the security. 
 
 ## Step 7: Permit by tool
 
-Let's narrow the access. Instead of allowing everything, explicitly permit only the `get-menu` tool. This means `create-order` is still denied for everyone - regardless of their token scopes.
+Let's narrow the access. Instead of allowing everything, let's explicitly permit only the `get-menu` tool. This means `create-order` is still denied for everyone - regardless of their token scopes (you'll fix it later).
 
 1. Edit `terraform/gateway-policies.tf` and comment out (or delete) the `permit_all` resource
 
