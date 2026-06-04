@@ -1,40 +1,30 @@
 # Module 5: Adding interceptors
 
-In the previous module you defined declarative fine-grained access policies - rules that the gateway evaluates automatically on every request. But what if you need even more flexibility than a policy language can offer? For example, what if you need to
-- Run arbitrary code on each incoming MCP request or outgoing MCP response
-- Validate requests against existing 3rd party systems
+In the previous module you defined declarative fine-grained access policies - rules that the gateway evaluates automatically on every request. But what if you need even more flexibility than a policy language can offer? For example, what if you need to:
+
+- Run arbitrary code processing each incoming MCP request or outgoing MCP response
+- Validate custom requests headers or payloads against 3rd party systems
 - Inject additional context into tool arguments before they reach targets
-- Enrich a response with live data from another service
+- Enrich or reduct a tool output, e.g. add metadata
 - Short-circuit a request entirely and return a synthetic response without ever invoking the tool
 
 That is exactly what **Gateway Interceptors** give you - a programmable hook that runs natively inside the gateway flow.
 
 ## Architecture
 
-In this module you will extend your gateway implementation and add the new Gateway Interceptor component:
+In this module you will extend your gateway implementation and add a new Gateway Interceptor component:
 
 ![](./images/m05-arch.png)
 
-## What interceptors can do
-
-| Use case | Request and/or Response? |
-|---|---|
-| Validate custom headers | REQUEST |
-| Log or audit tool calls | REQUEST and RESPONSE |
-| Inject context into tool arguments | REQUEST |
-| Short-circuit with a synthetic response | REQUEST |
-| Enrich or redact tool output | RESPONSE |
-| Add metadata (currency, units, timestamp) | RESPONSE |
-
 ## How do Interceptors work
 
-Interceptor is essentially a Lambda function that you Gateway invokes **before** forwarding the request to the tool (Request Interceptor) and/or **after** receiving the tool response (Response Interceptor).
+Interceptor is a Lambda function that Gateway invokes **before** forwarding the request to the tool (Request Interceptor) and/or **after** receiving the tool response (Response Interceptor).
 
-Both interceptor types receive request/response payloads, optionally make modifications, and return them for gateway to proceed processing. 
+Interceptors receive request headers and request/response payloads. It can modify these payloads and return them for gateway for further processing. 
 
-A Request Interceptor has two return options:
-- Return a `transformedGatewayRequest` - the gateway forwards it to the tool Lambda as-is. Use this to modify or enrich the incoming request.
-- Return a `transformedGatewayResponse` - the gateway sends that directly back to the caller and **skips the tool invocation entirely**. Use this for short-circuiting: caching, synthetic responses, calling external systems, or complex validations that go beyond what Cedar policies can express.
+When processing a request, your interceptor can control the flow. It can either:
+- Return a `transformedGatewayRequest` object, which will tell the gateway to continue the flow and forward the request to the target. Use this to modify or enrich the incoming request before sending to targets.
+- Return a `transformedGatewayResponse` object, which will tell the gateway to **skip the tool invocation entirely** and return the response back to the caller. Use this for short-circuiting: caching, synthetic responses, calling external systems, or complex validations that go beyond what Cedar policies can express.
 
 ## Interceptor event format
 
@@ -86,21 +76,21 @@ Your interceptor Lambda receives an event with this structure:
 
 Open `src/lambdas/interceptor/`. There are two handler files:
 
-**`index.js` (pass-through)** - logs the event and returns everything unchanged. Use this to understand what the gateway sends to the interceptor without modifying any traffic.
+**`index.js` (pass-through)** - logs the event and returns everything unchanged. You will use this file to understand what the gateway sends to the interceptor without modifying any traffic.
 
 **`index2.js` (mutating)** - demonstrates two transformations:
 - **REQUEST** transformation: if `pizzaId === 5` (Pineapple Deluxe), rewrites it to `pizzaId = 1` (Margherita)
 - **RESPONSE** transformation: adds `"currency": "USD"` to every `create-order` response
 
-Let's start implementing!
+Let's start implementing the interceptors!
 
 ## Step 1: Attach the interceptor to the Gateway
 
-The interceptor is a regular Lambda function - it just receives a structured event from the gateway rather than being invoked directly. The Terraform configuration for it is already written in `terraform/lambda-interceptor.tf`
+The interceptor is a regular Lambda function that gateway invokes. The Terraform configuration for it is already written in `terraform/lambda-interceptor.tf`
 
-1. Examine `terraform/lambda-interceptor.tf`, see the function resource at the bottom of the file. 
+1. Examine `terraform/lambda-interceptor.tf`, see the function resource at the bottom of the file. Note the function handler definition in line 29 you will change it in upcoming steps. 
 
-1. Open `terraform/gateway.tf`. See the commented out `interceptor_configurations` block that wires the Lambda ARN to the gateway and specifies which interception points to use (`REQUEST`, `RESPONSE`, or both).
+1. Open `terraform/gateway.tf`. See the commented out `interceptor_configurations` block (line 25) that wires the Lambda function to the gateway and specifies which interception points to use (`REQUEST`, `RESPONSE`, or both).
 
 1. Uncomment the `interceptor_configurations` block inside the gateway resource:
 
@@ -130,45 +120,45 @@ Once Terraform deployment has completed, let's start testing!
 
 ## Step 2: Observe the pass-through interceptor
 
-The pass-through interceptor defined in `src/lambdas/interceptor/index.js` logs the full event it receives from the gateway and returns everything unchanged. This lets you see exactly what the gateway sends - the request structure, headers, and response body - without affecting any traffic.
+The pass-through interceptor defined in `src/lambdas/interceptor/index.js` ONLY LOGS the request/response payload it receives from the gateway without making any changes. This lets you see exactly what the gateway sends - the request structure, headers, and response body - without affecting any traffic.
 
 1. Examine the pass-through interceptor file `src/lambdas/interceptor/index.js`:
 
     ```js
     export const handler = async (event) => {
-    console.log("incoming event", JSON.stringify(event, null, 2));
+        console.log("incoming event", JSON.stringify(event, null, 2));
 
-    let response;
+        let response;
 
-    if (event.mcp.gatewayResponse) {
-        console.log("> gateway response intercepted");
-        response = {
-        interceptorOutputVersion: "1.0",
-        mcp: {
-            transformedGatewayResponse: {
-            statusCode: event.mcp.gatewayResponse.statusCode,
-            body: event.mcp.gatewayResponse.body,
-            },
-        },
-        };
-    } else if (event.mcp.gatewayRequest) {
-        console.log("> gateway request intercepted");
-        response = {
-        interceptorOutputVersion: "1.0",
-        mcp: {
-            transformedGatewayRequest: {
-            body: event.mcp.gatewayRequest.body,
-            },
-        },
-        };
-    }
+        if (event.mcp.gatewayResponse) {
+            console.log("> gateway response intercepted");
+            response = {
+                interceptorOutputVersion: "1.0",
+                mcp: {
+                    transformedGatewayResponse: {
+                        statusCode: event.mcp.gatewayResponse.statusCode,
+                        body: event.mcp.gatewayResponse.body,
+                    },
+                },
+            };
+        } else if (event.mcp.gatewayRequest) {
+            console.log("> gateway request intercepted");
+                response = {
+                interceptorOutputVersion: "1.0",
+                mcp: {
+                    transformedGatewayRequest: {
+                        body: event.mcp.gatewayRequest.body,
+                    },
+                },
+            };
+        }
 
-    console.log("interceptor response", JSON.stringify(response, null, 2));
-    return response;
+        console.log("interceptor response", JSON.stringify(response, null, 2));
+        return response;
     };
     ```
 
-1. Place an order
+1. Place an order by running following commands in VS Code Terminal:
 
     ```bash
     make get-client2-token
@@ -180,16 +170,14 @@ The pass-through interceptor defined in `src/lambdas/interceptor/index.js` logs 
     - Go to "Logs -> Log Management" 
     - Find `/aws/lambda/<prefix>-pizza-gateway-interceptor`
     - Open the latest log stream
-    - You should see the full REQUEST and RESPONSE events logged by `console.log`:
+    - You should see the full REQUEST and RESPONSE logs:
 
     ![](./images/m05-interceptor-logs.png)
 
 
-The response from the MCP call should be unchanged - you ordered Pepperoni and got Pepperoni.
-
 ## Step 3: Switch to the mutating interceptor
 
-Now let's switch to the second handler (`index2.js`) to see how you can use Interceptors to adjust request/response payloads. This handler rewrites `pizzaId=5` to `pizzaId=1` on every incoming order request, and adds `"currency": "USD"` to every order response. The Lambda functions that implement the tools never change - only the interceptor does.
+Now let's switch to the second handler (`index2.js`) to see how you can use Interceptors to modify request/response payloads. This handler rewrites `pizzaId=5` to `pizzaId=1` on every incoming order request, and adds `"currency": "USD"` to every order response. The Lambda functions that implement the `create-order` tool never changes!
 
 1. Examine the mutating interceptor file `src/lambdas/interceptor/index2.js`. The key difference from the pass-through is the two mutation blocks:
 
@@ -197,8 +185,8 @@ Now let's switch to the second handler (`index2.js`) to see how you can use Inte
     ```js
     const args = event.mcp.gatewayRequest.body?.params?.arguments;
     if (args?.pizzaId === 5) { 
-      console.log("changing pizzaId=5 to pizzaId=1");
-      response.mcp.transformedGatewayRequest.body.params.arguments.pizzaId = 1;
+        console.log("changing pizzaId=5 to pizzaId=1");
+        response.mcp.transformedGatewayRequest.body.params.arguments.pizzaId = 1;
     }
     ```
 
@@ -206,8 +194,8 @@ Now let's switch to the second handler (`index2.js`) to see how you can use Inte
     ```js
     const parsed = JSON.parse(content[0].text);
     if (parsed.total !== undefined) {
-      parsed.currency = "USD";
-      response.mcp.transformedGatewayResponse.body.result.content[0].text = JSON.stringify(parsed);
+        parsed.currency = "USD";
+        response.mcp.transformedGatewayResponse.body.result.content[0].text = JSON.stringify(parsed);
     }
     ```
 
@@ -223,11 +211,13 @@ Now let's switch to the second handler (`index2.js`) to see how you can use Inte
     ```
 
 1. Redeploy:
+    
     ```bash
     make deploy-infra
     ```
 
 1. Order Pineapple Deluxe (id=5):
+    
     ```bash
     make create-order pizzaId=5
     ```
@@ -285,4 +275,4 @@ You have added a programmatic request/response interceptor to your gateway.
 
 ## Next step
 
-Head to [Module 6](m06-outbound-identity.md) to replace plaintext Cognito credentials with AgentCore's secure Token Vault.
+Head to [Module 6](m06-outbound-identity.md) to see how you can access protected targets using securely stored API Keys and OAuth2 secrets.

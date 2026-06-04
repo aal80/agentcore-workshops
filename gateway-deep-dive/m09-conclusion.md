@@ -4,6 +4,8 @@
 
 You've completed the AgentCore Gateway Deep Dive! Here's what you built across all eight modules:
 
+![](./images/m01-arch.png)
+
 | Module | What you added |
 |---|---|
 | 1 | Learned the core Gateway concepts: targets, tool schemas, authorizers, interceptors, policy engine, and outbound identity |
@@ -21,34 +23,35 @@ The patterns you learned here apply to any domain. The Gateway's tool abstractio
 
 ## Key takeaways
 
-**AgentCore Gateway is protocol translation + security.** Your Lambda functions are plain handlers that know nothing about MCP. The Gateway converts MCP calls to Lambda invocations, enforces authentication and authorization, and formats the response - without code changes to your tools.
+**AgentCore Gateway is the managed MCP layer for your tools.** It exposes Lambda functions, HTTP endpoints, and MCP servers as a single secured MCP endpoint — handling protocol translation, JWT authentication, fine-grained authorization policies, request/response interception, outbound credential injection, semantic tool search, and structured observability. Your backend tools stay unchanged; the Gateway handles everything between the agent and your code.
 
-**JWT + Cedar = defense in depth.** JWT authentication verifies *who* is calling. Cedar policies answer *what they can do* and *with what arguments*. The two layers are independent - you can change policies without touching authentication, and vice versa.
+**Authorizers + Policy engine = defense in depth.** Authorizers verify *who* is calling. Access policies answer *what they can do* and *with what arguments*. The two layers are independent - you can change policies without touching authentication, and vice versa.
 
 **Interceptors are the right place for cross-cutting logic.** Logging, header validation, context injection, request mutation - all belong in an interceptor, not in your tool code. They're centrally configurable and run on every request.
 
-**Secrets belong in the Token Vault.** The `aws_bedrockagentcore_api_key_credential_provider` resource stores credentials in AgentCore's managed vault. The gateway retrieves and injects them at request time - they never appear in your agent, your MCP client, or Terraform state.
+**Secrets belong in the Token Vault.** The `aws_bedrockagentcore_api_key_credential_provider` resource stores credentials in AgentCore's managed encrypted vault. The gateway retrieves and injects them at request time - they never appear in your agent, your MCP client, or Terraform state.
 
-**Observability is built in.** Application logs and X-Ray traces flow automatically once you wire the CloudWatch Log Delivery resources. No SDK instrumentation required in your tool code.
+**Observability is built in.** Gateway logs and traces flow automatically when you enable CloudWatch delivery. When using with other AgentCore components, such as Runtime, Identity, or Memory, you're getting a full end-to-end observability across all segments of your agentic solutions. 
 
 ## Cleanup
+
+Run the following command in VS Code Terminal to clean up the resources you've created during this workshop. You can skip this step if you used AWS-provided workshop account. 
 
 ```bash
 make destroy
 ```
 
-This runs `terraform destroy --auto-approve` and removes the `tmp/` directory.
-
 ## Next steps
+
+**Companion workshops**
+- [Building AI Agents with Amazon Bedrock AgentCore](https://github.com/aal80/agentcore-workshops/tree/main/building-ai-agents) - AgentCore Runtime, Memory, Knowledge Base, and Observability from the agent's perspective, including the Agent-to-Gateway identity pattern
 
 **Amazon Bedrock AgentCore**
 - [AgentCore Developer Guide](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html) - full reference for Gateway, Identity, Runtime, Memory, and Observability
 - [AgentCore Gateway](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html) - authorizer types, HTTP targets, MCP server targets
+- [Semantic tool search](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway-using-mcp-semantic-search.html) - natural language tool discovery via `x_amz_bedrock_agentcore_search`
 - [AgentCore Identity](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/identity.html) - workload identity, credential providers, Token Vault, OAuth2 flows
 - [Cedar policy language](https://www.cedarpolicy.com/learn) - conditions, entity types, schema validation
-
-**Companion workshops**
-- [Building AI Agents with Amazon Bedrock AgentCore](https://github.com/aal80/agentcore-workshops/tree/main/building-ai-agents) - AgentCore Runtime, Memory, Knowledge Base, and Observability from the agent's perspective, including the Agent → Gateway identity pattern
 
 **Strands Agents SDK**
 - [Strands Agents documentation](https://strandsagents.com) - tool definitions, model providers, MCP integration, multi-agent patterns

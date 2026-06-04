@@ -10,7 +10,7 @@ credential_provider_configuration {
 }
 ```
 
-But what if your target is a plain HTTP endpoint protected by an API key or OAuth2? This question is addressed by augmenting **AgentCore Gateway** with **AgentCore Identity**.  
+But what if your target is a plain HTTP endpoint protected by an API key or OAuth2? You can address this by augmenting **AgentCore Gateway** with **AgentCore Identity**.  
 
 ## Architecture
 
@@ -20,24 +20,24 @@ In this module you will extend your implementation with AgentCore Identity provi
 
 ## Understanding Credential Providers
 
-A core component of AgentCore Identity is **Credential Provider**. Credential Provider securely stores long-lived secrets, such as API Keys and OAuth2 `client_id` and `client_secret` in an encrypted vault. When your gateway or agent need a secret, they retrieve it from the Credential Provider and inject automatically into outbound target calls. All this without having the secret ever exposed to your agent, MCP client, or even Terraform state.
+**Credential Provider** is a core component of AgentCore Identity. Credential Providers securely store long-lived secrets, such as API Keys and OAuth2 `client_id` and `client_secret` in an encrypted vault. When your gateway needs a secret, they retrieve it from the Credential Provider and inject automatically into outbound target calls. All this without having the secret ever exposed to your agent, MCP client, or even Terraform state.
 
 ![](./images/m06-sequence-diagram.png)
 
 AgentCore Identity provides two Credential Provider types you can use:
 
 - **API key** - stored in the secure vault, injected as a request header or query parameter.
-- **OAuth2** - `client_id` and `client_secret` are stored in the secure vault. When Gateway requests an access token, Credential Provider automatically retrieves (or refreshes) it and returns to the Gateway. The Gateway automatically injects it as a `Bearer` token in the `Authorization` header.
+- **OAuth2** - `client_id` and `client_secret` are stored in the secure vault. When Gateway requests an access token, Credential Provider retrieves (or refreshes) it and returns to the Gateway. The Gateway injects it as a `Bearer` token in the `Authorization` header.
 
 ## Two authentication segments
 
-Where you attach a Credential Provider depends on which hop you're securing - there are two to think about:
+It is important to keep in mind that each networking segment must be secured. In agentic architectures, you can generalize this to two following segments:
 
 ![](./images/m06-agent-gateway-target.png)
 
-* **Agent-to-Gateway** - the agent needs to authenticate to the gateway, typically using a short-lived OAuth2 access token. To obtain it, instead of embedding long-lived secrets (e.g. OAuth2 client credentials) in the agent's environment, the agent uses Credential Provider to obtain short-lived credentials (e.g. access token) on-demand. This pattern is out of scope of this workshop, it is covered in detail in the [Building AI Agents with Amazon Bedrock AgentCore workshop](https://github.com/aal80/agentcore-workshops/tree/main/building-ai-agents).
+* **Agent-to-Gateway** - the agent needs to authenticate to the gateway, typically using a short-lived OAuth2 access token. To obtain it, instead of embedding long-lived secrets (e.g. OAuth2 client credentials) in the agent's environment, the agent should use a Credential Provider to obtain short-lived credentials (e.g. access token) on-demand. **This pattern is out of scope of this workshop, it is covered in detail in the [Building AI Agents with Amazon Bedrock AgentCore workshop](https://github.com/aal80/agentcore-workshops/tree/main/building-ai-agents).**
 
-* **Gateway-to-Target (tool)** - the gateway needs to authenticate to a downstream target (e.g. HTTP endpoint) by injecting credentials into each outbound request. You store the long-lived secret in Credential Provider, attach it to the gateway target, and the gateway handles retrieval and injection automatically. This is what you will implement in this module.
+* **Gateway-to-Target (tool)** - the gateway needs to authenticate to a downstream target (e.g. HTTP endpoint) by injecting credentials into each outbound request. You store the long-lived secret in Credential Provider, attach it to the gateway target, and the gateway handles retrieval and injection automatically. **This is what you will implement in this module.**
 
 Let's start building!
 
@@ -45,7 +45,7 @@ Let's start building!
 
 Open `terraform/promotions-backend.tf`. This file contains everything needed for this module:
 
-1. Simulating the protected **Promotions Backend** - a Lambda function exposed via HTTP API Gateway that returns pizza promotions, but only if the caller presents the correct `x-api-key` header:
+1. Simulating the protected **Promotions Backend** - a Lambda function exposed via HTTP API Gateway that returns pizza promotions, but only if the caller presents the correct `x-api-key` header (lines 8-22):
 
     ```js
     export const handler = async (event) => {
@@ -63,17 +63,17 @@ Open `terraform/promotions-backend.tf`. This file contains everything needed for
     };
     ```
 
-1. **The API Key Credential Provider** - stores the key in the Token Vault. `api_key_wo` is write-only: the value is stored in the Credential Provider and never written to Terraform state:
+1. **The API Key Credential Provider** - stores the key in the Token Vault. `api_key_wo` is write-only: the value is stored in the Credential Provider and never written to Terraform state (lines 110-114):
 
     ```hcl
     resource "aws_bedrockagentcore_api_key_credential_provider" "promotions" {
         name               = "${local.project_name}-promotions"
-        api_key_wo         = "workshop-demo-key"
+        api_key_wo         = "workshop-demo-key" # this is the secret
         api_key_wo_version = 1
     }
     ```
 
-1. **The Gateway Target** - registers the promotions backend as an MCP tool using an OpenAPI schema, and wires the credential provider to inject `x-api-key` as a request header on every outbound call:
+1. **The Gateway Target** - registers the promotions backend as an MCP tool using an OpenAPI schema, and wires the credential provider to inject `x-api-key` as a request header on every outbound call (lines 120-126):
 
     ```hcl
     resource "aws_bedrockagentcore_gateway_target" "promotions" {
@@ -104,21 +104,21 @@ Open `terraform/promotions-backend.tf`. This file contains everything needed for
     }
     ```
 
-1. **The Cedar policy** - permits all authenticated principals to call the promotions tool:
+1. **The Cedar policy** - permits all authenticated principals to call the promotions tool (lines 97-106):
 
     ```hcl
     resource "awscc_bedrockagentcore_policy" "allow_get_promotions" {
-    definition = {
-        cedar = {
-            statement = <<-EOT
-                permit(
-                principal,
-                action == AgentCore::Action::"promotions___get-promotions",
-                resource == AgentCore::Gateway::"<gateway_arn>"
-                );
-            EOT
+        definition = {
+            cedar = {
+                statement = <<-EOT
+                    permit(
+                    principal,
+                    action == AgentCore::Action::"promotions___get-promotions",
+                    resource == AgentCore::Gateway::"<gateway_arn>"
+                    );
+                EOT
+            }
         }
-    }
     }
     ```
 
@@ -132,11 +132,11 @@ Open `terraform/promotions-backend.tf`. This file contains everything needed for
     make redeploy-gateway
     ```
 
-    This deploys the promotions backend, creates the credential provider (writing the API key to the Token Vault), registers the gateway target, and applies the Cedar policy. The backend URL is written to `tmp/promotions_backend_url.txt`.
+    This deploys the promotions backend, creates the credential provider (writing the API key to the Token Vault), registers the gateway target, and applies the Cedar policy. The new promotions backend URL is written to `tmp/promotions_backend_url.txt`.
 
 ## Step 3: Verify the Promotions Backend directly
 
-Before testing through the gateway, confirm the backend itself is working correctly:
+Before testing through the gateway, let's confirm the backend itself is working correctly:
 
 1. Run the following command in VS Code Terminal:
 
@@ -144,7 +144,7 @@ Before testing through the gateway, confirm the backend itself is working correc
     curl $(cat tmp/promotions_backend_url.txt)
     ```
 
-    Expected result: `{"message":"Unauthorized"}`
+    Expected result: ❌ request is rejected with `{"message":"Unauthorized"}`
 
 1. Run the following command in VS Code Terminal:
 
@@ -152,7 +152,7 @@ Before testing through the gateway, confirm the backend itself is working correc
     curl $(cat tmp/promotions_backend_url.txt) -H "x-api-key: workshop-demo-key"
     ```
 
-    Expected result: `{"promotions":"Buy two pizzas get one free!"}`
+    Expected result: ✅ request is successful, you can see the response - `{"promotions":"Buy two pizzas get one free!"}`
 
 As expected, Promotions Backend only works when request contains the API Key. 
 
@@ -213,7 +213,7 @@ It's time to call the new tool via the gateway (without providing the API key ma
         }' | jq .
     ```
 
-    In Step 1, you configured the Gateway to retrieve the API key from a Credential Provider and inject it into requests sent to targets. This is exactly what it does. As a result, your MCP Client is successfully getting response back through the gateway:
+    In Step 1, you configured the Gateway to retrieve the API key from a Credential Provider and inject it into requests sent to targets. This is exactly what it did. As a result, your MCP Client is successfully getting response back through the gateway:
 
     ```json
     {
@@ -230,21 +230,21 @@ It's time to call the new tool via the gateway (without providing the API key ma
     }
     ```
 
-    The gateway retrieved `workshop-demo-key` from the Token Vault and injected it into the outbound request - your MCP Client never touched the key.
+The gateway retrieved `workshop-demo-key` from the Token Vault and injected it into the outbound request - your MCP Client never touched the key.
 
 ## How it works under the hood
 
 1. MCP client calls `tools/call` for `promotions___get-promotions`
 2. Gateway validates the inbound JWT (Module 3)
-3. Interceptor runs - logs the request (Module 5)
-4. Cedar Policy Engine evaluates the request - `allow_get_promotions` permits it (Module 4)
+3. Interceptor runs and logs the request (Module 5)
+4. Policy Engine evaluates the request (Module 4) - `allow_get_promotions` policy you've created above permits it 
 5. Gateway retrieves the API key from Credential Provider
 6. Gateway calls `GET /promotions` on the HTTP backend with `x-api-key: workshop-demo-key` injected
 7. Backend validates the key and returns the promotions data
-8. Interceptor runs again - logs the response (Module 5)
+8. Interceptor runs again and logs the response (Module 5)
 9. Gateway returns the result to the caller
 
-The API key exists only in Credential Provider's token vault. It never passes through the mcp client process and is never written to Terraform state.
+The API key exists only in Credential Provider's token vault. It never passes through the MCP client process and is never written to Terraform state.
 
 ## Congratulations!
 
@@ -252,7 +252,7 @@ You have secured the full request path - inbound and outbound:
 
 | Segment | Gateway's perspective | Secured with | Secret storage |
 |---|---|---|---|
-| MCP Client → Gateway | Inbound authentication | OAuth2 JWT | Gateway is secured with JWT. <br/><br/> MCP Client is using Cognito client credentials stored in `./tmp` directory, which is less secure. See [Building AI Agents with Amazon Bedrock AgentCore workshop](https://github.com/aal80/agentcore-workshops/tree/main/building-ai-agents) to learn how to use AgentCore Identity for properly securing this segment.|
+| MCP Client → Gateway | Inbound authentication | OAuth2 JWT | Gateway is secured with JWT. <br/><br/> MCP Client is using Cognito client credentials stored in `./tmp` directory, which is not secure. See [Building AI Agents with Amazon Bedrock AgentCore workshop](https://github.com/aal80/agentcore-workshops/tree/main/building-ai-agents) to learn how to use AgentCore Identity to properly secure this segment.|
 | Gateway → Lambda tools | Outbound authentication | IAM role | Using AWS IAM, no separate secret storage |
 | Gateway → HTTP backend | Outbound authentication | API Key Credential Provider | Secret (API key) lives in the Credential Provider token vault only |
 

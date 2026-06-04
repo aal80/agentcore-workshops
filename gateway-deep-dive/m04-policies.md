@@ -44,13 +44,13 @@ Let's get started!
 
     ```hcl
     resource "aws_cognito_user_pool_client" "client1" {
-      allowed_oauth_scopes = ["gateway/get_menu"]
-      ...REDACTED...
+        allowed_oauth_scopes = ["gateway/get_menu"]
+        ...REDACTED...
     }
 
     resource "aws_cognito_user_pool_client" "client2" {
-      allowed_oauth_scopes = ["gateway/get_menu", "gateway/create_order"]
-      ...REDACTED...
+        allowed_oauth_scopes = ["gateway/get_menu", "gateway/create_order"]
+        ...REDACTED...
     }
     ```
 
@@ -76,7 +76,7 @@ resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
         }
     }
 
-...REDACTED...
+    ...REDACTED...
 ```
 
 **allowed_scopes** here means "the token must contain AT LEAST `gateway/get_menu` scope" to pass the JWT check. The `gateway/create_order` scope restriction will be enforced later by a Cedar policy.
@@ -95,8 +95,8 @@ resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
 
     ```hcl
     policy_engine_configuration = {
-      arn  = awscc_bedrockagentcore_policy_engine.pizza_shop.policy_engine_arn
-      mode = "ENFORCE"
+        arn  = awscc_bedrockagentcore_policy_engine.pizza_shop.policy_engine_arn
+        mode = "ENFORCE"
     }
     ```
 
@@ -129,11 +129,11 @@ By default, Policy Engine implements `deny_all` approach. Requests are denied un
 
     ```json
     {
-    "jsonrpc": "2.0",
-    "id": 1,
-    "result": {
-        "tools": []
-    }
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "tools": []
+        }
     }
     ```
 
@@ -162,16 +162,16 @@ By default, Policy Engine implements `deny_all` approach. Requests are denied un
 
 Before writing targeted policies, start with a wide-open `permit_all` just to confirm the Policy Engine is wired up correctly and traffic can flow. This policy allows every principal to call any action on any gateway resource.
 
-1. Open `terraform/gateway-policies.tf` and uncomment the `permit_all` policy resource:
+1. Open `terraform/gateway-policies.tf` and uncomment the `permit_all` policy resource (lines 6-16):
 
     ```hcl
-    # Step 4a: Permit all (illustration only - overly permissive)
+    # Module 4 - Step 6: Permit all (illustration only - overly permissive)
     resource "awscc_bedrockagentcore_policy" "permit_all" {
-    definition = {
-        cedar = {
-            statement = "permit(principal, action, resource is AgentCore::Gateway);"
+        definition = {
+            cedar = {
+                statement = "permit(principal, action, resource is AgentCore::Gateway);"
+            }
         }
-    }
     }
     ```
 
@@ -198,9 +198,9 @@ However this `permit_all` is definitely overly permissive. Let's start tightenin
 
 Let's narrow the access. Instead of allowing everything, let's explicitly permit only the `get-menu` tool. This means `create-order` is still denied for everyone - regardless of their token scopes (you'll fix it later).
 
-1. Edit `terraform/gateway-policies.tf` and comment out (or delete) the `permit_all` resource
+1. Edit `terraform/gateway-policies.tf` and comment out (or delete) the `permit_all` policy resource (lines 6-16)
 
-1. Uncomment `allow_get_menu` resource. Note that this policy only permits access when action equals a very specific tool name:
+1. Uncomment `allow_get_menu` policy resource (lines 19-35). Note that this policy only permits access when action equals a very specific tool name:
 
     ```hcl
     permit(
@@ -210,19 +210,27 @@ Let's narrow the access. Instead of allowing everything, let's explicitly permit
     );
     ```
 
-1. Deploy your updates by running
+1. Deploy your updates by running the following command in VS Code Terminal:
 
     ```bash
     make deploy-infra
     ```
 
-1. Test the new configuration by running
+1. Once deployed, test the new configuration by running
+
+    ```bash
+    make list-tools
+    ```
+
+    Expected result: ℹ️ The returned list only contains a single `get-menu` tool. The gateway is not returning `create-orders` tool because there's no access policy allowing you to use it. 
+
+1. Try getting the pizza menu
 
     ```bash
     make get-menu
     ```
 
-    Expected result: ✅ request successfully completes. You've created a `permit` policy for `get-menu` tool, so now it can be accessed by clients. 
+    Expected result: ✅ request successfully completes since you've created a `permit` policy for `get-menu` tool. Now this tool can be accessed by clients. 
 
 1. Try to order pizza by running
 
@@ -230,15 +238,15 @@ Let's narrow the access. Instead of allowing everything, let's explicitly permit
     make create-order pizzaId=1
     ```
 
-    Expected result: ❌ denied. You haven't created any `permit` policies for the `create-order` tool, so the default `deny_all` policy is still being applied. Let's fix that. 
+    Expected result: ❌ denied. You haven't created any `permit` policies for the `create-order` tool, so the default `deny_all` policy is still being applied. 
 
 ## Step 8: Scope-based permit for create-order
 
-This is where Cedar and OAuth2 scopes work together! Let's create a policy that permits calling the `create-order` tool only when the caller's token contains the `gateway/create_order` scope. 
+This is where Cedar and OAuth2 scopes work together! Let's create a policy that permits calling the `create-order` tool only when the caller's token contains a `gateway/create_order` scope. 
 
-Reminder: `client1` has only `get_menu` scope and will be denied; `client2` has both scopes and will be allowed.
+> Reminder: `client1` has only `get_menu` scope and will be denied.  `client2` has both scopes and will be allowed.
 
-1. Edit `terraform/gateway-policies.tf` and uncomment the `allow_create_order_with_scope` policy:
+1. Edit `terraform/gateway-policies.tf` and uncomment the `allow_create_order_with_scope` policy resource (lines 38-58):
 
     ```hcl
     permit(
@@ -252,7 +260,7 @@ Reminder: `client1` has only `get_menu` scope and will be denied; `client2` has 
     };
     ```
 
-`principal.getTag("scope")` reads the `scope` claim from the validated JWT. The `like` operator with wildcards checks if the string contains `gateway/create_order`.
+    Note the `when` condition. The `principal.getTag("scope")` reads the `scope` claim from the validated JWT. The `like` operator checks if the string contains `gateway/create_order`.
 
 1. Deploy your updates by running:
 
@@ -280,13 +288,13 @@ Reminder: `client1` has only `get_menu` scope and will be denied; `client2` has 
 
 `client1` and `client2` now have different capabilities based on their JWT scopes, enforced at the policy layer.
 
-But can you apply access policies not just based on scopes and tool names, but also based on tool invocation arguments? Let's see how you can do it!
+But can you apply access policies not just based on JWT scopes and tool names, but even more fine-grained - based on tool invocation arguments? Let's see how you can do it!
 
 ## Step 9: Forbid pineapple pizza 🚫🍍🍕
 
-This step demonstrates what scopes alone can never do: make a decision based on the actual tool arguments. The `forbid_pineapple` policy inspects `context.input.pizzaId` and blocks any order for pizza #5 - regardless of who is calling or what scopes they have. Even `client2` with full access cannot order pineapple.
+This step demonstrates what scopes alone can never do: make a decision based on the actual tool arguments. The `forbid_pineapple` policy inspects `context.input.pizzaId` and blocks any order for pizza #5 (Pineapple Deluxe) - regardless of who is calling or what scopes they have. Even `client2` with full access will not be able order a pineapple pizza once this policy is applied.
 
-1. Edit `terraform/gateway-policies.tf` and uncomment the `forbid_pineapple` policy:
+1. Edit `terraform/gateway-policies.tf` and uncomment the `forbid_pineapple` policy resource (lines 61-80):
 
     ```hcl
     forbid(
@@ -299,22 +307,22 @@ This step demonstrates what scopes alone can never do: make a decision based on 
     };
     ```
 
-    `context.input` contains the tool arguments that were passed from the MCP client. This allows policies to make decisions based on the actual data being sent, not just who is calling.
+    Note the `when` condition. The`context.input` contains the tool arguments that were passed from the MCP client. This allows policies to make decisions based on the actual data being sent, not just who is calling.
 
-1. Deploy your updates:
+1. Run the following command in VS Code Terminal to deploy your updates:
 
     ```bash
     make deploy-infra
     ```
 
-1. Get a `client2` token (the only client allowed to order) and try ordering a regular pizza:
+1. Get a `client2` token (the only client allowed to create orders) and try ordering a Four Cheese pizza (pizzaId=3):
 
     ```bash
     make get-client2-token
     make create-order pizzaId=3
     ```
 
-    Expected result: ✅ Four Cheese order succeeds. `client2` has the right scope and `pizzaId=3` is not pineapple.
+    Expected result: ✅ Four Cheese order succeeds. `client2` has the right scope and `pizzaId` does not equal `5`.
 
 1. Now try ordering the pineapple pizza:
 
@@ -335,7 +343,7 @@ This step demonstrates what scopes alone can never do: make a decision based on 
     }
     ```
 
-    Tool call was ❌ denied by the policy engine. The `forbid` policy matches `pizzaId=5` and blocks the request even though `allow_create_order_with_scope` would permit it. **Forbid always wins.**
+    Expected result: ❌ the tool call was denied by the policy engine. The `forbid` policy matches `pizzaId=5` and blocks the request even though `allow_create_order_with_scope` policy would permit it. Remember - **Forbid always wins.**
 
 ## Congratulations!
 

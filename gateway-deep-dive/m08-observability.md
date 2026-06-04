@@ -1,15 +1,15 @@
 # Module 8: Observability
 
-In the previous module you ran a real agent against your gateway. Now let's look at what actually happened under the hood. This module walks you through the logs, metrics, and traces that are already flowing from your deployment.
+In the previous module you ran an AI agent against your gateway. Now let's look at what actually happened under the hood. This module walks you through the logs, metrics, and traces that are already flowing from your deployment.
 
 ## Instrumentation
 
-Your gateway is already configured to emit two streams of telemetry to CloudWatch - see `terraform/gateway-observability.tf`:
+Your gateway is already configured to emit gateway telemetry streams to CloudWatch:
 
 - **Application logs** - OTEL-formatted records of every action processed by the gateway, written to a CloudWatch Log Group.
-- **Traces** - OTEL-formatted traces capturing the full request lifecycle, including JWT validation, Cedar evaluation, interceptor invocation, and target call.
+- **Traces** - OTEL-formatted traces capturing the full request lifecycle, including JWT validation, Policy evaluation, interceptor invocation, and target call.
 
-Both are wired up via the CloudWatch Log Delivery API in `terraform/gateway-observability.tf`:
+Both are wired up in `terraform/gateway-observability.tf`:
 
 ```hcl
 # Define log source
@@ -51,13 +51,13 @@ No extra deployment is needed - both were enabled when you ran `make deploy-infr
 
 ## Step 2: View interceptor logs
 
-Your interceptor Lambda (Module 5) writes its own logs to a separate log group.
+Your interceptor Lambda (implemented in Module 5) writes its logs to a separate log group.
 
 1. Find the log group named `/aws/lambda/<your-project-name>-interceptor`.
 
 1. Open a recent log stream. You will see the structured log lines emitted by the interceptor for each REQUEST and RESPONSE:
 
-    ![](./images/m08-interceptor-logs.png)
+    ![](./images/m05-interceptor-logs.png)
 
 ## Step 3: View Gateway telemetry
 
