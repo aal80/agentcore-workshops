@@ -103,7 +103,6 @@ get-client2-token:
 	@echo "client2 token saved to ./tmp/access_token.txt"
 
 # ── Module 6: Outbound identity ──────────────────────────────────────────────
-
 get-promotions:
 	$(eval GATEWAY_URL := $(shell cat ./tmp/gateway_url.txt))
 	$(eval ACCESS_TOKEN := $(shell cat ./tmp/access_token.txt 2>/dev/null || echo ""))
@@ -113,7 +112,6 @@ get-promotions:
 		-d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"promotions___get-promotions","arguments":{}}}' | jq .
 
 # ── Module 8: Python agent ────────────────────────────────────────────────────
-
 run-agent-client1:
 	@echo "Starting pizza ordering agent as client1 (get_menu + promotions only)..."
 	$(eval GATEWAY_URL := $(shell cat ./tmp/gateway_url.txt))
