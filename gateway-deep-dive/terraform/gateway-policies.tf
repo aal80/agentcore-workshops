@@ -2,7 +2,7 @@ resource "awscc_bedrockagentcore_policy_engine" "pizza_shop" {
   name = local.project_name_underscore
 }
 
-# Step 4a: Permit all (illustration only — overly permissive)
+# Step 4a: Permit all (illustration only - overly permissive)
 # resource "awscc_bedrockagentcore_policy" "permit_all" {
 #   name             = "permit_all"
 #   policy_engine_id = awscc_bedrockagentcore_policy_engine.pizza_shop.policy_engine_id

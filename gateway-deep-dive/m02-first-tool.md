@@ -1,6 +1,6 @@
-# Module 2: Your first tool — no auth required
+# Module 2: Your first tool - no auth required
 
-In this module you deploy an AgentCore Gateway with two pizza tools — `get-menu` and `create-order` — with no authentication for now. By the end of this module you will be calling both tools via MCP using `curl`.
+In this module you deploy an AgentCore Gateway with two pizza tools - `get-menu` and `create-order` - with no authentication for now. By the end of this module you will be calling both tools via MCP using `curl`.
 
 ## What you will build
 
@@ -48,13 +48,13 @@ export const handler = async (event) => {
 };
 ```
 
-These are plain Lambda functions. There's absolutely nothing special about them. They know nothing about MCP or AgentCore. The same is also applicable when your targets are HTTP endpoints — the Gateway handles protocol translation.
+These are plain Lambda functions. There's absolutely nothing special about them. They know nothing about MCP or AgentCore. The same is also applicable when your targets are HTTP endpoints - the Gateway handles protocol translation.
 
 ## Step 2: Examine the Terraform configuration
 
 Open `terraform/gateway.tf`. Key things to notice:
 
-**Gateway resource** — `authorizer_type = "NONE"` means any caller can reach the tools:
+**Gateway resource** - `authorizer_type = "NONE"` means any caller can reach the tools:
 
 ```hcl
 resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
@@ -68,7 +68,7 @@ resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
 }
 ```
 
-**Target + tool schema** — the `inline_payload` block is what MCP clients see in `tools/list`. It defines the tool name, description, and input parameters:
+**Target + tool schema** - the `inline_payload` block is what MCP clients see in `tools/list`. It defines the tool name, description, and input parameters:
 
 ```hcl
 resource "aws_bedrockagentcore_gateway_target" "get_menu" {
@@ -120,7 +120,7 @@ resource "aws_bedrockagentcore_gateway_target" "get_menu" {
 
     Terraform apply takes about 2–3 minutes.
 
-1. Verify the deployment using AWS console — open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm you see your gateway with status **Ready**. 
+1. Verify the deployment using AWS console - open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm you see your gateway with status **Ready**. 
 
 1. Click into the gateway and verify:
     - Inbound auth is configured as **No authorization**
@@ -311,7 +311,7 @@ As expected, the create order MCP tool is working properly!
 5. Lambda returns `{ orderId, date, item, total }`
 6. Gateway wraps it in an MCP `tools/call` response
 
-The Lambda function is invoked with the `arguments` from the MCP call mapped directly as the event payload — `event.pizzaId` comes directly from `params.arguments.pizzaId`.
+The Lambda function is invoked with the `arguments` from the MCP call mapped directly as the event payload - `event.pizzaId` comes directly from `params.arguments.pizzaId`.
 
 ## Congratulations!
 
@@ -320,7 +320,7 @@ You have:
 - Called both tools via MCP from the command line
 - Seen how the inline tool schema controls what MCP clients discover
 
-The gateway is currently open — anyone with the URL can call your pizza tools. Let's fix that.
+The gateway is currently open - anyone with the URL can call your pizza tools. Let's fix that.
 
 ## Next step
 

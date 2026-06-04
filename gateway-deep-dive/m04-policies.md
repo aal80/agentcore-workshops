@@ -1,10 +1,10 @@
 # Module 4: Adding policies
 
-JWT authentication you implemented in the previous module tells you **who** is calling. OAuth2 scopes let you go one step further — you can restrict a token to a set of allowed operations (e.g. `gateway/get_menu` but not `gateway/create_order`). For many use cases, that is enough.
+JWT authentication you implemented in the previous module tells you **who** is calling. OAuth2 scopes let you go one step further - you can restrict a token to a set of allowed operations (e.g. `gateway/get_menu` but not `gateway/create_order`). For many use cases, that is enough.
 
-But scopes are coarse-grained. They carry high-level intent — "this client can place orders" — but they know nothing about the request payload. There is no OAuth2 scope for "this client may only order up to 2 pizzas at a time, and they cannot be pineapple." For that kind of fine-grained authorization validation you need a policy engine that can inspect not just OAuth2 scopes, but the actual tool names and arguments at request time.
+But scopes are coarse-grained. They carry high-level intent - "this client can place orders" - but they know nothing about the request payload. There is no OAuth2 scope for "this client may only order up to 2 pizzas at a time, and they cannot be pineapple." For that kind of fine-grained authorization validation you need a policy engine that can inspect not just OAuth2 scopes, but the actual tool names and arguments at request time.
 
-In this module you will attach a **Policy Engine** to your gateway and write authorization policies that control exactly which tools each caller can invoke — and under what conditions, including rules based on the arguments passed to a tool in request body.
+In this module you will attach a **Policy Engine** to your gateway and write authorization policies that control exactly which tools each caller can invoke - and under what conditions, including rules based on the arguments passed to a tool in request body.
 
 ## Architecture
 
@@ -14,7 +14,7 @@ In this module you will extend your gateway implementation and add the new Agent
 
 ## Policy Engine overview
 
-AgentCore's Policy engine evaluates [Cedar](https://www.cedarpolicy.com/) policies on every tool call. Cedar is an open-source policy language developed by AWS — it is expressive, fast to evaluate, and formally verifiable. Policies are written as `permit` and `forbid` statements that reference the caller's identity (`principal`), the operation being performed (`action`), and the resource being accessed (`resource`). 
+AgentCore's Policy engine evaluates [Cedar](https://www.cedarpolicy.com/) policies on every tool call. Cedar is an open-source policy language developed by AWS - it is expressive, fast to evaluate, and formally verifiable. Policies are written as `permit` and `forbid` statements that reference the caller's identity (`principal`), the operation being performed (`action`), and the resource being accessed (`resource`). 
 
 There are two important rules to keep in mind
 - The default behaviour is **deny-all**. Without explicit permit policies - nothing gets through.
@@ -36,8 +36,8 @@ Let's get started!
 
 1. In the previous module, you used a single Cognito client that had the `gateway/invoke` scope. In this module you replace it with **two clients** with different scopes:
 
-    - **client1** — has only `gateway/get_menu` scope. It can view the menu but cannot place orders
-    - **client2** — has both `gateway/get_menu` and `gateway/create_order` scopes — full access
+    - **client1** - has only `gateway/get_menu` scope. It can view the menu but cannot place orders
+    - **client2** - has both `gateway/get_menu` and `gateway/create_order` scopes - full access
 
 1. Open `terraform/cognito-module4.tf` and **uncomment the entire file**. This adds `client1` and `client2` alongside the existing `mcp_client` from Module 3. Note that each client has its own scope configuration:
 
@@ -162,7 +162,7 @@ Before writing targeted policies, start with a wide-open `permit_all` to confirm
 1. Open `terraform/gateway-policies.tf` and uncomment the `permit_all` policy resource:
 
     ```hcl
-    # Step 4a: Permit all (illustration only — overly permissive)
+    # Step 4a: Permit all (illustration only - overly permissive)
     resource "awscc_bedrockagentcore_policy" "permit_all" {
     definition = {
         cedar = {
@@ -190,7 +190,7 @@ Before writing targeted policies, start with a wide-open `permit_all` to confirm
 
 ## Step 7: Permit by tool
 
-Let's narrow the access. Instead of allowing everything, explicitly permit only the `get-menu` tool. This means `create-order` is still denied for everyone — regardless of their token scopes.
+Let's narrow the access. Instead of allowing everything, explicitly permit only the `get-menu` tool. This means `create-order` is still denied for everyone - regardless of their token scopes.
 
 1. Edit `terraform/gateway-policies.tf` and comment out (or delete) the `permit_all` resource
 
@@ -278,7 +278,7 @@ But can you apply access policies not just based on scopes and tool names, but a
 
 ## Step 9: Forbid pineapple pizza 🚫🍍🍕
 
-This step demonstrates what scopes alone can never do: make a decision based on the actual tool arguments. The `forbid_pineapple` policy inspects `context.input.pizzaId` and blocks any order for pizza #5 — regardless of who is calling or what scopes they have. Even `client2` with full access cannot order pineapple.
+This step demonstrates what scopes alone can never do: make a decision based on the actual tool arguments. The `forbid_pineapple` policy inspects `context.input.pizzaId` and blocks any order for pizza #5 - regardless of who is calling or what scopes they have. Even `client2` with full access cannot order pineapple.
 
 1. Edit `terraform/gateway-policies.tf` and uncomment the `forbid_pineapple` policy:
 

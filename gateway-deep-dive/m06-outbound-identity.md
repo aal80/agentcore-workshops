@@ -1,8 +1,8 @@
 # Module 6: Outbound identity
 
-So far, every security layer you've built has been about controlling *inbound* access — who can reach your gateway and what they can do. But there's an equally important question on the outbound side: when the gateway needs to call a protected downstream service, how do credentials get there securely?
+So far, every security layer you've built has been about controlling *inbound* access - who can reach your gateway and what they can do. But there's an equally important question on the outbound side: when the gateway needs to call a protected downstream service, how do credentials get there securely?
 
-You've already seen one answer to this in `terraform/gateway.tf` - when your target is a Lambda function, the gateway can use its own IAM role to invoke it — no credentials to manage at all:
+You've already seen one answer to this in `terraform/gateway.tf` - when your target is a Lambda function, the gateway can use its own IAM role to invoke it - no credentials to manage at all:
 
 ```hcl
 credential_provider_configuration {
@@ -27,17 +27,17 @@ A core component of AgentCore Identity is **Credential Provider**. Credential Pr
 AgentCore Identity provides two Credential Provider types you can use:
 
 - **API key** - stored in the secure vault, injected as a request header or query parameter.
-- **OAuth2** — `client_id` and `client_secret` are stored in the secure vault. When Gateway requests an access token, Credential Provider automatically retrieves (or refreshes) it and returns to the Gateway. The Gateway automatically injects it as a `Bearer` token in the `Authorization` header.
+- **OAuth2** - `client_id` and `client_secret` are stored in the secure vault. When Gateway requests an access token, Credential Provider automatically retrieves (or refreshes) it and returns to the Gateway. The Gateway automatically injects it as a `Bearer` token in the `Authorization` header.
 
 ## Two authentication segments
 
-Where you attach a Credential Provider depends on which hop you're securing — there are two to think about:
+Where you attach a Credential Provider depends on which hop you're securing - there are two to think about:
 
 ![](./images/m06-agent-gateway-target.png)
 
-* **Agent-to-Gateway** — the agent needs to authenticate to the gateway, typically using a short-lived OAuth2 access token. To obtain it, instead of embedding long-lived secrets (e.g. OAuth2 client credentials) in the agent's environment, the agent uses Credential Provider to obtain short-lived credentials (e.g. access token) on-demand. This pattern is out of scope of this workshop, it is covered in detail in the [Building AI Agents with Amazon Bedrock AgentCore workshop](https://github.com/aal80/agentcore-workshops/tree/main/building-ai-agents).
+* **Agent-to-Gateway** - the agent needs to authenticate to the gateway, typically using a short-lived OAuth2 access token. To obtain it, instead of embedding long-lived secrets (e.g. OAuth2 client credentials) in the agent's environment, the agent uses Credential Provider to obtain short-lived credentials (e.g. access token) on-demand. This pattern is out of scope of this workshop, it is covered in detail in the [Building AI Agents with Amazon Bedrock AgentCore workshop](https://github.com/aal80/agentcore-workshops/tree/main/building-ai-agents).
 
-* **Gateway-to-Target (tool)** — the gateway needs to authenticate to a downstream target (e.g. HTTP endpoint) by injecting credentials into each outbound request. You store the long-lived secret in Credential Provider, attach it to the gateway target, and the gateway handles retrieval and injection automatically. This is what you will implement in this module.
+* **Gateway-to-Target (tool)** - the gateway needs to authenticate to a downstream target (e.g. HTTP endpoint) by injecting credentials into each outbound request. You store the long-lived secret in Credential Provider, attach it to the gateway target, and the gateway handles retrieval and injection automatically. This is what you will implement in this module.
 
 Let's start building!
 
@@ -230,25 +230,25 @@ It's time to call the new tool via the gateway (without providing the API key ma
     }
     ```
 
-    The gateway retrieved `workshop-demo-key` from the Token Vault and injected it into the outbound request — your MCP Client never touched the key.
+    The gateway retrieved `workshop-demo-key` from the Token Vault and injected it into the outbound request - your MCP Client never touched the key.
 
 ## How it works under the hood
 
 1. MCP client calls `tools/call` for `promotions___get-promotions`
 2. Gateway validates the inbound JWT (Module 3)
-3. Interceptor runs — logs the request (Module 5)
-4. Cedar Policy Engine evaluates the request — `allow_get_promotions` permits it (Module 4)
+3. Interceptor runs - logs the request (Module 5)
+4. Cedar Policy Engine evaluates the request - `allow_get_promotions` permits it (Module 4)
 5. Gateway retrieves the API key from Credential Provider
 6. Gateway calls `GET /promotions` on the HTTP backend with `x-api-key: workshop-demo-key` injected
 7. Backend validates the key and returns the promotions data
-8. Interceptor runs again — logs the response (Module 5)
+8. Interceptor runs again - logs the response (Module 5)
 9. Gateway returns the result to the caller
 
 The API key exists only in Credential Provider's token vault. It never passes through the mcp client process and is never written to Terraform state.
 
 ## Congratulations!
 
-You have secured the full request path — inbound and outbound:
+You have secured the full request path - inbound and outbound:
 
 | Segment | Gateway's perspective | Secured with | Secret storage |
 |---|---|---|---|

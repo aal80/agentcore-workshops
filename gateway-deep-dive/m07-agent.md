@@ -1,6 +1,6 @@
 # Module 7: Running a local agent
 
-Every previous module tested the gateway using raw `curl` commands and `make` targets — direct MCP calls. In this module you run a real Python agent backed by [Strands Agents SDK](https://strandsagents.com/) that connects to your gateway and uses its tools to take natural language pizza orders.
+Every previous module tested the gateway using raw `curl` commands and `make` targets - direct MCP calls. In this module you run a real Python agent backed by [Strands Agents SDK](https://strandsagents.com/) that connects to your gateway and uses its tools to take natural language pizza orders.
 
 ## Architecture
 
@@ -15,17 +15,17 @@ The gateway enforces Cedar policies based on Cognito scopes. You have two client
 | `client1` | `get-menu`, `get-promotions` |
 | `client2` | `get-menu`, `create-order`, `get-promotions` |
 
-Decide which client to use before running the agent — it determines what the agent can do.
+Decide which client to use before running the agent - it determines what the agent can do.
 
 ## Step 2: Run the agent
 
 Pick the client that matches what you want to test:
 
 ```bash
-# client1 — browse menu and promotions only
+# client1 - browse menu and promotions only
 make run-agent-client1
 
-# client2 — full ordering capability
+# client2 - full ordering capability
 make run-agent-client2
 ```
 
@@ -69,7 +69,7 @@ I'd like to order a Margherita please
 I'd like to order a Pineapple pizza please
 ```
 
-> The interceptor from Module 5 rewrites `pizzaId=5` to `pizzaId=1`. You will see `[Tool called: create-order___create-order]` in the output — check the interceptor logs in CloudWatch to confirm the rewrite happened.
+> The interceptor from Module 5 rewrites `pizzaId=5` to `pizzaId=1`. You will see `[Tool called: create-order___create-order]` in the output - check the interceptor logs in CloudWatch to confirm the rewrite happened.
 
 Type `exit` or `quit` to stop the agent.
 
@@ -78,7 +78,7 @@ Type `exit` or `quit` to stop the agent.
 1. `make run-agent-client1` / `make run-agent-client2` launches `src/agent/agent.py` with the gateway URL and Cognito credentials for the chosen client as environment variables
 2. `mcp_client.py` calls `identity_helper.get_token()` to fetch a JWT from Cognito using the saved credentials
 3. An MCP `streamablehttp_client` connects to the gateway with `Authorization: Bearer <token>`
-4. `mcp_client.list_tools_sync()` calls `tools/list` — the gateway validates the JWT and returns the tools the token's scopes permit
+4. `mcp_client.list_tools_sync()` calls `tools/list` - the gateway validates the JWT and returns the tools the token's scopes permit
 5. The Strands `Agent` receives the tool list and uses them as callable functions
 6. On each user message, the agent decides which tool to call, issues a `tools/call` MCP request, and streams the response back to your terminal
 7. Gateway runs the full pipeline: JWT → interceptor → Cedar → target → interceptor → response

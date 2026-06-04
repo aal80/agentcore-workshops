@@ -4,10 +4,10 @@ In the previous module you ran a real agent against your gateway. Now let's look
 
 ## Instrumentation
 
-Your gateway is already configured to emit two streams of telemetry to CloudWatch — see `terraform/gateway-observability.tf`:
+Your gateway is already configured to emit two streams of telemetry to CloudWatch - see `terraform/gateway-observability.tf`:
 
-- **Application logs** — OTEL-formatted records of every action processed by the gateway, written to a CloudWatch Log Group.
-- **Traces** — OTEL-formatted traces capturing the full request lifecycle, including JWT validation, Cedar evaluation, interceptor invocation, and target call.
+- **Application logs** - OTEL-formatted records of every action processed by the gateway, written to a CloudWatch Log Group.
+- **Traces** - OTEL-formatted traces capturing the full request lifecycle, including JWT validation, Cedar evaluation, interceptor invocation, and target call.
 
 Both are wired up via the CloudWatch Log Delivery API in `terraform/gateway-observability.tf`:
 
@@ -37,7 +37,7 @@ resource "aws_cloudwatch_log_delivery" "gateway_logs" {
 }
 ```
 
-No extra deployment is needed — both were enabled when you ran `make deploy-infra` in Module 2.
+No extra deployment is needed - both were enabled when you ran `make deploy-infra` in Module 2.
 
 ## Step 1: View gateway logs
 

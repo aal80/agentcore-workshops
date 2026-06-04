@@ -11,9 +11,9 @@ l.info(f"mcp_client :: GATEWAY_URL={GATEWAY_URL}")
 mcp_tools_list = []
 
 if not GATEWAY_URL:
-    l.info("⚠️ GATEWAY_URL not set — gateway tools disabled")
+    l.info("⚠️ GATEWAY_URL not set - gateway tools disabled")
 elif not (gateway_token := get_token()):
-    l.info("⚠️ Could not retrieve gateway token — gateway tools disabled")
+    l.info("⚠️ Could not retrieve gateway token - gateway tools disabled")
 else:
     mcp_client = MCPClient(lambda: streamablehttp_client(
         GATEWAY_URL,

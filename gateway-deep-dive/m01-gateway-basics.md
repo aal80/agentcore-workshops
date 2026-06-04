@@ -4,22 +4,23 @@ Before you provision any cloud resources, this module builds a mental model of w
 
 ## What are you building?
 
-Throughout this workshop you will build the backend for a pizza shop AI ordering assistant. Two tools, implemented as Lambda functions, will be exposed via the gateway:
+Throughout this workshop you will build the backend and MCP gateway for a pizza shop AI ordering assistant. Two tools implemented as Lambda functions and one tool implemented as OpenAPI-documented HTTP endpoint will be exposed via the gateway:
 
-| Tool | What it does |
-|---|---|
-| `get-menu` | Returns the current menu with pizza names and prices |
-| `create-order` | Takes a `pizzaId` argument and returns the order confirmation |
+| Tool | Backend | What it does |
+|---|---|---|
+| `get-menu` | Lambda | Returns the current menu with pizza names and prices |
+| `create-order` | Lambda | Takes a `pizzaId` argument and returns the order confirmation |
+| `get-promotions` | HTTP endpoint | Returns current pizza promotions and special offers |
 
 By the end of this workshop you will have:
 
-- Both tools accessible via MCP, secured with inbound JWT and outbound IAM, governed by access policies
+- All tools accessible via a single MCP endpoint, secured with inbound JWT and outbound IAM, governed by access policies
 - An interceptor that inspects and modifies every request and response
 - A Strands agent that can submit pizza orders using those tools
 
 ## What are the building blocks of AgentCore Gateway?
 
-**Gateway** is a component of Amazon Bedrock AgentCore that allows you to expose a wide variety of backend targets (HTTP endpoints, Lambda functions, MCP servers) as [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) endpoints. Any agentic framework that speaks MCP — Strands, LangChain, LangGraph, Claude Desktop, and others — can discover and call these tools through a secured gateway URL.
+**Gateway** is a component of Amazon Bedrock AgentCore that allows you to expose a wide variety of backend targets (HTTP endpoints, Lambda functions, MCP servers) as [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) endpoints. Any agentic framework that speaks MCP - Strands, LangChain, LangGraph, Claude Desktop, and others - can discover and call these tools through a secured gateway URL.
 
 ![](./images/m01-arch.png)
 
@@ -29,22 +30,22 @@ Let's examine several of Gateway's core concepts. All of them are mapped to the 
 
 A **Gateway** is the top-level construct. It provides an HTTPS endpoint (`gateway_url`) and handles:
 
-- **Protocol translation** — Converts MCP JSON-RPC calls to the target's native invocation format
-- **Authentication** — Validates the caller's inbound identity and authenticates to outbound downstream targets — the agent never holds credentials for the target
-- **Policy enforcement** — Evaluates fine-grained access policies before forwarding requests to targets
-- **Interceptors** — Allows you to intercept, inspect, and modify MCP requests and responses
-- **Observability** — Emits structured telemetry to CloudWatch for every tool invocation, giving you an audit trail and latency visibility out of the box
+- **Protocol translation** - Converts MCP JSON-RPC calls to the target's native invocation format
+- **Authentication** - Validates the caller's inbound identity and authenticates to outbound downstream targets - the agent never holds credentials for the target
+- **Policy enforcement** - Evaluates fine-grained access policies before forwarding requests to targets
+- **Interceptors** - Allows you to intercept, inspect, and modify MCP requests and responses
+- **Observability** - Emits structured telemetry to CloudWatch for every tool invocation, giving you an audit trail and latency visibility out of the box
 
 ### Gateway Targets
 
 A **Target** is a backend resource registered with a Gateway, such as an HTTP endpoint or a Lambda function. Each target carries:
 
-- A **tool schema** — the tool name, description, and input parameters that Gateway publishes via MCP's `tools/list`. For HTTP and MCP targets this can be auto-discovered; for Lambda targets you define it inline.
-- A **credential provider** — how Gateway authenticates to the target (e.g. IAM role, API key, or OAuth2 token)
+- A **tool schema** - the tool name, description, and input parameters that Gateway publishes via MCP's `tools/list`. For HTTP and MCP targets this can be auto-discovered; for Lambda targets you define it inline.
+- A **credential provider** - how Gateway authenticates to the target (e.g. IAM role, API key, or OAuth2 token)
 
 ### Request authorizers
 
-An **authorizer** is the inbound authentication mechanism attached to a Gateway. It runs first — before interceptors, before policy evaluation, before any target is invoked. AgentCore supports four types: `None`, `JWT`, `AWS IAM`, and `Authenticate only`.
+An **authorizer** is the inbound authentication mechanism attached to a Gateway. It runs first - before interceptors, before policy evaluation, before any target is invoked. AgentCore supports four types: `None`, `JWT`, `AWS IAM`, and `Authenticate only`.
 
 This workshop starts with `None` in Module 2 and upgrades to `JWT` with Amazon Cognito in Module 3.
 
@@ -62,7 +63,7 @@ You will progressively strengthen security posture by adding policies in Module 
 
 ### Outbound identity
 
-When the Gateway invokes a downstream target, it authenticates using a **credential provider** — either the Gateway's IAM role (for Lambda) or an OAuth2 token. The calling agent never holds credentials for the downstream target.
+When the Gateway invokes a downstream target, it authenticates using a **credential provider** - either the Gateway's IAM role (for Lambda) or an OAuth2 token. The calling agent never holds credentials for the downstream target.
 
 The companion to this is the **Token Vault**: AgentCore securely stores OAuth2 `client_id`/`client_secret` pairs so agents never hold long-lived secrets either. You will set this up in Module 6.
 

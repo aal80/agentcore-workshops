@@ -34,10 +34,10 @@ cd gateway-deep-dive
 
 Open the `gateway-deep-dive` folder in Visual Studio Code. You will find:
 
-1. **Markdown modules** (`m01-*.md` through `m07-*.md`) — step-by-step instructions
-2. **Terraform configuration** (`terraform/`) — infrastructure as code for each module
-3. **Lambda source code** (`src/lambdas/`) — Lambda functions implementing pizza tools
-4. **Python agent** (`src/agent/`) — an AI agent you will use in Module 7
+1. **Markdown modules** (`m01-*.md` through `m07-*.md`) - step-by-step instructions
+2. **Terraform configuration** (`terraform/`) - infrastructure as code for each module
+3. **Lambda source code** (`src/lambdas/`) - Lambda functions implementing pizza tools
+4. **Python agent** (`src/agent/`) - an AI agent you will use in Module 7
 
 ## Step 4: Enable Transactional Search
 
@@ -56,7 +56,7 @@ Expected output (last line):
 }
 ```
 
-Enabling Transactional Search can take 5–10 minutes. You do not need to wait — proceed with the workshop now.
+Enabling Transactional Search can take 5–10 minutes. You do not need to wait - proceed with the workshop now.
 
 > [OPTIONAL TROUBLESHOOTING] If you see the error below, Transactional Search is already enabled. You can safely ignore it.
 > ```text

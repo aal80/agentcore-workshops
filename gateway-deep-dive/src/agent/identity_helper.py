@@ -12,7 +12,7 @@ def get_token() -> str | None:
     scope         = os.environ.get("COGNITO_SCOPE")
 
     if not all([client_id, client_secret, token_endpoint, scope]):
-        l.warning("⚠️ Cognito env vars not set — gateway tools disabled")
+        l.warning("⚠️ Cognito env vars not set - gateway tools disabled")
         return None
 
     l.info(f"COGNITO_CLIENT_ID={client_id}")

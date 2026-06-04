@@ -1,6 +1,6 @@
 # Module 3: Adding JWT authentication
 
-In Module 2, your gateway was wide open — anyone with the URL could call your pizza tools. But nobody likes paying for a stranger's pizza, right? In this module you secure inbound access with **JWT authentication** using Amazon Cognito as the identity provider.
+In Module 2, your gateway was wide open - anyone with the URL could call your pizza tools. But nobody likes paying for a stranger's pizza, right? In this module you secure inbound access with **JWT authentication** using Amazon Cognito as the identity provider.
 
 ## Architecture
 
@@ -12,11 +12,11 @@ In this module you will implement the following architecture:
 
 Without authentication, any process that discovers your gateway URL can read your menu and place orders. You have no way of controlling who calls your tools or auditing who placed orders. With `JWT` authorization, the Gateway validates an inbound OAuth2 Bearer token on every request. Callers without a valid token are rejected before any Lambda is ever invoked.
 
-> **Choosing an authorizer** — AgentCore supports four inbound authentication modes:
+> **Choosing an authorizer** - AgentCore supports four inbound authentication modes:
 
 - `JWT` (used here) works with any OIDC-compliant identity provider such as Cognito, Okta, Auth0, and others. 
 - `AWS IAM` is the right choice when your callers are other AWS services or IAM roles authenticating with SigV4. 
-- `Authenticate only` validates the JWT identity but delegates scope enforcement to the downstream target — useful for HTTP targets that implement their own authorization. 
+- `Authenticate only` validates the JWT identity but delegates scope enforcement to the downstream target - useful for HTTP targets that implement their own authorization. 
 - `None`, which you used in the previous module, is only appropriate for development or when a custom interceptor handles auth.
 
 The changes you're about to implement result in the following enhancements to your agent:
@@ -35,7 +35,7 @@ Let's start implementing!
 
 Open `terraform/cognito-module3.tf`. The key resources are:
 
-**Cognito User Pool** — the identity store:
+**Cognito User Pool** - the identity store:
 
 ```hcl
 resource "aws_cognito_user_pool" "this" {
@@ -43,7 +43,7 @@ resource "aws_cognito_user_pool" "this" {
 }
 ```
 
-**Resource Server + scope** — defines the OAuth2 audience and scopes clients can request:
+**Resource Server + scope** - defines the OAuth2 audience and scopes clients can request:
 
 ```hcl
 resource "aws_cognito_resource_server" "gateway" {
@@ -58,7 +58,7 @@ The full scope name is `gateway/invoke` (resource server identifier + scope name
 
 > Note that in this module you'll use one scope for all requests. In following modules you'll implement a more fine-grained scope-based authorization. 
 
-**App Client** — the credential pair your MCP Client will use:
+**App Client** - the credential pair your MCP Client will use:
 ```hcl
 resource "aws_cognito_user_pool_client" "mcp_client" {
   name         = "${local.project_name}-mcp-client"
@@ -72,7 +72,7 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
 }
 ```
 
-`client_credentials` grant is used here for simplicity — the agent authenticates with its own `client_id` + `client_secret`. AgentCore also supports other OAuth2 grants: `authorization_code` with PKCE, token exchange, and on-behalf-of flows for more advanced identity scenarios.
+`client_credentials` grant is used here for simplicity - the agent authenticates with its own `client_id` + `client_secret`. AgentCore also supports other OAuth2 grants: `authorization_code` with PKCE, token exchange, and on-behalf-of flows for more advanced identity scenarios.
 
 ## Step 2: Enable Cognito and update the gateway
 
@@ -119,17 +119,17 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
     make redeploy-gateway
     ```
 
-    > AgentCore does not allow updating `authorizer_type` in-place — the API returns a 400. This is intentional: switching from an authenticated mode to `NONE` (or vice versa) is a security-sensitive change that should be explicit and auditable, not a silent field update. `redeploy-gateway` uses `terraform apply -replace` which destroys the old gateway first and creates a fresh one with the new authorizer configuration.
+    > AgentCore does not allow updating `authorizer_type` in-place - the API returns a 400. This is intentional: switching from an authenticated mode to `NONE` (or vice versa) is a security-sensitive change that should be explicit and auditable, not a silent field update. `redeploy-gateway` uses `terraform apply -replace` which destroys the old gateway first and creates a fresh one with the new authorizer configuration.
 
 1. Once Terraform deployment completes, you will find four files under `tmp/`:
-    - `tmp/gateway_url.txt` — new gateway endpoint
-    - `tmp/cognito_token_endpoint.txt` — Cognito token URL
+    - `tmp/gateway_url.txt` - new gateway endpoint
+    - `tmp/cognito_token_endpoint.txt` - Cognito token URL
     - `tmp/cognito_client_id.txt`
     - `tmp/cognito_client_secret.txt`
 
     > You will notice that `cognito_client_secret` is written to a plain text file. Keeping secrets in your filesystem is a bad security practice! In this module, this is done intentionally to illustrate what you should NOT be doing. You'll replace this with AgentCore Identity in upcoming modules.
 
-1. Verify the deployment in AWS console — open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm the gateway shows **Inbound Auth: Custom JWT**.
+1. Verify the deployment in AWS console - open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm the gateway shows **Inbound Auth: Custom JWT**.
     ![](./images/m03-after-enabling-cognito.png)
 
 ## How the gateway validates the JWT
@@ -138,10 +138,10 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
 2. It fetches the OIDC discovery document from the `discovery_url` you configured (Cognito publishes this at `/.well-known/openid-configuration`)
 3. It downloads the public keys from the `jwks_uri` in that document
 4. It verifies the JWT signature, expiry (`exp`), issuer (`iss`), and that the token contains all `allowed_scopes`
-5. If any check fails — HTTP 401, `"Invalid Bearer token"`
-6. If all checks pass — Gateway forwards the request to the target Lambda
+5. If any check fails - HTTP 401, `"Invalid Bearer token"`
+6. If all checks pass - Gateway forwards the request to the target Lambda
 
-> Note: Token signature validation keys are cached — Gateway does not call Cognito on every single request.
+> Note: Token signature validation keys are cached - Gateway does not call Cognito on every single request.
 
 ## Step 3: Try calling without a token
 
@@ -191,7 +191,7 @@ Run the following command again, this time it will use the access token you retr
 make list-tools
 ```
 
-This command reads `tmp/access_token.txt` and adds `Authorization: Bearer <token>` to the request. Expected response is the same tool list as Module 2 — but now only authorized callers can see it.
+This command reads `tmp/access_token.txt` and adds `Authorization: Bearer <token>` to the request. Expected response is the same tool list as Module 2 - but now only authorized callers can see it.
 
 Place an order to confirm the full flow works:
 
