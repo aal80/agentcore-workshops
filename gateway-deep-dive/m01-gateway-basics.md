@@ -1,6 +1,6 @@
 # Module 1: Understanding AgentCore Gateway
 
-Before you provision any cloud resources, this module builds a mental model of what AgentCore Gateway is and how its parts fit together. It is a conceptual module - no AWS resources are deployed yet.
+This module builds a mental model of what AgentCore Gateway is and how its parts fit together. It is a conceptual module - no AWS resources are deployed just yet.
 
 ## What are you building?
 
@@ -20,53 +20,64 @@ By the end of this workshop you will have:
 
 ## What are the building blocks of AgentCore Gateway?
 
-**Gateway** is a component of Amazon Bedrock AgentCore that allows you to expose a wide variety of backend targets (HTTP endpoints, Lambda functions, MCP servers) as [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) endpoints. Any agentic framework that speaks MCP - Strands, LangChain, LangGraph, Claude Desktop, and others - can discover and call these tools through a secured gateway URL.
+**Gateway** is a component of [Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore) that allows you to aggregate and expose a wide variety of backend targets (HTTP endpoints, Lambda functions, MCP servers, API Gateway stages) as [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) endpoints. Any agentic framework that speaks MCP - Strands, LangChain, LangGraph, Claude Desktop, and others - can discover and call these tools through a secured gateway URL.
 
 ![](./images/m01-arch.png)
 
 Let's examine several of Gateway's core concepts. All of them are mapped to the above diagram.
 
-### Gateway
+### Gateway (Module 2)
 
-A **Gateway** is the top-level construct. It provides an HTTPS endpoint (`gateway_url`) and handles:
+A **Gateway** is the top-level construct. It provides an MCP endpoint exposed over HTTPS (`gateway_url`) and handles:
 
-- **Protocol translation** - Converts MCP JSON-RPC calls to the target's native invocation format
-- **Authentication** - Validates the caller's inbound identity and authenticates to outbound downstream targets - the agent never holds credentials for the target
+- **Protocol translation** - Converts MCP JSON-RPC calls to the target's native invocation format and vice-versa.
+- **Authentication** - Validates the caller's inbound identity and authenticates to outbound downstream targets - the agent (MCP client) never holds credentials for the target
 - **Policy enforcement** - Evaluates fine-grained access policies before forwarding requests to targets
 - **Interceptors** - Allows you to intercept, inspect, and modify MCP requests and responses
 - **Observability** - Emits structured telemetry to CloudWatch for every tool invocation, giving you an audit trail and latency visibility out of the box
+- **Semantic tool search** - Exposes a built-in search tool that lets agents find relevant tools using natural language queries rather than exact tool names — useful when your gateway exposes a large number of tools
 
-### Gateway Targets
+### Gateway Targets (Module 2)
 
-A **Target** is a backend resource registered with a Gateway, such as an HTTP endpoint or a Lambda function. Each target carries:
+A **Target** is a backend resource registered with a Gateway, such as an HTTP endpoint, a Lambda function, or an API Gateway stage. Each target carries:
 
-- A **tool schema** - the tool name, description, and input parameters that Gateway publishes via MCP's `tools/list`. For HTTP and MCP targets this can be auto-discovered; for Lambda targets you define it inline.
+- A **tool schema** - the tool name, description, and input parameters that Gateway publishes via MCP's `tools/list`. For HTTP and MCP targets this can be auto-discovered. For Lambda targets you define it inline, as you will see in the next module.
 - A **credential provider** - how Gateway authenticates to the target (e.g. IAM role, API key, or OAuth2 token)
 
-### Request authorizers
+### Request authorizers (Module 3)
 
 An **authorizer** is the inbound authentication mechanism attached to a Gateway. It runs first - before interceptors, before policy evaluation, before any target is invoked. AgentCore supports four types: `None`, `JWT`, `AWS IAM`, and `Authenticate only`.
 
 This workshop starts with `None` in Module 2 and upgrades to `JWT` with Amazon Cognito in Module 3.
 
-### Interceptors
+### Policy Engine (Module 4)
 
-An **Interceptor** is an optional Lambda function that runs on every request and/or response. It can read headers, inspect the MCP payload, modify arguments, enrich responses, or short-circuit with a synthetic response entirely. The tool Lambdas themselves are never changed.
-
-You will build a pass-through and a mutating interceptor in Module 5.
-
-### Policy Engine
-
-A **Policy Engine** is an optional component that evaluates fine-grained authorization policies before each tool call. Without any `permit` policy, the engine denies everything by default. Policies can be scoped to specific tools, JWT claims, or even the arguments passed to a tool.
+A **Policy Engine** is a component that evaluates fine-grained authorization policies before each tool call. Without any `permit` policy, the engine denies everything by default. Policies can be scoped to specific tools, JWT claims, or even specific arguments passed to a tool.
 
 You will progressively strengthen security posture by adding policies in Module 4. 
 
-### Outbound identity
+### Interceptors (Module 5)
 
-When the Gateway invokes a downstream target, it authenticates using a **credential provider** - either the Gateway's IAM role (for Lambda) or an OAuth2 token. The calling agent never holds credentials for the downstream target.
+An **Interceptor** is a Lambda function that Gateway runs on every request and/or response. It can read headers, inspect the MCP payload, modify arguments, enrich responses, or short-circuit with a synthetic response entirely. 
 
-The companion to this is the **Token Vault**: AgentCore securely stores OAuth2 `client_id`/`client_secret` pairs so agents never hold long-lived secrets either. You will set this up in Module 6.
+You will build a pass-through and a mutating interceptor in Module 5.
+
+### Outbound identity (Module 6)
+
+When the Gateway invokes a downstream target, it authenticates using a **Credential Provider** - Gateway's IAM role, API Key, or an OAuth2 token. The calling client never holds credentials for the downstream targets.
+
+The companion to this is AgentCore Identity's **Token Vault** — an encrypted store for long-lived secrets like API keys and OAuth2 `client_secret`. The gateway retrieves secrets from the vault at request time, so they never appear in your agent code, environment variables, or Terraform state.
+
+You will set this up in Module 6.
+
+### Running an AI agent (Module 7)
+
+Once the gateway is setup, in Module 7 you will connect a real Python agent to it. The agent is built with [Strands Agents SDK](https://strandsagents.com/) — it authenticates to the gateway, discovers available tools via `tools/list`, and uses them to handle natural language pizza orders in a terminal chat loop.
+
+### Observability (Module 8)
+
+AgentCore Gateway emits OTEL-formatted, structured telemetry automatically. You will explore the application logs and end-to-end traces flowing through CloudWatch, and use the GenAI Observability dashboard to see what happened during your agent session in Module 8.
 
 ## Next step
 
-Enough talking, let's start building! Head to [Module 2](m02-first-tool.md) to deploy the gateway and your first tool.
+Let's start building! Continue to [Module 2](m02-first-tool.md) to deploy the gateway and your first tool.
