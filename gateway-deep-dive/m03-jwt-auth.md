@@ -61,14 +61,14 @@ The full scope name is `gateway/invoke` (resource server identifier + scope name
 **App Client** - the credential pair your MCP Client will use:
 ```hcl
 resource "aws_cognito_user_pool_client" "mcp_client" {
-  name         = "${local.project_name}-mcp-client"
-  user_pool_id = aws_cognito_user_pool.this.id
+    name         = "${local.project_name}-mcp-client"
+    user_pool_id = aws_cognito_user_pool.this.id
 
-  generate_secret                      = true
-  allowed_oauth_flows_user_pool_client = true
-  allowed_oauth_flows                  = ["client_credentials"]
-  allowed_oauth_scopes                 = ["gateway/invoke"]
-  supported_identity_providers         = ["COGNITO"]
+    generate_secret                      = true
+    allowed_oauth_flows_user_pool_client = true
+    allowed_oauth_flows                  = ["client_credentials"]
+    allowed_oauth_scopes                 = ["gateway/invoke"]
+    supported_identity_providers         = ["COGNITO"]
 }
 ```
 
@@ -86,12 +86,13 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
     ```hcl
     authorizer_type = "CUSTOM_JWT"
     authorizer_configuration = {
-      custom_jwt_authorizer = {
-        discovery_url  = local.cognito_discovery_url
-        allowed_scopes = ["gateway/invoke"]
-      }
+        custom_jwt_authorizer = {
+            discovery_url  = local.cognito_discovery_url
+            allowed_scopes = ["gateway/invoke"]
+        }
     }
     ```
+    
     - This is what gateway resource should look like after your changes:
 
     ```hcl
@@ -104,8 +105,8 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
         authorizer_type = "CUSTOM_JWT"
         authorizer_configuration = {
             custom_jwt_authorizer = {
-            discovery_url  = local.cognito_discovery_url
-            allowed_scopes = [local.cognito_scope]
+                discovery_url  = local.cognito_discovery_url
+                allowed_scopes = ["gateway/invoke"]
             }
         }
 
@@ -119,25 +120,18 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
     make redeploy-gateway
     ```
 
-    > AgentCore does not allow updating `authorizer_type` in-place - the API returns a 400. This is intentional: switching from an authenticated mode to `NONE` (or vice versa) is a security-sensitive change that should be explicit and auditable, not a silent field update. `redeploy-gateway` uses `terraform apply -replace` which destroys the old gateway first and creates a fresh one with the new authorizer configuration.
+    > AgentCore intentionally does not allow updating `authorizer_type` in-place: switching from an authenticated mode to `NONE` (or vice versa) is a security-sensitive change that should be explicit and auditable, not a silent field update. `redeploy-gateway` uses `terraform apply -replace` which destroys the old gateway and creates a fresh one with the new authorizer configuration.
 
-1. Once Terraform deployment completes, you will find four files under `tmp/`:
-    - `tmp/gateway_url.txt` - new gateway endpoint
-    - `tmp/cognito_token_endpoint.txt` - Cognito token URL
-    - `tmp/cognito_client_id.txt`
-    - `tmp/cognito_client_secret.txt`
+1. Once deployment completes, verify the updates in AWS console - open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm the gateway shows **Inbound Auth: Custom JWT**.
 
-    > You will notice that `cognito_client_secret` is written to a plain text file. Keeping secrets in your filesystem is a bad security practice! In this module, this is done intentionally to illustrate what you should NOT be doing. You'll replace this with AgentCore Identity in upcoming modules.
-
-1. Verify the deployment in AWS console - open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm the gateway shows **Inbound Auth: Custom JWT**.
     ![](./images/m03-after-enabling-cognito.png)
 
 ## How the gateway validates the JWT
 
 1. On every request, Gateway reads the `Authorization: Bearer <jwt>` HTTP header
-2. It fetches the OIDC discovery document from the `discovery_url` you configured (Cognito publishes this at `/.well-known/openid-configuration`)
-3. It downloads the public keys from the `jwks_uri` in that document
-4. It verifies the JWT signature, expiry (`exp`), issuer (`iss`), and that the token contains all `allowed_scopes`
+2. Gateway fetches the OIDC discovery document from the `discovery_url` you configured (Cognito publishes this at `/.well-known/openid-configuration`)
+3. Gateway downloads the public keys from the `jwks_uri` in that document
+4. Gateway verifies the JWT signature, expiry (`exp`), issuer (`iss`), and that the token contains all `allowed_scopes`
 5. If any check fails - HTTP 401, `"Invalid Bearer token"`
 6. If all checks pass - Gateway forwards the request to the target Lambda
 
@@ -191,7 +185,7 @@ Run the following command again, this time it will use the access token you retr
 make list-tools
 ```
 
-This command reads `tmp/access_token.txt` and adds `Authorization: Bearer <token>` to the request. Expected response is the same tool list as Module 2 - but now only authorized callers can see it.
+This command reads `tmp/access_token.txt` and adds `Authorization: Bearer <token>` HTTP header to the request. Expected response is the same tool list as Module 2 - but now only authorized callers can see it.
 
 Place an order to confirm the full flow works:
 
@@ -219,10 +213,10 @@ Your authenticated pizza order was successfully created! Expected response:
 
 ## Congratulations!
 
-You've added your first security layer, and now your pizza gateway requires a valid Cognito JWT on every request.
+You've added your first security layer! Now your pizza gateway requires a valid Cognito JWT on every request.
 
 - **Cognito User Pool** acts as the OAuth2 identity provider
-- **`client_credentials` grant** provides machine-to-machine token issuance
+- Access token is retrieved using the `client_credentials` OAuth2 grant
 - **`CUSTOM_JWT` authorizer** validates tokens and checks scopes
 
 ## Next step
