@@ -2,7 +2,7 @@
 
 This module explains how to set up your workshop environment and install required dependencies. This takes about 5 minutes.
 
-## Step 1: Install prerequisites (skip if using AWS-provided workshop accounts)
+## Step 1: Install prerequisites (skip this step if you're using AWS-provided workshop accounts)
 
 > **If you're using an AWS-provided workshop account**, all dependencies are pre-installed. Skip to [Step 2](#step-2-clone-the-workshop).
 
@@ -37,7 +37,7 @@ Open the `gateway-deep-dive` folder in Visual Studio Code. You will find:
 1. **Markdown modules** (`m01-*.md` through `m07-*.md`) — step-by-step instructions
 2. **Terraform configuration** (`terraform/`) — infrastructure as code for each module
 3. **Lambda source code** (`src/lambdas/`) — Lambda functions implementing pizza tools
-4. **Python agent** (`src/agent/`) — a Strands-based agent you will use in Module 6
+4. **Python agent** (`src/agent/`) — an AI agent you will use in Module 7
 
 ## Step 4: Enable Transactional Search
 
