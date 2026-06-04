@@ -4,37 +4,37 @@ resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
   role_arn      = aws_iam_role.gateway.arn
   protocol_type = "MCP"
   
-#   authorizer_type = "NONE"
+  authorizer_type = "NONE"
 
   # --- Module 3: comment out authorizer_type = "NONE" above and uncomment:
-  authorizer_type = "CUSTOM_JWT"
-  authorizer_configuration = {
-    custom_jwt_authorizer = {
-      discovery_url  = local.cognito_discovery_url
-      allowed_scopes = ["gateway/get_menu"]
-    }
-  }
+#   authorizer_type = "CUSTOM_JWT"
+#   authorizer_configuration = {
+#     custom_jwt_authorizer = {
+#       discovery_url  = local.cognito_discovery_url
+#       allowed_scopes = ["gateway/get_menu"]
+#     }
+#   }
 
   # --- Module 4: Uncomment to attach the Policy Engine
-  policy_engine_configuration = {
-    arn  = awscc_bedrockagentcore_policy_engine.pizza_shop.policy_engine_arn
-    mode = "ENFORCE"
-  }
+#   policy_engine_configuration = {
+#     arn  = awscc_bedrockagentcore_policy_engine.pizza_shop.policy_engine_arn
+#     mode = "ENFORCE"
+#   }
 
   # --- Module 5: Uncomment to attach the interceptor Lambda
-  interceptor_configurations = [
-    {
-      interception_points = ["REQUEST", "RESPONSE"]
-      interceptor = {
-        lambda = {
-          arn = aws_lambda_function.interceptor.arn
-        }
-      }
-      input_configuration = {
-        pass_request_headers = true
-      }
-    }
-  ]
+#   interceptor_configurations = [
+#     {
+#       interception_points = ["REQUEST", "RESPONSE"]
+#       interceptor = {
+#         lambda = {
+#           arn = aws_lambda_function.interceptor.arn
+#         }
+#       }
+#       input_configuration = {
+#         pass_request_headers = true
+#       }
+#     }
+#   ]
 
   exception_level = "DEBUG"
 }

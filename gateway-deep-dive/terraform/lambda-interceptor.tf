@@ -26,7 +26,7 @@ resource "aws_lambda_function" "interceptor" {
   function_name    = "${local.project_name}-interceptor"
   filename         = data.archive_file.interceptor.output_path
   source_code_hash = data.archive_file.interceptor.output_base64sha256
-  handler          = "index2.handler"  # change to index2.handler for the mutating variant
+  handler          = "index.handler"  # change to index2.handler for the mutating variant
   runtime          = "nodejs22.x"
   memory_size      = 512
   role             = aws_iam_role.interceptor.arn

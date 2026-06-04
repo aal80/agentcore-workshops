@@ -1,105 +1,96 @@
 # Module 2: Your first tool - no auth required
 
-In this module you deploy an AgentCore Gateway with two pizza tools - `get-menu` and `create-order` - with no authentication for now. By the end of this module you will be calling both tools via MCP using `curl`.
+In this module you will deploy an AgentCore Gateway with two pizza tools - `get-menu` and `create-order` - with no authentication for now. By the end of this module you will be calling both tools via MCP using `curl`.
 
 ## What you will build
 
 ![](./images/m02-arch.png)
 
-> AgentCore Gateway supports several inbound authentication modes: `None`, `JWT`, `AWS IAM`, and `Authenticate only`. This module uses `None` so you can focus on the Gateway and MCP mechanics without credential setup. You will switch to `JWT` in upcoming modules. 
+> AgentCore Gateway supports several inbound authentication modes: `None`, `JWT`, `AWS IAM`, and `Authenticate only`. This module uses `None` so you can focus on the Gateway and MCP mechanics without credential setup. You will switch to `JWT` in Module 3. 
 
 ## Step 1: Examine the Lambda functions
 
-### `Get Menu` implementation
+1. Explore the `Get Menu` implementation in `src/lambdas/get-menu/index.js`. It returns a static menu:
 
-Open `src/lambdas/get-menu/index.js`. It returns a static menu:
+    ```js
+    const menu = [
+    { id: 1, name: "Margherita",      price: 12.99 },
+    { id: 2, name: "Pepperoni",       price: 14.99 },
+    { id: 3, name: "Four Cheese",     price: 15.99 },
+    { id: 4, name: "BBQ Chicken",     price: 16.99 },
+    { id: 5, name: "Pineapple Deluxe", price: 15.49 },
+    { id: 6, name: "Veggie Supreme",  price: 14.99 },
+    ];
 
-```js
-const menu = [
-  { id: 1, name: "Margherita",      price: 12.99 },
-  { id: 2, name: "Pepperoni",       price: 14.99 },
-  { id: 3, name: "Four Cheese",     price: 15.99 },
-  { id: 4, name: "BBQ Chicken",     price: 16.99 },
-  { id: 5, name: "Pineapple Deluxe", price: 15.49 },
-  { id: 6, name: "Veggie Supreme",  price: 14.99 },
-];
+    export const handler = async () => {
+    return { menu };
+    };
+    ```
 
-export const handler = async () => {
-  return { menu };
-};
-```
+2. Explore the `Create Order` implementation in `src/lambdas/create-order/index.js`. It looks up a pizza by `pizzaId` and returns an order confirmation:
 
-### `Create Order` implementation
+    ```js
+    export const handler = async (event) => {
+    const pizzaId = event.pizzaId;
+    const pizza = menu.find((p) => p.id === pizzaId);
+    if (!pizza) return { error: `Pizza with id ${pizzaId} not found` };
 
-Open `src/lambdas/create-order/index.js`. It looks up a pizza by `pizzaId` and returns an order confirmation:
+    return {
+        orderId: `ORDER-${crypto.randomUUID()}`,
+        date: new Date().toISOString(),
+        item: pizza.name,
+        total: pizza.price,
+    };
+    };
+    ```
 
-```js
-export const handler = async (event) => {
-  const pizzaId = event.pizzaId;
-  const pizza = menu.find((p) => p.id === pizzaId);
-  if (!pizza) return { error: `Pizza with id ${pizzaId} not found` };
+These are two plain Lambda functions. There's absolutely nothing special about them - they know nothing about MCP or AgentCore. The Gateway fully handles protocol translation.
 
-  return {
-    orderId: `ORDER-${crypto.randomUUID()}`,
-    date: new Date().toISOString(),
-    item: pizza.name,
-    total: pizza.price,
-  };
-};
-```
+## Step 2: Examine the Gateway Terraform configuration
 
-These are plain Lambda functions. There's absolutely nothing special about them. They know nothing about MCP or AgentCore. The same is also applicable when your targets are HTTP endpoints - the Gateway handles protocol translation.
+Open `terraform/gateway.tf`. There are two key things to notice:
 
-## Step 2: Examine the Terraform configuration
+1. **Gateway resource** has `authorizer_type = "NONE"`. This means any caller can reach the tools without any authorization requirements:
 
-Open `terraform/gateway.tf`. Key things to notice:
+    ```hcl
+    resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
+        name = "${local.project_name}"
+        role_arn      = aws_iam_role.gateway.arn
+        protocol_type = "MCP"
 
-**Gateway resource** - `authorizer_type = "NONE"` means any caller can reach the tools:
+        # Any caller can reach the tools, no auth required
+        authorizer_type = "NONE"
 
-```hcl
-resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
-  name = "${local.project_name}"
-  role_arn      = aws_iam_role.gateway.arn
-  protocol_type = "MCP"
-
-  # Any caller can reach the tools, no auth required
-  authorizer_type = "NONE"
-  ...REDACTED...
-}
-```
-
-**Target + tool schema** - the `inline_payload` block is what MCP clients see in `tools/list`. It defines the tool name, description, and input parameters:
-
-```hcl
-resource "aws_bedrockagentcore_gateway_target" "get_menu" {
-  name               = "get-menu"
-  gateway_identifier = awscc_bedrockagentcore_gateway.pizza_shop.gateway_identifier
-
-  # Outbound identity to be used for communicating with targets
-  credential_provider_configuration {
-    gateway_iam_role {}
-  }
-
-  target_configuration {
-    mcp {
-      lambda {
-        lambda_arn = aws_lambda_function.get_menu.arn
-
-        tool_schema {
-          inline_payload {
-            name        = "get-menu"
-            description = "Returns the current pizza menu with item IDs, names, and prices"
-
-            input_schema {
-              type = "object"
-            }
-          }
-        }
-      }
+        ...REDACTED...
     }
-  }
-}
-```
+    ```
+
+2. **Target + tool schema** - the `inline_payload` block is what MCP clients see in `tools/list`. It defines the tool name, description, and input parameters:
+
+    ```hcl
+    resource "aws_bedrockagentcore_gateway_target" "get_menu" {
+    ...REDACTED...
+    
+        target_configuration {
+            mcp {
+                lambda {
+                    lambda_arn = aws_lambda_function.get_menu.arn
+
+                    tool_schema {
+                        inline_payload {
+                            name        = "get-menu"
+                            description = "Returns the current pizza menu with item IDs, names, and prices"
+
+                            input_schema {
+                                type = "object"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    ```
 
 ## Step 3: Deploy the gateway
 
