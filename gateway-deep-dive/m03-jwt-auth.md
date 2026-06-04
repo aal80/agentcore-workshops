@@ -88,7 +88,7 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
     authorizer_configuration = {
       custom_jwt_authorizer = {
         discovery_url  = local.cognito_discovery_url
-        allowed_scopes = [local.cognito_scope]
+        allowed_scopes = ["gateway/invoke"]
       }
     }
     ```
