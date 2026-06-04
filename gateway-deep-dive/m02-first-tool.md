@@ -69,7 +69,7 @@ Open `terraform/gateway.tf`. There are two key things to notice:
 
     ```hcl
     resource "aws_bedrockagentcore_gateway_target" "get_menu" {
-    ...REDACTED...
+        ...REDACTED...
     
         target_configuration {
             mcp {
