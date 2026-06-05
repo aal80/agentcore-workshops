@@ -2,7 +2,7 @@
 
 ## Overview
 
-[Amazon Bedrock AgentCore Gateway](https://aws.amazon.com/bedrock/agentcore/) converts Lambda functions and HTTP services into [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) endpoints that any agent framework can discover and call. It handles authentication, authorization, request/response transformation, and secure outbound identity - all without changes to your tool implementations.
+[Amazon Bedrock AgentCore Gateway](https://aws.amazon.com/bedrock/agentcore/) translates Lambda functions and HTTP services into [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) endpoints that any agent framework can discover and call. It handles authentication, authorization, request/response transformation, and secure outbound identity - all without changes to your tool implementations.
 
 ![](./images/intro.png)
 
