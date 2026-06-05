@@ -91,7 +91,7 @@ resource "awscc_bedrockagentcore_gateway" "pizza_shop" {
     }
     ```
 
-1. Open `terraform/gateway.tf` and uncomment the `policy_engine_configuration` block inside the gateway resource:
+1. Open `terraform/gateway.tf` and uncomment the `policy_engine_configuration` block inside the gateway resource (line 19):
 
     ```hcl
     policy_engine_configuration = {

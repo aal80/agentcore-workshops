@@ -86,7 +86,7 @@ Let's start implementing the interceptors!
 
 ## Step 1: Attach the interceptor to the Gateway
 
-The interceptor is a regular Lambda function that gateway invokes. The Terraform configuration for it is already written in `terraform/lambda-interceptor.tf`
+The interceptor is a regular Lambda function that gateway invokes. You can see the Terraform configuration for deploying this Lambda function in `terraform/lambda-interceptor.tf`
 
 1. Examine `terraform/lambda-interceptor.tf`, see the function resource at the bottom of the file. Note the function handler definition in line 29 you will change it in upcoming steps. 
 

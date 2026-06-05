@@ -43,7 +43,7 @@ Let's start building!
 
 ## Step 1: Examine the infrastructure
 
-Open `terraform/promotions-backend.tf`. This file contains everything needed for this module:
+Open and uncomment the `terraform/promotions-backend.tf`. This file contains everything needed for this module:
 
 1. Simulating the protected **Promotions Backend** - a Lambda function exposed via HTTP API Gateway that returns pizza promotions, but only if the caller presents the correct `x-api-key` header (lines 8-22):
 
@@ -124,7 +124,7 @@ Open `terraform/promotions-backend.tf`. This file contains everything needed for
 
 ## Step 2: Uncomment and deploy
 
-1. Uncomment and save the whole `terraform/promotions-backend.tf` file. 
+1. Uncomment and save the `terraform/promotions-backend.tf` file. 
 
 1. Run the following command in the VS Code Terminal to deploy updates
 
