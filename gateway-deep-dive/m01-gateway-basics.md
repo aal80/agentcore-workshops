@@ -14,8 +14,8 @@ Throughout this workshop you will build a backend and MCP gateway for a pizza sh
 
 By the end of this workshop you will have:
 
-- All tools accessible via a single MCP endpoint, secured with inbound JWT and outbound IAM, governed by access policies
-- An interceptor that inspects and modifies every request and response
+- All tools accessible via a single MCP endpoint, secured with inbound JWT and outbound AWS IAM/API Key, governed by access policies
+- An interceptor that inspects and modifies requests and responses
 - A Strands agent that can submit pizza orders using those tools
 
 ## What are the building blocks of AgentCore Gateway?
