@@ -197,7 +197,7 @@ And placing an order to confirm the full flow works:
 make create-order pizzaId=3
 ```
 
-Your authenticated pizza order was successfully created! Expected response:
+Now you can see the menu again and your authenticated pizza order was successfully created! Expected response:
 
 ```json
 {

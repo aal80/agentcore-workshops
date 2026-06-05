@@ -1,8 +1,8 @@
 # Module 4: Adding policies
 
-JWT authentication you implemented in the previous module tells you **who** is calling. OAuth2 scopes let you go one step further - you can restrict a token to a set of allowed operations (e.g. `gateway/get_menu` but not `gateway/create_order`). For many use cases, that is enough.
+JWT authentication you implemented in the previous module tells you **who** is calling. Using OAuth2 scopes you can go one step further and restrict token to a set of allowed operations (e.g. `gateway/get_menu` but not `gateway/create_order`). For many use cases, that is enough.
 
-But scopes are coarse-grained. They carry high-level intent - "this client can place orders" - but they know nothing about the request payload. There is no OAuth2 scope for "this client may only order up to 2 pizzas at a time, and they cannot be pineapple." For that kind of fine-grained authorization validation you need a policy engine that can inspect not just OAuth2 scopes, but the actual tool names and arguments at request time.
+But scopes are coarse-grained. They carry high-level intent - "this client can place orders" - but they know nothing about the request payload. There is no OAuth2 scope for "this client may only order up to 2 pizzas at a time, and they cannot be pineapple". For that kind of fine-grained authorization validation you need a policy engine that can inspect not just OAuth2 scopes, but the actual tool names and arguments at request time.
 
 In this module you will attach a **Policy Engine** to your gateway and write authorization policies that control exactly which tools each caller can invoke - and under what conditions, including rules based on the arguments passed to a tool in request body.
 
@@ -25,10 +25,10 @@ By the end of this module you will gradually implement the following fine-graine
 
 1. JWT Validation by Gateway authorizer (from Module 3)
 1. Policy engine chain
-    - **Permit** all principals to perform `get-menu` action
-    - **Permit** all principals to perform `create-order` action 
+    - **Permit** all principals to call `get-menu` tool
+    - **Permit** all principals to call `create-order` tool
         - ONLY WHEN they have `gateway/create_order` scope in JWT
-    - **Forbid** all principals to perform `create-order` action 
+    - **Forbid** all principals to call `create-order` tool
         - ONLY WHEN `pizzaId==5` (forbid ordering pineapple pizza 🚫🍍🍕). 
 
 Let's get started!
