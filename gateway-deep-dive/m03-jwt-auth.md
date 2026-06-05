@@ -74,9 +74,7 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
 
 `client_credentials` grant is used here for simplicity - the agent authenticates with its own `client_id` + `client_secret`. AgentCore also supports other OAuth2 grants: `authorization_code` with PKCE, token exchange, and on-behalf-of flows for more advanced identity scenarios.
 
-## Step 2: Enable Cognito and update the gateway
-
-1. Open `terraform/cognito-module3.tf` and **uncomment the entire file**.
+## Step 2: Update the gateway configuration to use a custom JWT authorizer 
 
 1. Open `terraform/gateway.tf` and make two changes to the `awscc_bedrockagentcore_gateway` resource:
 
