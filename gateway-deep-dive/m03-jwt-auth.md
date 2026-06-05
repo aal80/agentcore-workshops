@@ -12,7 +12,7 @@ In this module you will implement the following architecture:
 
 Without authentication, any process that discovers your gateway URL can read your menu and place orders. You have no way of controlling who calls your tools or auditing who placed orders. With `JWT` authorization, the Gateway validates an inbound OAuth2 Bearer token on every request. Callers without a valid token are rejected before any tool is ever invoked.
 
-> **Choosing an authorizer** - AgentCore supports four inbound authorizer types:
+**Choosing an authorizer** - AgentCore supports four inbound authorizer types:
 
 - `None` (which you used in the previous module) is not recommended, unless you explicitly want your MCP endpoint not to require authorization.
 - `CUSTOM_JWT` (which you will use in this module) works with any OIDC-compliant identity provider such as Cognito, Okta, Auth0, and others. 

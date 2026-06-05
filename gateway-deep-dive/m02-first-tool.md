@@ -107,13 +107,15 @@ Open `terraform/gateway.tf`. There are two key things to notice:
     - Create the AgentCore Gateway with `authorizer_type = "NONE"`
     - Register both Lambda functions as Gateway targets with their tool schemas
     - Set up CloudWatch log and traces delivery
-    - Write `tmp/gateway_url.txt` so subsequent `make` targets can find the endpoint
+    - Write `tmp/gateway_url.txt` so subsequent `curl` commands can find the endpoint
 
-    Terraform apply takes about 2–3 minutes.
+    Deployment should take about 2–3 minutes.
 
     > If you're seeing an error failing to create a `CloudWatch Logs Delivery`, wait for a minute and retry running `make deploy-infra`. This error indicates that Transactional Search is still being enabled in the account. 
 
-1. Verify the deployment using AWS console - open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm you see your gateway with status **Ready**. 
+1. Verify the deployment using AWS console - open the [Amazon Bedrock AgentCore console](https://us-east-1.console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm you see your gateway with status **Ready**. 
+
+    > Make sure the `North Virginia (us-east-1)` region is selected. 
 
 1. Click into the gateway and verify:
     - Inbound auth is configured as **No authorization**
