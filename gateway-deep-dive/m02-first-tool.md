@@ -6,7 +6,7 @@ In this module you will deploy an AgentCore Gateway with two pizza tools - `get-
 
 ![](./images/m02-arch.png)
 
-> AgentCore Gateway supports several inbound authentication modes: `None`, `JWT`, `AWS IAM`, and `Authenticate only`. This module uses `None` so you can focus on the Gateway and MCP mechanics without credential setup. You will switch to `JWT` in Module 3. 
+> This module is not using any authorization so you can focus on the Gateway and MCP mechanics without credential setup. You will switch to `CUSTOM_JWT` in the next module. 
 
 ## Step 1: Examine the Lambda functions
 

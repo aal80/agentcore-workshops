@@ -46,9 +46,9 @@ A **Target** is a backend resource registered with a Gateway, such as an HTTP en
 
 ### Request authorizers (Module 3)
 
-An **authorizer** is the inbound authentication mechanism attached to a Gateway. It runs first - before interceptors, before policy evaluation, before any target is invoked. AgentCore supports four types: `None`, `JWT`, `AWS IAM`, and `Authenticate only`.
+An **authorizer** is the inbound authentication mechanism attached to a Gateway. It runs first - before interceptors, before policy evaluation, before any target is invoked. AgentCore supports four types: `None`, `CUSTOM_JWT`, `AWS IAM`, and `Authenticate only`.
 
-This workshop starts with `None` in Module 2 and upgrades to `JWT` with Amazon Cognito in Module 3.
+This workshop starts with `None` in Module 2 and upgrades to `CUSTOM_JWT` with Amazon Cognito in Module 3.
 
 ### Policy Engine (Module 4)
 
@@ -60,7 +60,7 @@ You will progressively strengthen security posture by adding policies in Module 
 
 An **Interceptor** is a Lambda function that Gateway runs on every request and/or response. It can read headers, inspect the MCP payload, modify arguments, enrich responses, or short-circuit with a synthetic response entirely. 
 
-You will build a pass-through and a mutating interceptor in Module 5.
+You will build pass-through and mutating interceptors in Module 5.
 
 ### Outbound identity (Module 6)
 
@@ -72,11 +72,11 @@ You will set this up in Module 6.
 
 ### Running an AI agent (Module 7)
 
-Once the gateway is setup, in Module 7 you will connect a real Python agent to it. The agent is built with [Strands Agents SDK](https://strandsagents.com/) — it authenticates to the gateway, discovers available tools via `tools/list`, and uses them to handle natural language pizza orders in a terminal chat loop.
+Once the gateway is setup, in Module 7 you will connect a real Python agent to it. The agent is built with [Strands Agents SDK](https://strandsagents.com/) - it authenticates to the gateway, discovers available tools via `tools/list`, and uses them to handle natural language pizza orders in a terminal chat loop.
 
 ### Observability (Module 8)
 
-AgentCore Gateway emits OTEL-formatted, structured telemetry automatically. You will explore the application logs and end-to-end traces flowing through CloudWatch, and use the GenAI Observability dashboard to see what happened during your agent session in Module 8.
+AgentCore Gateway emits OTEL-formatted, structured telemetry. In Module 8, you will explore gateway logs and end-to-end traces flowing to CloudWatch, and use the GenAI Observability dashboard to see what happens during your agent sessions.
 
 ## Next step
 
