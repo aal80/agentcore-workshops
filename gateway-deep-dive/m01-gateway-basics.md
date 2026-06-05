@@ -41,7 +41,7 @@ A **Gateway** is the top-level construct. It provides an MCP endpoint exposed ov
 
 A **Target** is a backend resource registered with a Gateway, such as an HTTP endpoint, a Lambda function, or an API Gateway stage. Each target carries:
 
-- A **tool schema** - the tool name, description, and input parameters that Gateway publishes via MCP's `tools/list`. For HTTP and MCP targets this can be auto-discovered. For Lambda targets you define it inline, as you will see in the next module.
+- A **tool schema** - the tool name, description, and input parameters that Gateway publishes via MCP's `tools/list`. Gateway can auto-discover schemas for MCP and HTTP targets (build from OpenAPI spec). For Lambda targets you define it inline, as you will see in the next module.
 - A **credential provider** - how Gateway authenticates to the target (e.g. IAM role, API key, or OAuth2 token)
 
 ### Request authorizers (Module 3)
