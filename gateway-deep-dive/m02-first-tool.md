@@ -6,7 +6,7 @@ In this module you will deploy an AgentCore Gateway with two pizza tools - `get-
 
 ![](./images/m02-arch.png)
 
-> This module is not using any authorization so you can focus on the Gateway and MCP mechanics without credential setup. You will switch to `CUSTOM_JWT` in the next module. 
+> This module is intentionally not enforcing authentication so you can focus on the Gateway and MCP mechanics without additional setup. You will switch to `CUSTOM_JWT` in the next module. 
 
 ## Step 1: Examine the Lambda functions
 
