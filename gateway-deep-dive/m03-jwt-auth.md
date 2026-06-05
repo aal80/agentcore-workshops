@@ -120,7 +120,7 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
 
     > AgentCore intentionally does not allow updating `authorizer_type` in-place: switching from an authenticated mode to `NONE` (or vice versa) is a security-sensitive change that should be explicit and auditable, not a silent field update. `redeploy-gateway` uses `terraform apply -replace` which destroys the old gateway and creates a fresh one with the new authorizer configuration.
 
-1. Once deployment completes, verify the updates in AWS console - open the [Amazon Bedrock AgentCore console](https://console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateway**, and confirm the gateway shows **Inbound Auth: Custom JWT**.
+1. Once deployment completes, verify the updates in AWS console - open the [Amazon Bedrock AgentCore console](https://us-east-1.console.aws.amazon.com/bedrock-agentcore/), go to **Build → Gateways**, click on your gateway and confirm it shows Inbound Auth identity provider as **Cognito**.
 
     ![](./images/m03-after-enabling-cognito.png)
 
@@ -130,8 +130,8 @@ resource "aws_cognito_user_pool_client" "mcp_client" {
 2. Gateway fetches the OIDC discovery document from the `discovery_url` you configured (Cognito publishes this at `/.well-known/openid-configuration`)
 3. Gateway downloads the public keys from the `jwks_uri` in that document
 4. Gateway verifies the JWT signature, expiry (`exp`), issuer (`iss`), and that the token contains all `allowed_scopes`
-5. If any check fails - HTTP 401, `"Invalid Bearer token"`
-6. If all checks pass - Gateway forwards the request to the target Lambda
+5. If any check fails - the gateway returns authorization error
+6. If all checks pass - the gateway forwards the request to the target Lambda
 
 > Note: Token signature validation keys are cached - Gateway does not call Cognito on every single request.
 
@@ -185,7 +185,13 @@ make list-tools
 
 This command reads `tmp/access_token.txt` and adds `Authorization: Bearer <token>` HTTP header to the request. Expected response is the same tool list as Module 2 - but now only authorized callers can see it.
 
-Place an order to confirm the full flow works:
+Try getting the menu:
+
+```bash
+make get-menu
+```
+
+And placing an order to confirm the full flow works:
 
 ```bash
 make create-order pizzaId=3
