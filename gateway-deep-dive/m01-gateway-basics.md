@@ -4,7 +4,7 @@ This module builds a mental model of what AgentCore Gateway is and how its parts
 
 ## What are you building?
 
-Throughout this workshop you will build the backend and MCP gateway for a pizza shop AI ordering assistant. Two tools implemented as Lambda functions and one tool implemented as OpenAPI-documented HTTP endpoint will be exposed via the gateway:
+Throughout this workshop you will build a backend and MCP gateway for a pizza shop AI ordering assistant. You will implement two tools as Lambda functions and one more tool as OpenAPI-documented HTTP endpoint:
 
 | Tool | Backend | What it does |
 |---|---|---|
