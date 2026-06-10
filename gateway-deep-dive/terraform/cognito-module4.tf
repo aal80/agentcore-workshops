@@ -7,6 +7,8 @@
 #   allowed_oauth_flows                  = ["client_credentials"]
 #   allowed_oauth_scopes                 = ["gateway/get_menu"]
 #   supported_identity_providers         = ["COGNITO"]
+#
+#   depends_on = [ aws_cognito_resource_server.gateway ]
 # }
 
 # resource "aws_cognito_user_pool_client" "client2" {
@@ -18,6 +20,8 @@
 #   allowed_oauth_flows                  = ["client_credentials"]
 #   allowed_oauth_scopes                 = ["gateway/get_menu", "gateway/create_order"]
 #   supported_identity_providers         = ["COGNITO"]
+#
+#   depends_on = [ aws_cognito_resource_server.gateway ]
 # }
 
 # resource "local_file" "cognito_client1_id" {
