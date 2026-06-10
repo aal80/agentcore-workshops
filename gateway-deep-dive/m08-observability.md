@@ -65,7 +65,7 @@ Your interceptor Lambda (implemented in Module 5) writes its logs to a separate 
 
 1. Click on the **Gateways** Tab
     
-    ![](/images/m08-ac-observability-gateway-tab.png)
+    ![](./images/m08-ac-observability-gateway-tab.png)
 
 1. You will see a list of the gateways you've created during this workshop - there are several since you've re-created gateway multiple times.  
 
